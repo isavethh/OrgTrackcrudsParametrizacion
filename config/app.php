@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for generating QR codes and frontend links.
+    | Should be accessible from mobile devices.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'https://orgtrackprueba.netlify.app'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

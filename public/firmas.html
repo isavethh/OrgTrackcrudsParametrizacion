@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrgTrack - Sistema de Firmas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .signature-container {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .signature-pad {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+        }
+
+        .signature-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .signature-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .signature-preview img {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .user-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .user-info h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            color: #7f8c8d;
+            margin: 2px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .signature-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 OrgTrack</h1>
+            <p>Sistema de Firmas Digitales</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Información del Usuario -->
+            <div class="user-info" id="userInfo" style="display: none;">
+                <h3>👤 Usuario Autenticado</h3>
+                <p><strong>Nombre:</strong> <span id="userName"></span></p>
+                <p><strong>Rol:</strong> <span id="userRole"></span></p>
+                <p><strong>ID:</strong> <span id="userId"></span></p>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="roleSelector">Cambiar Rol (para testing):</label>
+                    <select id="roleSelector" onchange="changeRole()">
+                        <option value="cliente">Cliente</option>
+                        <option value="transportista">Transportista</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sección de Autenticación -->
+            <div class="section" id="authSection">
+                <h2>🔐 Autenticación</h2>
+                <div class="form-group">
+                    <label for="token">Token de Acceso:</label>
+                    <input type="text" id="token" placeholder="Ingresa tu token JWT aquí...">
+                </div>
+                <button class="btn btn-primary" onclick="authenticateUser()">Verificar Token</button>
+            </div>
+
+            <!-- Sección de Firma del Transportista -->
+            <div class="section" id="transportistaSection" style="display: none;">
+                <h2>🚛 Firma del Transportista</h2>
+                <div class="form-group">
+                    <label for="asignacionTransportista">ID de Asignación:</label>
+                    <input type="number" id="asignacionTransportista" placeholder="Ej: 10">
+                </div>
+                
+                <div class="signature-container">
+                    <canvas id="signaturePadTransportista" class="signature-pad"></canvas>
+                    <div class="signature-controls">
+                        <button class="btn btn-warning" onclick="clearSignature('transportista')">🗑️ Limpiar</button>
+                        <button class="btn btn-primary" onclick="debugCanvas('transportista')">🔍 Debug</button>
+                        <button class="btn btn-success" onclick="saveSignature('transportista')">💾 Guardar Firma</button>
+                    </div>
+                    <div class="signature-preview" id="previewTransportista"></div>
+                </div>
+            </div>
+
+            <!-- Sección de Firma del Cliente -->
+            <div class="section" id="clienteSection" style="display: none;">
+                <h2>👤 Firma del Cliente</h2>
+                <div class="form-group">
+                    <label for="asignacionCliente">ID de Asignación:</label>
+                    <input type="number" id="asignacionCliente" placeholder="Ej: 10">
+                </div>
+                
+                <div class="signature-container">
+                    <canvas id="signaturePadCliente" class="signature-pad"></canvas>
+                    <div class="signature-controls">
+                        <button class="btn btn-warning" onclick="clearSignature('cliente')">🗑️ Limpiar</button>
+                        <button class="btn btn-primary" onclick="debugCanvas('cliente')">🔍 Debug</button>
+                        <button class="btn btn-success" onclick="saveSignature('cliente')">💾 Guardar Firma</button>
+                    </div>
+                    <div class="signature-preview" id="previewCliente"></div>
+                </div>
+            </div>
+
+            <!-- Sección de Verificación de Firmas -->
+            <div class="section" id="verificationSection" style="display: none;">
+                <h2>🔍 Verificar Firmas</h2>
+                <div class="form-group">
+                    <label for="asignacionVerificar">ID de Asignación:</label>
+                    <input type="number" id="asignacionVerificar" placeholder="Ej: 10">
+                </div>
+                <div class="signature-controls">
+                    <button class="btn btn-primary" onclick="getTransportistaSignature()">Ver Firma Transportista</button>
+                    <button class="btn btn-primary" onclick="getClienteSignature()">Ver Firma Cliente</button>
+                </div>
+                <div id="signatureDisplay"></div>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Procesando...</p>
+            </div>
+
+            <!-- Alertas -->
+            <div id="alerts"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentUser = null;
+        let signaturePads = {};
+
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSignaturePads();
+        });
+
+        // Inicializar los pads de firma
+        function initializeSignaturePads() {
+            const canvasTransportista = document.getElementById('signaturePadTransportista');
+            const canvasCliente = document.getElementById('signaturePadCliente');
+
+            // Configurar canvas
+            [canvasTransportista, canvasCliente].forEach(canvas => {
+                // Establecer tamaño del canvas
+                canvas.width = 400;
+                canvas.height = 200;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // Limpiar el canvas con fondo blanco
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                // Eventos del mouse
+                canvas.addEventListener('mousedown', (e) => {
+                    isDrawing = true;
+                    [lastX, lastY] = getMousePos(canvas, e);
+                });
+
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDrawing) return;
+                    const [currentX, currentY] = getMousePos(canvas, e);
+                    drawLine(ctx, lastX, lastY, currentX, currentY);
+                    [lastX, lastY] = [currentX, currentY];
+                });
+
+                canvas.addEventListener('mouseup', () => isDrawing = false);
+                canvas.addEventListener('mouseout', () => isDrawing = false);
+
+                // Eventos táctiles
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isDrawing = true;
+                    const touch = e.touches[0];
+                    [lastX, lastY] = getTouchPos(canvas, touch);
+                });
+
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!isDrawing) return;
+                    const touch = e.touches[0];
+                    const [currentX, currentY] = getTouchPos(canvas, touch);
+                    drawLine(ctx, lastX, lastY, currentX, currentY);
+                    [lastX, lastY] = [currentX, currentY];
+                });
+
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    isDrawing = false;
+                });
+
+                signaturePads[canvas.id] = canvas;
+            });
+        }
+
+        // Obtener posición del mouse
+        function getMousePos(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            return [e.clientX - rect.left, e.clientY - rect.top];
+        }
+
+        // Obtener posición del touch
+        function getTouchPos(canvas, touch) {
+            const rect = canvas.getBoundingClientRect();
+            return [touch.clientX - rect.left, touch.clientY - rect.top];
+        }
+
+        // Dibujar línea
+        function drawLine(ctx, x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        // Autenticar usuario
+        async function authenticateUser() {
+            const token = document.getElementById('token').value.trim();
+            if (!token) {
+                showAlert('Por favor ingresa un token válido', 'error');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                // Simular verificación del token (en producción, verificarías con el backend)
+                const response = await fetch('/api/usuarios', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Token válido, simular datos del usuario
+                    // Por defecto, permitir ambos roles para testing
+                    currentUser = {
+                        id: 1,
+                        nombre: 'Usuario',
+                        rol: 'cliente' // Cambiar a 'transportista' si necesitas probar como transportista
+                    };
+                    
+                    showUserInfo();
+                    showSections();
+                    showAlert('Token verificado correctamente', 'success');
+                } else {
+                    throw new Error('Token inválido');
+                }
+            } catch (error) {
+                showAlert('Error al verificar el token: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Mostrar información del usuario
+        function showUserInfo() {
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.nombre;
+                document.getElementById('userRole').textContent = currentUser.rol;
+                document.getElementById('userId').textContent = currentUser.id;
+                document.getElementById('userInfo').style.display = 'block';
+            }
+        }
+
+        // Mostrar secciones según el rol
+        function showSections() {
+            if (currentUser) {
+                // Para testing, mostrar ambas secciones
+                document.getElementById('transportistaSection').style.display = 'block';
+                document.getElementById('clienteSection').style.display = 'block';
+                document.getElementById('verificationSection').style.display = 'block';
+                
+                // Comentado: lógica original por rol
+                // if (currentUser.rol === 'transportista') {
+                //     document.getElementById('transportistaSection').style.display = 'block';
+                // } else if (currentUser.rol === 'cliente') {
+                //     document.getElementById('clienteSection').style.display = 'block';
+                // }
+            }
+        }
+
+        // Cambiar rol para testing
+        function changeRole() {
+            const newRole = document.getElementById('roleSelector').value;
+            if (currentUser) {
+                currentUser.rol = newRole;
+                document.getElementById('userRole').textContent = newRole;
+                showAlert(`Rol cambiado a: ${newRole}`, 'info');
+            }
+        }
+
+        // Limpiar firma
+        function clearSignature(type) {
+            const canvas = document.getElementById(`signaturePad${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`).innerHTML = '';
+        }
+
+        // Función de debug para verificar el canvas
+        function debugCanvas(type) {
+            const canvas = document.getElementById(`signaturePad${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            let nonWhitePixels = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] !== 255 || data[i + 1] !== 255 || data[i + 2] !== 255) {
+                    nonWhitePixels++;
+                }
+            }
+            
+            console.log(`Canvas ${type}: ${nonWhitePixels} píxeles no blancos`);
+            showAlert(`Debug: ${nonWhitePixels} píxeles detectados en el canvas`, 'info');
+        }
+
+        // Guardar firma
+        async function saveSignature(type) {
+            const canvas = document.getElementById(`signaturePad${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const asignacionId = document.getElementById(`asignacion${type.charAt(0).toUpperCase() + type.slice(1)}`).value;
+
+            if (!asignacionId) {
+                showAlert('Por favor ingresa el ID de asignación', 'error');
+                return;
+            }
+
+            // Verificar si hay contenido en el canvas de manera más precisa
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Verificar si hay píxeles no blancos (que indican que se dibujó algo)
+            let hasSignature = false;
+            for (let i = 0; i < data.length; i += 4) {
+                // Si hay píxeles que no son blancos (255, 255, 255)
+                if (data[i] !== 255 || data[i + 1] !== 255 || data[i + 2] !== 255) {
+                    hasSignature = true;
+                    break;
+                }
+            }
+
+            if (!hasSignature) {
+                showAlert('Por favor realiza una firma antes de guardar', 'error');
+                return;
+            }
+
+            const signatureData = canvas.toDataURL('image/png');
+            
+            showLoading(true);
+            try {
+                const endpoint = type === 'transportista' ? 
+                    `/api/firmas/transportista/${asignacionId}` : 
+                    `/api/firmas/envio/${asignacionId}`;
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${document.getElementById('token').value}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imagenFirma: signatureData
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert(`Firma del ${type} guardada correctamente`, 'success');
+                    showSignaturePreview(type, signatureData);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error al guardar la firma');
+                }
+            } catch (error) {
+                showAlert('Error al guardar la firma: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Mostrar preview de la firma
+        function showSignaturePreview(type, signatureData) {
+            const preview = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            preview.innerHTML = `
+                <h4>Firma guardada:</h4>
+                <img src="${signatureData}" alt="Firma ${type}">
+            `;
+        }
+
+        // Obtener firma del transportista
+        async function getTransportistaSignature() {
+            const asignacionId = document.getElementById('asignacionVerificar').value;
+            if (!asignacionId) {
+                showAlert('Por favor ingresa el ID de asignación', 'error');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch(`/api/firmas/transportista/${asignacionId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${document.getElementById('token').value}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showSignatureDisplay('Transportista', data.imagenFirma, data.fechaFirma);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error al obtener la firma');
+                }
+            } catch (error) {
+                showAlert('Error al obtener la firma: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Obtener firma del cliente
+        async function getClienteSignature() {
+            const asignacionId = document.getElementById('asignacionVerificar').value;
+            if (!asignacionId) {
+                showAlert('Por favor ingresa el ID de asignación', 'error');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch(`/api/firmas/envio/${asignacionId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${document.getElementById('token').value}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showSignatureDisplay('Cliente', data.imagenFirma, data.fechaFirma);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error al obtener la firma');
+                }
+            } catch (error) {
+                showAlert('Error al obtener la firma: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Mostrar firma en el display
+        function showSignatureDisplay(type, signatureData, fecha) {
+            const display = document.getElementById('signatureDisplay');
+            display.innerHTML = `
+                <div class="alert alert-info">
+                    <h4>Firma del ${type}</h4>
+                    <p><strong>Fecha:</strong> ${new Date(fecha).toLocaleString()}</p>
+                    <img src="${signatureData}" alt="Firma ${type}" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px;">
+                </div>
+            `;
+        }
+
+        // Mostrar loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alertClass = type === 'error' ? 'alert-error' : 
+                              type === 'success' ? 'alert-success' : 'alert-info';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${alertClass}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Remover después de 5 segundos
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

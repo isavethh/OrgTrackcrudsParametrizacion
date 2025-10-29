@@ -32,8 +32,22 @@ class JwtAuth
             return response()->json(['error' => 'Token inválido'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $request->attributes->set('usuario_id', (int) ($payload->sub ?? 0));
-        $request->attributes->set('usuario_rol', (string) ($payload->rol ?? ''));
+        $usuario_id = (int) ($payload->sub ?? 0);
+        $usuario_rol = (string) ($payload->rol ?? '');
+        
+        // Obtener datos completos del usuario
+        $usuario = \App\Models\Usuario::find($usuario_id);
+        if (!$usuario) {
+            return response()->json(['error' => 'Usuario no encontrado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $request->attributes->set('usuario', [
+            'id' => $usuario->id,
+            'nombre' => $usuario->nombre,
+            'apellido' => $usuario->apellido,
+            'correo' => $usuario->correo,
+            'rol' => $usuario->rol
+        ]);
 
         return $next($request);
     }
