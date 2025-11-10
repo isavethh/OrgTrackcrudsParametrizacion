@@ -88,3 +88,13 @@ Route::get('/documentos/{id}/particiones', function ($id) {
 Route::get('/documentos/{id}/ver', function ($id) {
     return view('documentos.ver', ['id' => $id]);
 })->name('documentos.ver');
+
+// Rutas de Transportistas (CRUD hardcodeado - vistas placeholder)
+Route::get('/transportistas', function () {
+    return view('transportistas.index');
+})->name('transportistas.index');
+
+// Rutas de Vehículos (CRUD hardcodeado - vistas placeholder)
+Route::get('/vehiculos', function () {
+    return view('vehiculos.index');
+})->name('vehiculos.index');

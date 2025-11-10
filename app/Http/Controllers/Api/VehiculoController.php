@@ -35,10 +35,14 @@ class VehiculoController extends Controller
             ])],
             'placa' => ['required', 'string', 'max:20', 'unique:vehiculos,placa'],
             'capacidad' => ['required', 'numeric'],
-            'estado' => ['required', 'string', Rule::in(['Mantenimiento','No Disponible','En ruta','Disponible'])],
         ]);
 
-        $vehiculo = Vehiculo::create($validated);
+        $vehiculo = Vehiculo::create([
+            'tipo' => $validated['tipo'],
+            'placa' => $validated['placa'],
+            'capacidad' => $validated['capacidad'],
+            'estado' => 'Disponible',
+        ]);
         return response()->json(['mensaje' => 'Vehículo creado correctamente', 'data' => $vehiculo], Response::HTTP_CREATED);
     }
 
@@ -49,6 +53,10 @@ class VehiculoController extends Controller
             return response()->json(['error' => 'Vehículo no encontrado'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($vehiculo->estado === 'En ruta') {
+            return response()->json(['error' => 'No se puede modificar un vehículo que está en ruta'], Response::HTTP_BAD_REQUEST);
+        }
+
         $validated = $request->validate([
             'tipo' => ['sometimes', 'required', 'string', 'max:50', Rule::in([
                 'Pesado - Ventilado','Pesado - Aislado','Pesado - Refrigerado',
@@ -57,7 +65,6 @@ class VehiculoController extends Controller
             ])],
             'placa' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('vehiculos', 'placa')->ignore($vehiculo->id)],
             'capacidad' => ['sometimes', 'required', 'numeric'],
-            'estado' => ['sometimes', 'required', 'string', Rule::in(['Mantenimiento','No Disponible','En ruta','Disponible'])],
         ]);
 
         $vehiculo->fill($validated);
@@ -71,6 +78,9 @@ class VehiculoController extends Controller
         $vehiculo = Vehiculo::find($id);
         if (!$vehiculo) {
             return response()->json(['error' => 'Vehículo no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+        if ($vehiculo->estado === 'En ruta') {
+            return response()->json(['error' => 'No se puede eliminar un vehículo que está en ruta'], Response::HTTP_BAD_REQUEST);
         }
         $vehiculo->delete();
         return response()->json(['mensaje' => 'Vehículo eliminado correctamente']);

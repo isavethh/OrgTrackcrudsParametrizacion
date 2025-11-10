@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class TransportistaController extends Controller
 {
@@ -80,20 +81,33 @@ class TransportistaController extends Controller
     public function crear(Request $request): JsonResponse
     {
         try {
-            // Validar los datos de entrada
             $request->validate([
                 'id_usuario' => 'required|integer|exists:usuarios,id',
                 'ci' => 'required|string|max:20|unique:transportistas,ci',
-                'telefono' => 'nullable|string|max:20',
-                'estado' => 'required|string|in:Inactivo,No Disponible,En ruta,Disponible'
+                'telefono' => 'required|string|max:20',
             ]);
 
+            // Verificar que el usuario no tenga ya un transportista asociado
+            $usuario = Usuario::find($request->id_usuario);
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuario no encontrado'], 404);
+            }
+            if (Transportista::where('id_usuario', $usuario->id)->exists()) {
+                return response()->json(['error' => 'El usuario ya es transportista'], 409);
+            }
+
             $transportista = Transportista::create([
-                'id_usuario' => $request->id_usuario,
+                'id_usuario' => $usuario->id,
                 'ci' => $request->ci,
                 'telefono' => $request->telefono,
-                'estado' => $request->estado
+                'estado' => 'Disponible',
             ]);
+
+            // Actualizar rol del usuario (si no lo era ya)
+            if ($usuario->rol !== 'transportista') {
+                $usuario->rol = 'transportista';
+                $usuario->save();
+            }
 
             return response()->json([
                 'mensaje' => 'Transportista creado correctamente',
@@ -114,22 +128,24 @@ class TransportistaController extends Controller
     {
         try {
             // Validar los datos de entrada
-            $request->validate([
-                'ci' => 'required|string|max:20|unique:transportistas,ci,' . $id,
-                'telefono' => 'nullable|string|max:20',
-                'estado' => 'required|string|in:Inactivo,No Disponible,En ruta,Disponible'
-            ]);
-
             $transportista = Transportista::find($id);
 
             if (!$transportista) {
                 return response()->json(['error' => 'Transportista no encontrado'], 404);
             }
 
+            if ($transportista->estado === 'En ruta') {
+                return response()->json(['error' => 'No se puede editar un transportista que está en ruta'], 400);
+            }
+
+            $request->validate([
+                'ci' => 'required|string|max:20|unique:transportistas,ci,' . $id,
+                'telefono' => 'required|string|max:20',
+            ]);
+
             $transportista->update([
                 'ci' => $request->ci,
                 'telefono' => $request->telefono,
-                'estado' => $request->estado
             ]);
 
             return response()->json(['mensaje' => 'Transportista actualizado correctamente']);
@@ -153,6 +169,10 @@ class TransportistaController extends Controller
                 return response()->json(['error' => 'Transportista no encontrado'], 404);
             }
 
+            if ($transportista->estado === 'En ruta') {
+                return response()->json(['error' => 'No se puede eliminar un transportista que está en ruta'], 400);
+            }
+
             $id_usuario = $transportista->id_usuario;
 
             // Usar transacción para asegurar consistencia
@@ -160,8 +180,8 @@ class TransportistaController extends Controller
                 // Eliminar transportista
                 $transportista->delete();
                 
-                // Eliminar usuario asociado
-                Usuario::where('id', $id_usuario)->delete();
+                // Revertir rol del usuario a cliente
+                Usuario::where('id', $id_usuario)->update(['rol' => 'cliente']);
             });
 
             return response()->json(['mensaje' => 'Transportista y usuario eliminados correctamente']);
@@ -177,28 +197,49 @@ class TransportistaController extends Controller
     public function crearTransportistaCompleto(Request $request): JsonResponse
     {
         try {
-            // Validar los datos de entrada
             $request->validate([
-                'id_usuario' => 'required|integer|exists:usuarios,id',
                 'ci' => 'required|string|max:20|unique:transportistas,ci',
-                'telefono' => 'required|string|max:20'
+                'telefono' => 'required|string|max:20',
+                'id_usuario' => 'nullable|integer|exists:usuarios,id',
+                'usuario.nombre' => 'required_without:id_usuario|string|max:100',
+                'usuario.apellido' => 'required_without:id_usuario|string|max:100',
+                'usuario.correo' => 'required_without:id_usuario|email|max:100|unique:usuarios,correo',
+                'usuario.contrasena' => 'required_without:id_usuario|string|min:6',
             ]);
 
-            // Usar transacción para asegurar consistencia
             $result = DB::transaction(function () use ($request) {
-                // 1. Insertar en la tabla Transportistas
-                $transportista = Transportista::create([
-                    'id_usuario' => $request->id_usuario,
+                $usuario = null;
+
+                if ($request->filled('id_usuario')) {
+                    $usuario = Usuario::lockForUpdate()->find($request->id_usuario);
+                    if (!$usuario) {
+                        throw ValidationException::withMessages(['id_usuario' => 'Usuario no encontrado']);
+                    }
+                    if (Transportista::where('id_usuario', $usuario->id)->exists()) {
+                        throw ValidationException::withMessages(['id_usuario' => 'El usuario ya es transportista']);
+                    }
+                } else {
+                    $usuarioData = $request->input('usuario');
+                    $usuario = Usuario::create([
+                        'nombre' => $usuarioData['nombre'],
+                        'apellido' => $usuarioData['apellido'],
+                        'correo' => $usuarioData['correo'],
+                        'contrasena' => Hash::make($usuarioData['contrasena']),
+                        'rol' => 'transportista',
+                    ]);
+                }
+
+                if ($usuario->rol !== 'transportista') {
+                    $usuario->rol = 'transportista';
+                    $usuario->save();
+                }
+
+                return Transportista::create([
+                    'id_usuario' => $usuario->id,
                     'ci' => $request->ci,
                     'telefono' => $request->telefono,
-                    'estado' => 'Disponible' // Por defecto
+                    'estado' => 'Disponible',
                 ]);
-
-                // 2. Actualizar rol del usuario a 'transportista'
-                Usuario::where('id', $request->id_usuario)
-                    ->update(['rol' => 'transportista']);
-
-                return $transportista;
             });
 
             return response()->json([

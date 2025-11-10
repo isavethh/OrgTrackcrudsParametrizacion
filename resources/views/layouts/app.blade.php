@@ -102,6 +102,18 @@
                             <p>Documentos</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{{ route('transportistas.index') }}" class="nav-link {{ request()->routeIs('transportistas.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-user-friends"></i>
+                            <p>Transportistas</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('vehiculos.index') }}" class="nav-link {{ request()->routeIs('vehiculos.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-truck"></i>
+                            <p>Vehículos</p>
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <!-- /.sidebar-menu -->
