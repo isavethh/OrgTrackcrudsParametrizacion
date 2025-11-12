@@ -9,11 +9,20 @@ class TipoTransporte extends Model
 {
     use HasFactory;
 
-    protected $table = 'tipotransporte';
+    protected $table = 'tipo_transporte';
     public $timestamps = false;
 
-    protected $fillable = [
-        'nombre',
-        'descripcion'
-    ];
+    protected $fillable = ['nombre'];
+
+    // Relación con Vehículos
+    public function vehiculos()
+    {
+        return $this->hasMany(Vehiculo::class, 'tipo_transporte_id');
+    }
+
+    // Relación con Asignaciones
+    public function asignaciones()
+    {
+        return $this->hasMany(AsignacionMultiple::class, 'tipo_transporte_id');
+    }
 }

@@ -3,28 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehiculo;
+use App\Models\Admin;
+use App\Models\TipoTransporte;
+use App\Models\TamanoTransporte;
 use Illuminate\Http\Request;
 
 class VehiculoController extends Controller
 {
     public function index()
     {
-        $vehiculos = Vehiculo::all();
+        $vehiculos = Vehiculo::with(['admin.usuario', 'tipoTransporte', 'tamanoTransporte'])->get();
         return view('vehiculos.index', compact('vehiculos'));
     }
 
     public function create()
     {
-        return view('vehiculos.create');
+        $admins = Admin::with('usuario')->get();
+        $tiposTransporte = TipoTransporte::all();
+        $tamanosTransporte = TamanoTransporte::all();
+        
+        return view('vehiculos.create', compact('admins', 'tiposTransporte', 'tamanosTransporte'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tipo' => 'required|string|max:50',
-            'placa' => 'required|string|max:20|unique:vehiculos,placa',
-            'capacidad' => 'required|numeric|min:0',
-            'estado' => 'required|in:Mantenimiento,No Disponible,En ruta,Disponible',
+            'admin_id' => 'required|exists:admin,id',
+            'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
+            'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
+            'placa' => 'required|string|max:20|unique:vehiculo,placa',
+            'marca' => 'nullable|string|max:50',
+            'modelo' => 'nullable|string|max:50',
+            'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 
         Vehiculo::create($validated);
@@ -35,16 +45,23 @@ class VehiculoController extends Controller
 
     public function edit(Vehiculo $vehiculo)
     {
-        return view('vehiculos.edit', compact('vehiculo'));
+        $admins = Admin::with('usuario')->get();
+        $tiposTransporte = TipoTransporte::all();
+        $tamanosTransporte = TamanoTransporte::all();
+        
+        return view('vehiculos.edit', compact('vehiculo', 'admins', 'tiposTransporte', 'tamanosTransporte'));
     }
 
     public function update(Request $request, Vehiculo $vehiculo)
     {
         $validated = $request->validate([
-            'tipo' => 'required|string|max:50',
-            'placa' => 'required|string|max:20|unique:vehiculos,placa,' . $vehiculo->id,
-            'capacidad' => 'required|numeric|min:0',
-            'estado' => 'required|in:Mantenimiento,No Disponible,En ruta,Disponible',
+            'admin_id' => 'required|exists:admin,id',
+            'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
+            'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
+            'placa' => 'required|string|max:20|unique:vehiculo,placa,' . $vehiculo->id,
+            'marca' => 'nullable|string|max:50',
+            'modelo' => 'nullable|string|max:50',
+            'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 
         $vehiculo->update($validated);

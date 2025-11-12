@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Tipos de Transporte')
+@section('title', 'Tamaños de Transporte')
 
 @section('content_header')
-    <h1>Gestión de Tipos de Transporte</h1>
+    <h1>Tamaños de Transporte</h1>
 @stop
 
 @section('content')
@@ -16,15 +16,15 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Lista de Tipos de Transporte</h3>
+            <h3 class="card-title">Lista de Tamaños de Transporte</h3>
             <div class="card-tools">
-                <a href="{{ route('tipo-transportes.create') }}" class="btn btn-success btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Tipo
+                <a href="{{ route('tamanos-transporte.create') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus"></i> Nuevo Tamaño
                 </a>
             </div>
         </div>
         <div class="card-body">
-            <table class="table table-bordered table-striped" id="tipos-table">
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -33,15 +33,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($tipoTransportes as $tipo)
+                    @foreach($tamanos as $tamano)
                     <tr>
-                        <td>{{ $tipo->id }}</td>
-                        <td>{{ $tipo->nombre }}</td>
+                        <td>{{ $tamano->id }}</td>
+                        <td>{{ $tamano->nombre }}</td>
                         <td>
-                            <a href="{{ route('tipo-transportes.edit', $tipo->id) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ route('tamanos-transporte.edit', $tamano->id) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('tipo-transportes.destroy', $tipo->id) }}" method="POST" style="display: inline-block;">
+                            <form action="{{ route('tamanos-transporte.destroy', $tamano->id) }}" method="POST" style="display: inline-block;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro?')">
@@ -55,22 +55,4 @@
             </table>
         </div>
     </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-@stop
-
-@section('js')
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#tipos-table').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
-                }
-            });
-        });
-    </script>
 @stop

@@ -9,7 +9,7 @@ class Usuario extends Model
 {
     use HasFactory;
 
-    protected $table = 'usuarios';
+    protected $table = 'usuario';
     public $timestamps = false;
 
     protected $fillable = [
@@ -17,7 +17,6 @@ class Usuario extends Model
         'apellido',
         'correo',
         'contrasena',
-        'rol',
         'fecha_registro'
     ];
 
@@ -29,9 +28,30 @@ class Usuario extends Model
         'fecha_registro' => 'datetime',
     ];
 
+    // Relación con Admin
+    public function admin()
+    {
+        return $this->hasOne(Admin::class, 'usuario_id');
+    }
+
+    // Relación con Cliente
+    public function cliente()
+    {
+        return $this->hasOne(Cliente::class, 'usuario_id');
+    }
+
     // Relación con Transportista
     public function transportista()
     {
-        return $this->hasOne(Transportista::class, 'id_usuario');
+        return $this->hasOne(Transportista::class, 'usuario_id');
+    }
+
+    // Método helper para determinar el rol
+    public function getRolAttribute()
+    {
+        if ($this->admin) return 'admin';
+        if ($this->cliente) return 'cliente';
+        if ($this->transportista) return 'transportista';
+        return null;
     }
 }

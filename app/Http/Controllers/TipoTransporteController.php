@@ -20,15 +20,14 @@ class TipoTransporteController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:50',
-            'descripcion' => 'nullable|string|max:255',
+        $request->validate([
+            'nombre' => 'required|string|max:50|unique:tipo_transporte,nombre',
         ]);
 
-        TipoTransporte::create($validated);
+        TipoTransporte::create($request->all());
 
         return redirect()->route('tipo-transportes.index')
-            ->with('success', 'Tipo de Transporte creado exitosamente.');
+            ->with('success', 'Tipo de transporte creado exitosamente.');
     }
 
     public function edit(TipoTransporte $tipoTransporte)
@@ -38,15 +37,14 @@ class TipoTransporteController extends Controller
 
     public function update(Request $request, TipoTransporte $tipoTransporte)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:50',
-            'descripcion' => 'nullable|string|max:255',
+        $request->validate([
+            'nombre' => 'required|string|max:50|unique:tipo_transporte,nombre,' . $tipoTransporte->id,
         ]);
 
-        $tipoTransporte->update($validated);
+        $tipoTransporte->update($request->all());
 
         return redirect()->route('tipo-transportes.index')
-            ->with('success', 'Tipo de Transporte actualizado exitosamente.');
+            ->with('success', 'Tipo de transporte actualizado exitosamente.');
     }
 
     public function destroy(TipoTransporte $tipoTransporte)

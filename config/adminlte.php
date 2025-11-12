@@ -313,14 +313,62 @@ return [
             'active' => ['/', 'dashboard'],
         ],
         
-        ['header' => 'GESTIÓN DE DATOS'],
+        ['header' => 'GESTIÓN DE USUARIOS'],
         
         [
             'text' => 'Usuarios',
-            'url' => 'usuarios',
             'icon' => 'fas fa-fw fa-users',
-            'active' => ['usuarios', 'usuarios/*'],
+            'submenu' => [
+                [
+                    'text' => 'Administradores',
+                    'url' => 'admins',
+                    'icon' => 'fas fa-fw fa-user-shield',
+                    'active' => ['admins', 'admins/*'],
+                ],
+                [
+                    'text' => 'Clientes',
+                    'url' => 'clientes',
+                    'icon' => 'fas fa-fw fa-user',
+                    'active' => ['clientes', 'clientes/*'],
+                ],
+                [
+                    'text' => 'Transportistas',
+                    'url' => 'transportistas',
+                    'icon' => 'fas fa-fw fa-user-tie',
+                    'active' => ['transportistas', 'transportistas/*'],
+                ],
+            ],
         ],
+        
+        ['header' => 'CATÁLOGOS'],
+        
+        [
+            'text' => 'Unidades de Medida',
+            'url' => 'unidades-medida',
+            'icon' => 'fas fa-fw fa-weight',
+            'active' => ['unidades-medida', 'unidades-medida/*'],
+        ],
+        [
+            'text' => 'Tipos de Empaque',
+            'url' => 'tipos-empaque',
+            'icon' => 'fas fa-fw fa-box',
+            'active' => ['tipos-empaque', 'tipos-empaque/*'],
+        ],
+        [
+            'text' => 'Tipos de Transporte',
+            'url' => 'tipo-transportes',
+            'icon' => 'fas fa-fw fa-truck-moving',
+            'active' => ['tipo-transportes', 'tipo-transportes/*'],
+        ],
+        [
+            'text' => 'Tamaños de Transporte',
+            'url' => 'tamanos-transporte',
+            'icon' => 'fas fa-fw fa-ruler-combined',
+            'active' => ['tamanos-transporte', 'tamanos-transporte/*'],
+        ],
+        
+        ['header' => 'GESTIÓN OPERATIVA'],
+        
         [
             'text' => 'Vehículos',
             'url' => 'vehiculos',
@@ -328,39 +376,16 @@ return [
             'active' => ['vehiculos', 'vehiculos/*'],
         ],
         [
-            'text' => 'Transportistas',
-            'url' => 'transportistas',
-            'icon' => 'fas fa-fw fa-user-tie',
-            'active' => ['transportistas', 'transportistas/*'],
+            'text' => 'Envíos',
+            'url' => 'envios',
+            'icon' => 'fas fa-fw fa-shipping-fast',
+            'active' => ['envios', 'envios/*'],
         ],
         [
-            'text' => 'Tipos de Transporte',
-            'url' => 'tipo-transportes',
-            'icon' => 'fas fa-fw fa-list',
-            'active' => ['tipo-transportes', 'tipo-transportes/*'],
-        ],
-        [
-            'text' => 'Cargas',
-            'url' => 'cargas',
-            'icon' => 'fas fa-fw fa-box',
-            'active' => ['cargas', 'cargas/*'],
-        ],
-        
-        ['header' => 'INFORMACIÓN'],
-        [
-            'text' => 'important',
-            'icon_color' => 'red',
-            'url' => '#',
-        ],
-        [
-            'text' => 'warning',
-            'icon_color' => 'yellow',
-            'url' => '#',
-        ],
-        [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
+            'text' => 'Direcciones',
+            'url' => 'direcciones',
+            'icon' => 'fas fa-fw fa-map-marked-alt',
+            'active' => ['direcciones', 'direcciones/*'],
         ],
     ],
 

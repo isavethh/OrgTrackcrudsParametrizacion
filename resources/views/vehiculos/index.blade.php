@@ -28,9 +28,12 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Tipo</th>
+                        <th>Admin</th>
+                        <th>Tipo Transporte</th>
+                        <th>Tamaño</th>
                         <th>Placa</th>
-                        <th>Capacidad (Ton)</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
                         <th>Estado</th>
                         <th>Fecha Registro</th>
                         <th>Acciones</th>
@@ -40,9 +43,12 @@
                     @foreach($vehiculos as $vehiculo)
                     <tr>
                         <td>{{ $vehiculo->id }}</td>
-                        <td>{{ $vehiculo->tipo }}</td>
+                        <td>{{ $vehiculo->admin ? $vehiculo->admin->usuario->nombre : '-' }}</td>
+                        <td>{{ $vehiculo->tipoTransporte->nombre }}</td>
+                        <td>{{ $vehiculo->tamanoTransporte->nombre }}</td>
                         <td><strong>{{ $vehiculo->placa }}</strong></td>
-                        <td>{{ number_format($vehiculo->capacidad, 2) }}</td>
+                        <td>{{ $vehiculo->marca ?? '-' }}</td>
+                        <td>{{ $vehiculo->modelo ?? '-' }}</td>
                         <td>
                             <span class="badge badge-{{ $vehiculo->estado == 'Disponible' ? 'success' : ($vehiculo->estado == 'En ruta' ? 'warning' : 'secondary') }}">
                                 {{ $vehiculo->estado }}

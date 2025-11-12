@@ -9,40 +9,44 @@ class Vehiculo extends Model
 {
     use HasFactory;
 
-    protected $table = 'vehiculos';
+    protected $table = 'vehiculo';
     public $timestamps = false;
 
     protected $fillable = [
-        'tipo',
+        'admin_id',
+        'tipo_transporte_id',
+        'tamano_transporte_id',
         'placa',
-        'capacidad',
-        'estado',
-        'fecha_registro'
+        'marca',
+        'modelo',
+        'estado'
     ];
 
     protected $casts = [
-        'capacidad' => 'decimal:2',
         'fecha_registro' => 'datetime',
     ];
 
-    // Constantes para tipos de vehículo
-    public const TIPOS = [
-        'Pesado - Ventilado',
-        'Pesado - Aislado',
-        'Pesado - Refrigerado',
-        'Mediano - Ventilado',
-        'Mediano - Aislado',
-        'Mediano - Refrigerado',
-        'Ligero - Ventilado',
-        'Ligero - Aislado',
-        'Ligero - Refrigerado',
-    ];
+    // Relación con Admin
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class);
+    }
 
-    // Constantes para estados
-    public const ESTADOS = [
-        'Disponible',
-        'En ruta',
-        'No Disponible',
-        'Mantenimiento',
-    ];
+    // Relación con Tipo de Transporte
+    public function tipoTransporte()
+    {
+        return $this->belongsTo(TipoTransporte::class, 'tipo_transporte_id');
+    }
+
+    // Relación con Tamaño de Transporte
+    public function tamanoTransporte()
+    {
+        return $this->belongsTo(TamanoTransporte::class, 'tamano_transporte_id');
+    }
+
+    // Relación con Peso Soportado
+    public function pesoSoportado()
+    {
+        return $this->hasOne(PesoSoportado::class);
+    }
 }

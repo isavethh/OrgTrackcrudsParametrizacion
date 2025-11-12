@@ -9,14 +9,15 @@ class Transportista extends Model
 {
     use HasFactory;
 
-    protected $table = 'transportistas';
+    protected $table = 'transportista';
     public $timestamps = false;
 
     protected $fillable = [
-        'id_usuario',
+        'usuario_id',
         'ci',
+        'placa',
         'telefono',
-        'estado',
+        'estado_id',
         'fecha_registro'
     ];
 
@@ -24,17 +25,21 @@ class Transportista extends Model
         'fecha_registro' => 'datetime',
     ];
 
-    // Constantes para estados
-    public const ESTADOS = [
-        'Disponible',
-        'En ruta',
-        'No Disponible',
-        'Inactivo',
-    ];
-
     // Relación con Usuario
     public function usuario()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario');
+        return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    // Relación con Estado
+    public function estado()
+    {
+        return $this->belongsTo(EstadoTransportista::class, 'estado_id');
+    }
+
+    // Relación con Asignaciones
+    public function asignaciones()
+    {
+        return $this->hasMany(AsignacionMultiple::class, 'transportista_id');
     }
 }
