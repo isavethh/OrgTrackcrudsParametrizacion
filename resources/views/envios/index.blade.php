@@ -32,10 +32,7 @@
                         <th>Estado</th>
                         <th>Tipo Empaque</th>
                         <th>Peso</th>
-                        <th>Volumen</th>
                         <th>Rutas</th>
-                        <th>Fecha Envío</th>
-                        <th>Entrega Estimada</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -62,12 +59,9 @@
                                 -
                             @endif
                         </td>
-                        <td>{{ $envio->volumen ? number_format($envio->volumen, 2) . ' m³' : '-' }}</td>
                         <td>
                             <span class="badge badge-secondary">{{ $envio->direcciones->count() }} rutas</span>
                         </td>
-                        <td>{{ $envio->fecha_envio ? $envio->fecha_envio->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $envio->fecha_entrega_estimada ? $envio->fecha_entrega_estimada->format('d/m/Y H:i') : '-' }}</td>
                         <td>
                             <a href="{{ route('envios.show', $envio) }}" class="btn btn-info btn-sm" title="Ver">
                                 <i class="fas fa-eye"></i>

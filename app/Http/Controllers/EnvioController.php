@@ -13,7 +13,7 @@ class EnvioController extends Controller
     public function index()
     {
         $envios = Envio::with(['admin.usuario', 'tipoEmpaque', 'unidadMedida', 'direcciones'])
-            ->orderBy('fecha_envio', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
         return view('envios.index', compact('envios'));
     }
@@ -34,10 +34,7 @@ class EnvioController extends Controller
             'tipo_empaque_id' => 'nullable|exists:tipo_empaque,id',
             'unidad_medida_id' => 'nullable|exists:unidad_medida,id',
             'estado' => 'required|in:Pendiente,Asignado,En curso,Entregado,Parcialmente entregado',
-            'volumen' => 'nullable|numeric|min:0',
             'peso' => 'nullable|numeric|min:0',
-            'fecha_envio' => 'required|date',
-            'fecha_entrega_estimada' => 'nullable|date|after_or_equal:fecha_envio',
         ]);
 
         Envio::create($validated);
@@ -68,10 +65,7 @@ class EnvioController extends Controller
             'tipo_empaque_id' => 'nullable|exists:tipo_empaque,id',
             'unidad_medida_id' => 'nullable|exists:unidad_medida,id',
             'estado' => 'required|in:Pendiente,Asignado,En curso,Entregado,Parcialmente entregado',
-            'volumen' => 'nullable|numeric|min:0',
             'peso' => 'nullable|numeric|min:0',
-            'fecha_envio' => 'required|date',
-            'fecha_entrega_estimada' => 'nullable|date|after_or_equal:fecha_envio',
         ]);
 
         $envio->update($validated);

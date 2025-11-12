@@ -30,6 +30,7 @@
                         <th>ID</th>
                         <th>Usuario</th>
                         <th>CI</th>
+                        <th>Placa</th>
                         <th>Teléfono</th>
                         <th>Estado</th>
                         <th>Fecha Registro</th>
@@ -48,11 +49,20 @@
                             @endif
                         </td>
                         <td><strong>{{ $transportista->ci }}</strong></td>
+                        <td><strong>{{ $transportista->placa ?? '-' }}</strong></td>
                         <td>{{ $transportista->telefono ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-{{ $transportista->estado == 'Disponible' ? 'success' : ($transportista->estado == 'En ruta' ? 'warning' : 'secondary') }}">
-                                {{ $transportista->estado }}
-                            </span>
+                            @if($transportista->estado)
+                                @php
+                                    $estadoNombre = $transportista->estado->nombre;
+                                    $badgeClass = $estadoNombre == 'Disponible' ? 'success' : ($estadoNombre == 'En ruta' ? 'warning' : 'secondary');
+                                @endphp
+                                <span class="badge badge-{{ $badgeClass }}">
+                                    {{ $estadoNombre }}
+                                </span>
+                            @else
+                                <span class="badge badge-secondary">Sin estado</span>
+                            @endif
                         </td>
                         <td>{{ $transportista->fecha_registro ? $transportista->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
                         <td>

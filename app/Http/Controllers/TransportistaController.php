@@ -4,31 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Models\Transportista;
 use App\Models\Usuario;
+use App\Models\EstadoTransportista;
 use Illuminate\Http\Request;
 
 class TransportistaController extends Controller
 {
     public function index()
     {
-        $transportistas = Transportista::with('usuario')->get();
+        $transportistas = Transportista::with('usuario', 'estado')->get();
         return view('transportistas.index', compact('transportistas'));
     }
 
     public function create()
     {
         $usuarios = Usuario::whereDoesntHave('transportista')
-            ->where('rol', 'transportista')
+            ->whereDoesntHave('admin')
+            ->whereDoesntHave('cliente')
             ->get();
-        return view('transportistas.create', compact('usuarios'));
+        $estados = EstadoTransportista::all();
+        return view('transportistas.create', compact('usuarios', 'estados'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_usuario' => 'nullable|exists:usuarios,id|unique:transportistas,id_usuario',
-            'ci' => 'required|string|max:20|unique:transportistas,ci',
+            'usuario_id' => 'required|exists:usuario,id|unique:transportista,usuario_id',
+            'ci' => 'required|string|max:20|unique:transportista,ci',
+            'placa' => 'required|string|max:20|unique:transportista,placa',
             'telefono' => 'nullable|string|max:20',
-            'estado' => 'required|in:Inactivo,No Disponible,En ruta,Disponible',
+            'estado_id' => 'required|exists:estado_transportista,id',
         ]);
 
         Transportista::create($validated);
@@ -39,20 +43,25 @@ class TransportistaController extends Controller
 
     public function edit(Transportista $transportista)
     {
-        $usuarios = Usuario::whereDoesntHave('transportista')
-            ->orWhere('id', $transportista->id_usuario)
-            ->where('rol', 'transportista')
+        $usuarios = Usuario::where(function($query) use ($transportista) {
+                $query->whereDoesntHave('transportista')
+                    ->orWhere('id', $transportista->usuario_id);
+            })
+            ->whereDoesntHave('admin')
+            ->whereDoesntHave('cliente')
             ->get();
-        return view('transportistas.edit', compact('transportista', 'usuarios'));
+        $estados = EstadoTransportista::all();
+        return view('transportistas.edit', compact('transportista', 'usuarios', 'estados'));
     }
 
     public function update(Request $request, Transportista $transportista)
     {
         $validated = $request->validate([
-            'id_usuario' => 'nullable|exists:usuarios,id|unique:transportistas,id_usuario,' . $transportista->id,
-            'ci' => 'required|string|max:20|unique:transportistas,ci,' . $transportista->id,
+            'usuario_id' => 'required|exists:usuario,id|unique:transportista,usuario_id,' . $transportista->id,
+            'ci' => 'required|string|max:20|unique:transportista,ci,' . $transportista->id,
+            'placa' => 'required|string|max:20|unique:transportista,placa,' . $transportista->id,
             'telefono' => 'nullable|string|max:20',
-            'estado' => 'required|in:Inactivo,No Disponible,En ruta,Disponible',
+            'estado_id' => 'required|exists:estado_transportista,id',
         ]);
 
         $transportista->update($validated);

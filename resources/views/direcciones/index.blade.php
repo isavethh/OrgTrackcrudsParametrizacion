@@ -28,10 +28,9 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Origen</th>
-                        <th>Destino</th>
-                        <th>Coordenadas</th>
+                        <th>Envío</th>
+                        <th>Nombre Ruta</th>
+                        <th>Fecha Creación</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -39,18 +38,21 @@
                     @foreach($direcciones as $direccion)
                     <tr>
                         <td>{{ $direccion->id }}</td>
-                        <td>{{ $direccion->usuario->nombre }} {{ $direccion->usuario->apellido }}</td>
-                        <td><strong>{{ $direccion->nombreorigen }}</strong></td>
-                        <td><strong>{{ $direccion->nombredestino }}</strong></td>
                         <td>
-                            <small>
-                                @if($direccion->origen_lat && $direccion->origen_lng)
-                                    Origen: {{ number_format($direccion->origen_lat, 6) }}, {{ number_format($direccion->origen_lng, 6) }}<br>
-                                @endif
-                                @if($direccion->destino_lat && $direccion->destino_lng)
-                                    Destino: {{ number_format($direccion->destino_lat, 6) }}, {{ number_format($direccion->destino_lng, 6) }}
-                                @endif
-                            </small>
+                            @if($direccion->envio)
+                                Envío #{{ $direccion->envio->id }}<br>
+                                <small class="text-muted">{{ $direccion->envio->estado }}</small>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td><strong>{{ $direccion->nombre_ruta }}</strong></td>
+                        <td>
+                            @if($direccion->fecha_creacion)
+                                {{ $direccion->fecha_creacion->format('d/m/Y H:i') }}
+                            @else
+                                -
+                            @endif
                         </td>
                         <td>
                             <a href="{{ route('direcciones.edit', $direccion) }}" class="btn btn-primary btn-sm">

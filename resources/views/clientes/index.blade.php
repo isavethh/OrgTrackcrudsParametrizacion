@@ -8,7 +8,16 @@
 
 @section('content')
     <div class="card">
+        <div class="card-header">
+            <a href="{{ route('clientes.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Cliente
+            </a>
+        </div>
         <div class="card-body">
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
             <table class="table table-bordered table-striped" id="clientesTable">
                 <thead>
                     <tr>
@@ -18,6 +27,7 @@
                         <th>Teléfono</th>
                         <th>Dirección Entrega</th>
                         <th>Fecha Registro</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,6 +39,21 @@
                         <td>{{ $cliente->telefono ?? '-' }}</td>
                         <td>{{ $cliente->direccion_entrega ?? '-' }}</td>
                         <td>{{ $cliente->usuario->fecha_registro ? $cliente->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
+                        <td>
+                            <a href="{{ route('clientes.show', $cliente->id) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('clientes.destroy', $cliente->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

@@ -85,50 +85,12 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="peso">Peso</label>
-                            <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso', $envio->peso) }}">
-                            @error('peso')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="volumen">Volumen (m³)</label>
-                            <input type="number" step="0.01" name="volumen" id="volumen" class="form-control @error('volumen') is-invalid @enderror" value="{{ old('volumen', $envio->volumen) }}">
-                            @error('volumen')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="fecha_envio">Fecha de Envío <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="fecha_envio" id="fecha_envio" class="form-control @error('fecha_envio') is-invalid @enderror" 
-                                value="{{ old('fecha_envio', $envio->fecha_envio ? $envio->fecha_envio->format('Y-m-d\TH:i') : '') }}" required>
-                            @error('fecha_envio')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="fecha_entrega_estimada">Fecha de Entrega Estimada</label>
-                            <input type="datetime-local" name="fecha_entrega_estimada" id="fecha_entrega_estimada" class="form-control @error('fecha_entrega_estimada') is-invalid @enderror" 
-                                value="{{ old('fecha_entrega_estimada', $envio->fecha_entrega_estimada ? $envio->fecha_entrega_estimada->format('Y-m-d\TH:i') : '') }}">
-                            @error('fecha_entrega_estimada')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label for="peso">Peso</label>
+                    <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso', $envio->peso) }}">
+                    @error('peso')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="alert alert-info">

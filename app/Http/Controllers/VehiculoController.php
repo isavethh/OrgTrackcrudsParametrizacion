@@ -32,8 +32,6 @@ class VehiculoController extends Controller
             'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa',
-            'marca' => 'nullable|string|max:50',
-            'modelo' => 'nullable|string|max:50',
             'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 
@@ -59,8 +57,6 @@ class VehiculoController extends Controller
             'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa,' . $vehiculo->id,
-            'marca' => 'nullable|string|max:50',
-            'modelo' => 'nullable|string|max:50',
             'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 

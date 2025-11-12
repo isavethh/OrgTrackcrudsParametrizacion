@@ -3,35 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\Direccion;
-use App\Models\Usuario;
+use App\Models\Envio;
 use Illuminate\Http\Request;
 
 class DireccionController extends Controller
 {
     public function index()
     {
-        $direcciones = Direccion::with('usuario')->get();
+        $direcciones = Direccion::with('envio')->get();
         return view('direcciones.index', compact('direcciones'));
     }
 
     public function create()
     {
-        $usuarios = Usuario::all();
-        return view('direcciones.create', compact('usuarios'));
+        $envios = Envio::all();
+        return view('direcciones.create', compact('envios'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuarios,id',
-            'nombreorigen' => 'required|string|max:200',
-            'origen_lng' => 'nullable|numeric',
-            'origen_lat' => 'nullable|numeric',
-            'nombredestino' => 'required|string|max:200',
-            'destino_lng' => 'nullable|numeric',
-            'destino_lat' => 'nullable|numeric',
-            'rutageojson' => 'nullable|string',
+            'envio_id' => 'required|exists:envio,id',
+            'nombre_ruta' => 'required|string|max:100',
+            'ruta_geojson' => 'required|string',
         ]);
+
+        // Validar que ruta_geojson sea JSON válido
+        $rutaJson = json_decode($request->ruta_geojson);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors(['ruta_geojson' => 'El formato de la ruta no es válido.'])->withInput();
+        }
 
         Direccion::create($validated);
 
@@ -41,22 +42,23 @@ class DireccionController extends Controller
 
     public function edit(Direccion $direccione)
     {
-        $usuarios = Usuario::all();
-        return view('direcciones.edit', compact('direccione', 'usuarios'));
+        $envios = Envio::all();
+        return view('direcciones.edit', compact('direccione', 'envios'));
     }
 
     public function update(Request $request, Direccion $direccione)
     {
         $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuarios,id',
-            'nombreorigen' => 'required|string|max:200',
-            'origen_lng' => 'nullable|numeric',
-            'origen_lat' => 'nullable|numeric',
-            'nombredestino' => 'required|string|max:200',
-            'destino_lng' => 'nullable|numeric',
-            'destino_lat' => 'nullable|numeric',
-            'rutageojson' => 'nullable|string',
+            'envio_id' => 'required|exists:envio,id',
+            'nombre_ruta' => 'required|string|max:100',
+            'ruta_geojson' => 'required|string',
         ]);
+
+        // Validar que ruta_geojson sea JSON válido
+        $rutaJson = json_decode($request->ruta_geojson);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors(['ruta_geojson' => 'El formato de la ruta no es válido.'])->withInput();
+        }
 
         $direccione->update($validated);
 

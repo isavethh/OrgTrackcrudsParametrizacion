@@ -15,16 +15,11 @@ class Direccion extends Model
     protected $fillable = [
         'envio_id',
         'nombre_ruta',
-        'descripcion',
-        'latitud',
-        'longitud',
-        'orden'
+        'ruta_geojson'
     ];
 
     protected $casts = [
-        'latitud' => 'decimal:8',
-        'longitud' => 'decimal:8',
-        'orden' => 'integer'
+        'fecha_creacion' => 'datetime'
     ];
 
     // Relación con Envío

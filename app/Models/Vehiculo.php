@@ -17,8 +17,6 @@ class Vehiculo extends Model
         'tipo_transporte_id',
         'tamano_transporte_id',
         'placa',
-        'marca',
-        'modelo',
         'estado'
     ];
 

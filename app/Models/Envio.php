@@ -17,16 +17,10 @@ class Envio extends Model
         'tipo_empaque_id',
         'unidad_medida_id',
         'estado',
-        'volumen',
-        'peso',
-        'fecha_envio',
-        'fecha_entrega_estimada'
+        'peso'
     ];
 
     protected $casts = [
-        'fecha_envio' => 'datetime',
-        'fecha_entrega_estimada' => 'datetime',
-        'volumen' => 'decimal:2',
         'peso' => 'decimal:2'
     ];
 
