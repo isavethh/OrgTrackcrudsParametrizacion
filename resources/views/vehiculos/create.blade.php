@@ -15,16 +15,16 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="admin_id">Administrador <span class="text-danger">*</span></label>
-                            <select name="admin_id" id="admin_id" class="form-control @error('admin_id') is-invalid @enderror" required>
-                                <option value="">Seleccione un administrador</option>
-                                @foreach($admins as $admin)
-                                    <option value="{{ $admin->id }}" {{ old('admin_id') == $admin->id ? 'selected' : '' }}>
-                                        {{ $admin->usuario->nombre }} {{ $admin->usuario->apellido }}
+                            <label for="transportista_id">Transportista <span class="text-danger">*</span></label>
+                            <select name="transportista_id" id="transportista_id" class="form-control @error('transportista_id') is-invalid @enderror" required>
+                                <option value="">Seleccione un transportista</option>
+                                @foreach($transportistas as $transportista)
+                                    <option value="{{ $transportista->id }}" {{ old('transportista_id') == $transportista->id ? 'selected' : '' }}>
+                                        {{ $transportista->usuario->nombre }} {{ $transportista->usuario->apellido }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('admin_id')
+                            @error('transportista_id')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>

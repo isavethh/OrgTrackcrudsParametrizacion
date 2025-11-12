@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehiculo;
-use App\Models\Admin;
+use App\Models\Transportista;
 use App\Models\TipoTransporte;
 use App\Models\TamanoTransporte;
 use Illuminate\Http\Request;
@@ -12,23 +12,23 @@ class VehiculoController extends Controller
 {
     public function index()
     {
-        $vehiculos = Vehiculo::with(['admin.usuario', 'tipoTransporte', 'tamanoTransporte'])->get();
+        $vehiculos = Vehiculo::with(['transportista.usuario', 'tipoTransporte', 'tamanoTransporte'])->get();
         return view('vehiculos.index', compact('vehiculos'));
     }
 
     public function create()
     {
-        $admins = Admin::with('usuario')->get();
+        $transportistas = Transportista::with('usuario')->get();
         $tiposTransporte = TipoTransporte::all();
         $tamanosTransporte = TamanoTransporte::all();
         
-        return view('vehiculos.create', compact('admins', 'tiposTransporte', 'tamanosTransporte'));
+        return view('vehiculos.create', compact('transportistas', 'tiposTransporte', 'tamanosTransporte'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'admin_id' => 'required|exists:admin,id',
+            'transportista_id' => 'required|exists:transportista,id',
             'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa',
@@ -45,17 +45,17 @@ class VehiculoController extends Controller
 
     public function edit(Vehiculo $vehiculo)
     {
-        $admins = Admin::with('usuario')->get();
+        $transportistas = Transportista::with('usuario')->get();
         $tiposTransporte = TipoTransporte::all();
         $tamanosTransporte = TamanoTransporte::all();
         
-        return view('vehiculos.edit', compact('vehiculo', 'admins', 'tiposTransporte', 'tamanosTransporte'));
+        return view('vehiculos.edit', compact('vehiculo', 'transportistas', 'tiposTransporte', 'tamanosTransporte'));
     }
 
     public function update(Request $request, Vehiculo $vehiculo)
     {
         $validated = $request->validate([
-            'admin_id' => 'required|exists:admin,id',
+            'transportista_id' => 'required|exists:transportista,id',
             'tipo_transporte_id' => 'required|exists:tipo_transporte,id',
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa,' . $vehiculo->id,

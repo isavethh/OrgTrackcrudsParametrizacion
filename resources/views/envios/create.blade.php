@@ -15,42 +15,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="admin_id">Administrador <span class="text-danger">*</span></label>
-                            <select name="admin_id" id="admin_id" class="form-control select2 @error('admin_id') is-invalid @enderror" required>
-                                <option value="">Seleccione un administrador</option>
-                                @foreach($admins as $admin)
-                                    <option value="{{ $admin->id }}" {{ old('admin_id') == $admin->id ? 'selected' : '' }}>
-                                        {{ $admin->usuario->nombre }} {{ $admin->usuario->apellido }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('admin_id')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="estado">Estado <span class="text-danger">*</span></label>
-                            <select name="estado" id="estado" class="form-control @error('estado') is-invalid @enderror" required>
-                                <option value="">Seleccione un estado</option>
-                                <option value="Pendiente" {{ old('estado', 'Pendiente') == 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="Asignado" {{ old('estado') == 'Asignado' ? 'selected' : '' }}>Asignado</option>
-                                <option value="En curso" {{ old('estado') == 'En curso' ? 'selected' : '' }}>En curso</option>
-                                <option value="Entregado" {{ old('estado') == 'Entregado' ? 'selected' : '' }}>Entregado</option>
-                                <option value="Parcialmente entregado" {{ old('estado') == 'Parcialmente entregado' ? 'selected' : '' }}>Parcialmente entregado</option>
-                            </select>
-                            @error('estado')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
                             <label for="tipo_empaque_id">Tipo de Empaque</label>
                             <select name="tipo_empaque_id" id="tipo_empaque_id" class="form-control select2 @error('tipo_empaque_id') is-invalid @enderror">
                                 <option value="">Seleccione un tipo</option>
@@ -85,33 +49,87 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <label for="peso">Peso (kg)</label>
-                            <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso') }}">
+                            <label for="direccion_id">Dirección/Ruta</label>
+                            <select name="direccion_id" id="direccion_id" class="form-control select2 @error('direccion_id') is-invalid @enderror">
+                                <option value="">Seleccione una dirección</option>
+                                @foreach($direcciones as $direccion)
+                                    <option value="{{ $direccion->id }}" {{ old('direccion_id') == $direccion->id ? 'selected' : '' }}>
+                                        {{ $direccion->nombre_ruta }}
+                                        @if($direccion->descripcion)
+                                            - {{ Str::limit($direccion->descripcion, 50) }}
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('direccion_id')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Selecciona la ruta que seguirá este envío. 
+                                <a href="{{ route('direcciones.create') }}" target="_blank">¿Crear nueva ruta?</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="peso_por_unidad">Peso por Unidad (kg)</label>
+                            <input type="number" step="0.01" name="peso_por_unidad" id="peso_por_unidad" class="form-control @error('peso_por_unidad') is-invalid @enderror" value="{{ old('peso_por_unidad') }}">
+                            @error('peso_por_unidad')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="cantidad_productos">Cantidad de Productos</label>
+                            <input type="number" name="cantidad_productos" id="cantidad_productos" class="form-control @error('cantidad_productos') is-invalid @enderror" value="{{ old('cantidad_productos') }}" min="1">
+                            @error('cantidad_productos')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="peso">Peso Total (kg) <small class="text-muted">(Calculado automáticamente)</small></label>
+                            <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso') }}" readonly style="background-color: #e9ecef;">
                             @error('peso')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="fecha_envio">Fecha de Envío <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="fecha_envio" id="fecha_envio" class="form-control @error('fecha_envio') is-invalid @enderror" value="{{ old('fecha_envio', now()->format('Y-m-d\TH:i')) }}" required>
+                            @error('fecha_envio')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="volumen">Volumen (m³)</label>
-                            <input type="number" step="0.01" name="volumen" id="volumen" class="form-control @error('volumen') is-invalid @enderror" value="{{ old('volumen') }}">
-                            @error('volumen')
+                            <label for="fecha_entrega_estimada">Fecha de Entrega Estimada</label>
+                            <input type="datetime-local" name="fecha_entrega_estimada" id="fecha_entrega_estimada" class="form-control @error('fecha_entrega_estimada') is-invalid @enderror" value="{{ old('fecha_entrega_estimada') }}">
+                            @error('fecha_entrega_estimada')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
                 </div>
 
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Las direcciones/rutas se asignarán después de crear el envío.
-                </div>
-
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Las direcciones/rutas se asignarán después de crear el envío.
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> <strong>Importante:</strong> Puedes seleccionar una dirección/ruta existente o crear el envío sin dirección y asignarla posteriormente.
                 </div>
 
                 <div class="form-group">
@@ -140,6 +158,27 @@
                 theme: 'bootstrap4',
                 width: '100%'
             });
+
+            // Calcular peso total automáticamente
+            function calcularPesoTotal() {
+                var pesoPorUnidad = parseFloat($('#peso_por_unidad').val()) || 0;
+                var cantidadProductos = parseInt($('#cantidad_productos').val()) || 0;
+                var pesoTotal = pesoPorUnidad * cantidadProductos;
+                
+                if (pesoTotal > 0) {
+                    $('#peso').val(pesoTotal.toFixed(2));
+                } else {
+                    $('#peso').val('');
+                }
+            }
+
+            // Ejecutar cálculo cuando cambien los campos
+            $('#peso_por_unidad, #cantidad_productos').on('input change', function() {
+                calcularPesoTotal();
+            });
+
+            // Calcular al cargar si hay valores antiguos
+            calcularPesoTotal();
         });
     </script>
 @stop

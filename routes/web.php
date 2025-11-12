@@ -14,7 +14,6 @@ use App\Http\Controllers\UnidadMedidaController;
 use App\Http\Controllers\TipoEmpaqueController;
 use App\Http\Controllers\TamanoTransporteController;
 use App\Http\Controllers\EstadoTransportistaController;
-use App\Http\Controllers\ProductoController;
 
 // Dashboard principal
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -40,9 +39,6 @@ Route::resource('tamanos-transporte', TamanoTransporteController::class);
 
 // CRUD de Direcciones
 Route::resource('direcciones', DireccionController::class);
-
-// CRUD de Productos
-Route::resource('productos', ProductoController::class);
 
 // CRUD de Envíos
 Route::resource('envios', EnvioController::class);

@@ -13,7 +13,7 @@ class Vehiculo extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'admin_id',
+        'transportista_id',
         'tipo_transporte_id',
         'tamano_transporte_id',
         'placa',
@@ -26,10 +26,10 @@ class Vehiculo extends Model
         'fecha_registro' => 'datetime',
     ];
 
-    // Relación con Admin
-    public function admin()
+    // Relación con Transportista
+    public function transportista()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->belongsTo(Transportista::class);
     }
 
     // Relación con Tipo de Transporte

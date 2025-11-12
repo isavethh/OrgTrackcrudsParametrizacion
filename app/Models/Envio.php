@@ -19,14 +19,19 @@ class Envio extends Model
         'estado',
         'volumen',
         'peso',
-        'fecha_entrega',
-        'hora_entrega_estimada'
+        'peso_por_unidad',
+        'cantidad_productos',
+        'fecha_envio',
+        'fecha_entrega_estimada'
     ];
 
     protected $casts = [
-        'fecha_entrega' => 'date',
+        'fecha_envio' => 'datetime',
+        'fecha_entrega_estimada' => 'datetime',
         'volumen' => 'decimal:2',
-        'peso' => 'decimal:2'
+        'peso' => 'decimal:2',
+        'peso_por_unidad' => 'decimal:2',
+        'cantidad_productos' => 'integer'
     ];
 
     // Relación con Admin

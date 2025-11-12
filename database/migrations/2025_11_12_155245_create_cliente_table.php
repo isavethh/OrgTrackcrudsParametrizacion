@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('usuario_id')->unique()->constrained('usuario')->onDelete('cascade');
             $table->string('telefono', 20)->nullable();
+            $table->string('direccion_entrega', 255)->nullable();
         });
     }
 
