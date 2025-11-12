@@ -14,8 +14,7 @@ class Cliente extends Model
 
     protected $fillable = [
         'usuario_id',
-        'telefono',
-        'direccion_entrega'
+        'telefono'
     ];
 
     // Relación con Usuario

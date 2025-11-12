@@ -69,7 +69,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="unidad_medida_id">Unidad de Medida</label>
-                            <select name="unidad_medida_id" id="unidad_medida_id" class="form-control @error('unidad_medida_id') is-invalid @enderror">
+                            <select name="unidad_medida_id" id="unidad_medida_id" class="form-control select2 @error('unidad_medida_id') is-invalid @enderror">
                                 <option value="">Seleccione una unidad</option>
                                 @foreach($unidadesMedida as $unidad)
                                     <option value="{{ $unidad->id }}" {{ old('unidad_medida_id') == $unidad->id ? 'selected' : '' }}>
@@ -87,7 +87,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="peso">Peso</label>
+                            <label for="peso">Peso (kg)</label>
                             <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso') }}">
                             @error('peso')
                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -106,26 +106,8 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="fecha_envio">Fecha de Envío <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="fecha_envio" id="fecha_envio" class="form-control @error('fecha_envio') is-invalid @enderror" value="{{ old('fecha_envio', now()->format('Y-m-d\TH:i')) }}" required>
-                            @error('fecha_envio')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="fecha_entrega_estimada">Fecha de Entrega Estimada</label>
-                            <input type="datetime-local" name="fecha_entrega_estimada" id="fecha_entrega_estimada" class="form-control @error('fecha_entrega_estimada') is-invalid @enderror" value="{{ old('fecha_entrega_estimada') }}">
-                            @error('fecha_entrega_estimada')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Las direcciones/rutas se asignarán después de crear el envío.
                 </div>
 
                 <div class="alert alert-info">

@@ -1,15 +1,15 @@
 @extends('adminlte::page')
 
-@section('title', 'Crear Transportista')
+@section('title', 'Crear Cliente')
 
 @section('content_header')
-    <h1>Crear Nuevo Transportista</h1>
+    <h1>Crear Cliente</h1>
 @stop
 
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('transportistas.store') }}" method="POST">
+            <form action="{{ route('clientes.store') }}" method="POST">
                 @csrf
                 
                 <div class="row">
@@ -51,48 +51,19 @@
                     <small class="form-text text-muted">Mínimo 6 caracteres</small>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="ci">Cédula de Identidad <span class="text-danger">*</span></label>
-                            <input type="text" name="ci" id="ci" class="form-control @error('ci') is-invalid @enderror" value="{{ old('ci') }}" required>
-                            @error('ci')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="telefono">Teléfono</label>
-                            <input type="text" name="telefono" id="telefono" class="form-control @error('telefono') is-invalid @enderror" value="{{ old('telefono') }}">
-                            @error('telefono')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label for="estado_id">Estado <span class="text-danger">*</span></label>
-                    <select name="estado_id" id="estado_id" class="form-control @error('estado_id') is-invalid @enderror" required>
-                        <option value="">Seleccione un estado</option>
-                        @foreach($estados as $estado)
-                            <option value="{{ $estado->id }}" {{ old('estado_id') == $estado->id ? 'selected' : '' }}>
-                                {{ $estado->nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('estado_id')
+                    <label for="telefono">Teléfono</label>
+                    <input type="text" name="telefono" id="telefono" class="form-control @error('telefono') is-invalid @enderror" value="{{ old('telefono') }}">
+                    @error('telefono')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar
+                        <i class="fas fa-save"></i> Guardar Cliente
                     </button>
-                    <a href="{{ route('transportistas.index') }}" class="btn btn-secondary">
+                    <a href="{{ route('clientes.index') }}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancelar
                     </a>
                 </div>

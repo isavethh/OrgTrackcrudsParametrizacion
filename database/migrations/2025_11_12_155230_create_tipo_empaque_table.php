@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('recogidaentrega', function (Blueprint $table) {
+        Schema::create('tipo_empaque', function (Blueprint $table) {
             $table->id();
-            $table->date('fecha_recogida');
-            $table->time('hora_recogida');
-            $table->time('hora_entrega');
-            $table->string('instrucciones_recogida', 255)->nullable();
-            $table->string('instrucciones_entrega', 255)->nullable();
+            $table->string('nombre', 50)->unique();
         });
     }
 
@@ -26,7 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('recogidaentrega');
+        Schema::dropIfExists('tipo_empaque');
     }
 };
-

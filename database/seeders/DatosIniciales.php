@@ -36,7 +36,6 @@ class DatosIniciales extends Seeder
         
         $admin = Admin::create([
             'usuario_id' => $adminUser->id,
-            'nivel_acceso' => 3,
         ]);
 
         // Cliente 1

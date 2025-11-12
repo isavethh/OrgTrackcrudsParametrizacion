@@ -3,34 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Direccion;
-use App\Models\Usuario;
 use Illuminate\Http\Request;
 
 class DireccionController extends Controller
 {
     public function index()
     {
-        $direcciones = Direccion::with('usuario')->get();
+        $direcciones = Direccion::with('envio')->get();
         return view('direcciones.index', compact('direcciones'));
     }
 
     public function create()
     {
-        $usuarios = Usuario::all();
-        return view('direcciones.create', compact('usuarios'));
+        return view('direcciones.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuarios,id',
-            'nombreorigen' => 'required|string|max:200',
-            'origen_lng' => 'nullable|numeric',
-            'origen_lat' => 'nullable|numeric',
-            'nombredestino' => 'required|string|max:200',
-            'destino_lng' => 'nullable|numeric',
-            'destino_lat' => 'nullable|numeric',
-            'rutageojson' => 'nullable|string',
+            'nombre_ruta' => 'required|string|max:200',
+            'descripcion' => 'nullable|string|max:500',
+            'punto_recogida_lat' => 'nullable|numeric|between:-90,90',
+            'punto_recogida_lng' => 'nullable|numeric|between:-180,180',
+            'nombre_punto_recogida' => 'nullable|string|max:200',
+            'punto_entrega_lat' => 'nullable|numeric|between:-90,90',
+            'punto_entrega_lng' => 'nullable|numeric|between:-180,180',
+            'nombre_punto_entrega' => 'nullable|string|max:200',
         ]);
 
         Direccion::create($validated);
@@ -41,21 +39,20 @@ class DireccionController extends Controller
 
     public function edit(Direccion $direccione)
     {
-        $usuarios = Usuario::all();
-        return view('direcciones.edit', compact('direccione', 'usuarios'));
+        return view('direcciones.edit', compact('direccione'));
     }
 
     public function update(Request $request, Direccion $direccione)
     {
         $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuarios,id',
-            'nombreorigen' => 'required|string|max:200',
-            'origen_lng' => 'nullable|numeric',
-            'origen_lat' => 'nullable|numeric',
-            'nombredestino' => 'required|string|max:200',
-            'destino_lng' => 'nullable|numeric',
-            'destino_lat' => 'nullable|numeric',
-            'rutageojson' => 'nullable|string',
+            'nombre_ruta' => 'required|string|max:200',
+            'descripcion' => 'nullable|string|max:500',
+            'punto_recogida_lat' => 'nullable|numeric|between:-90,90',
+            'punto_recogida_lng' => 'nullable|numeric|between:-180,180',
+            'nombre_punto_recogida' => 'nullable|string|max:200',
+            'punto_entrega_lat' => 'nullable|numeric|between:-90,90',
+            'punto_entrega_lng' => 'nullable|numeric|between:-180,180',
+            'nombre_punto_entrega' => 'nullable|string|max:200',
         ]);
 
         $direccione->update($validated);

@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('historialestados', function (Blueprint $table) {
+        Schema::create('cliente', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_envio')->constrained('envios');
-            $table->string('estado', 50);
-            $table->timestampTz('fecha')->default(DB::raw('now()'));
+            $table->foreignId('usuario_id')->unique()->constrained('usuario')->onDelete('cascade');
+            $table->string('telefono', 20)->nullable();
         });
     }
 
@@ -25,7 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('historialestados');
+        Schema::dropIfExists('cliente');
     }
 };
-

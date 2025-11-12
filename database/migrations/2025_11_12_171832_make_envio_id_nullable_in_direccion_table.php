@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('carga', function (Blueprint $table) {
-            $table->id();
-            $table->string('tipo', 50);
-            $table->string('variedad', 50);
-            $table->integer('cantidad');
-            $table->string('empaquetado', 50);
-            $table->decimal('peso', 10, 2);
+        Schema::table('direccion', function (Blueprint $table) {
+            //
         });
     }
 
@@ -26,7 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('carga');
+        Schema::table('direccion', function (Blueprint $table) {
+            //
+        });
     }
 };
-

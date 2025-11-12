@@ -13,12 +13,7 @@ class Admin extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario_id',
-        'nivel_acceso'
-    ];
-
-    protected $casts = [
-        'nivel_acceso' => 'integer',
+        'usuario_id'
     ];
 
     // Relación con Usuario

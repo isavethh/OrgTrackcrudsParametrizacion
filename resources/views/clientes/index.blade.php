@@ -8,6 +8,11 @@
 
 @section('content')
     <div class="card">
+        <div class="card-header">
+            <a href="{{ route('clientes.create') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Crear Cliente
+            </a>
+        </div>
         <div class="card-body">
             <table class="table table-bordered table-striped" id="clientesTable">
                 <thead>
@@ -16,8 +21,8 @@
                         <th>Nombre Completo</th>
                         <th>Correo</th>
                         <th>Teléfono</th>
-                        <th>Dirección Entrega</th>
                         <th>Fecha Registro</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,8 +32,19 @@
                         <td>{{ $cliente->usuario->nombre }} {{ $cliente->usuario->apellido }}</td>
                         <td>{{ $cliente->usuario->correo }}</td>
                         <td>{{ $cliente->telefono ?? '-' }}</td>
-                        <td>{{ $cliente->direccion_entrega ?? '-' }}</td>
                         <td>{{ $cliente->usuario->fecha_registro ? $cliente->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
+                        <td>
+                            <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('clientes.destroy', $cliente->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

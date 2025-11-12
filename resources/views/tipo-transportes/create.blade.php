@@ -18,14 +18,7 @@
                     @error('nombre')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="descripcion">Descripción</label>
-                    <textarea name="descripcion" id="descripcion" class="form-control @error('descripcion') is-invalid @enderror" rows="3">{{ old('descripcion') }}</textarea>
-                    @error('descripcion')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                    <small class="form-text text-muted">Ejemplo: Terrestre, Marítimo, Aéreo</small>
                 </div>
 
                 <div class="form-group">

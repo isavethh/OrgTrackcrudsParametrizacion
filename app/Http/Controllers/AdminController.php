@@ -36,7 +36,6 @@ class AdminController extends Controller
             'apellido' => 'required|string|max:100',
             'correo' => 'required|email|unique:usuario,correo',
             'contrasena' => 'required|min:6',
-            'nivel_acceso' => 'required|integer|min:1|max:5',
         ]);
 
         $usuario = Usuario::create([
@@ -48,7 +47,6 @@ class AdminController extends Controller
 
         Admin::create([
             'usuario_id' => $usuario->id,
-            'nivel_acceso' => $request->nivel_acceso,
         ]);
 
         return redirect()->route('admins.index')->with('success', 'Administrador creado exitosamente');
@@ -83,7 +81,6 @@ class AdminController extends Controller
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
             'correo' => 'required|email|unique:usuario,correo,' . $admin->usuario_id,
-            'nivel_acceso' => 'required|integer|min:1|max:5',
         ]);
 
         $admin->usuario->update([
@@ -97,10 +94,6 @@ class AdminController extends Controller
                 'contrasena' => Hash::make($request->contrasena),
             ]);
         }
-
-        $admin->update([
-            'nivel_acceso' => $request->nivel_acceso,
-        ]);
 
         return redirect()->route('admins.index')->with('success', 'Administrador actualizado exitosamente');
     }

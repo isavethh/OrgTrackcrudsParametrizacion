@@ -28,9 +28,10 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Origen</th>
-                        <th>Destino</th>
+                        <th>Envío</th>
+                        <th>Nombre de Ruta</th>
+                        <th>Descripción</th>
+                        <th>Orden</th>
                         <th>Coordenadas</th>
                         <th>Acciones</th>
                     </tr>
@@ -39,18 +40,34 @@
                     @foreach($direcciones as $direccion)
                     <tr>
                         <td>{{ $direccion->id }}</td>
-                        <td>{{ $direccion->usuario->nombre }} {{ $direccion->usuario->apellido }}</td>
-                        <td><strong>{{ $direccion->nombreorigen }}</strong></td>
-                        <td><strong>{{ $direccion->nombredestino }}</strong></td>
                         <td>
-                            <small>
-                                @if($direccion->origen_lat && $direccion->origen_lng)
-                                    Origen: {{ number_format($direccion->origen_lat, 6) }}, {{ number_format($direccion->origen_lng, 6) }}<br>
+                            @if($direccion->envio)
+                                <strong>#{{ $direccion->envio->id }}</strong>
+                                @if($direccion->envio->admin)
+                                    <br><small>Admin: {{ $direccion->envio->admin->usuario->nombre }}</small>
                                 @endif
-                                @if($direccion->destino_lat && $direccion->destino_lng)
-                                    Destino: {{ number_format($direccion->destino_lat, 6) }}, {{ number_format($direccion->destino_lng, 6) }}
-                                @endif
-                            </small>
+                            @else
+                                <span class="text-muted">Sin envío</span>
+                            @endif
+                        </td>
+                        <td><strong>{{ $direccion->nombre_ruta }}</strong></td>
+                        <td>{{ $direccion->descripcion ?? '-' }}</td>
+                        <td>
+                            @if($direccion->orden)
+                                <span class="badge badge-info">{{ $direccion->orden }}</span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            @if($direccion->latitud && $direccion->longitud)
+                                <small>
+                                    Lat: {{ number_format($direccion->latitud, 6) }}<br>
+                                    Lng: {{ number_format($direccion->longitud, 6) }}
+                                </small>
+                            @else
+                                <span class="text-muted">Sin coordenadas</span>
+                            @endif
                         </td>
                         <td>
                             <a href="{{ route('direcciones.edit', $direccion) }}" class="btn btn-primary btn-sm">

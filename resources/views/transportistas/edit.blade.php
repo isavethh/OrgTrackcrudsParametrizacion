@@ -13,19 +13,43 @@
                 @csrf
                 @method('PUT')
                 
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="nombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $transportista->usuario->nombre) }}" required>
+                            @error('nombre')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="apellido">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" name="apellido" id="apellido" class="form-control @error('apellido') is-invalid @enderror" value="{{ old('apellido', $transportista->usuario->apellido) }}" required>
+                            @error('apellido')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label for="id_usuario">Usuario (Opcional)</label>
-                    <select name="id_usuario" id="id_usuario" class="form-control @error('id_usuario') is-invalid @enderror">
-                        <option value="">Seleccione un usuario</option>
-                        @foreach($usuarios as $usuario)
-                            <option value="{{ $usuario->id }}" {{ old('id_usuario', $transportista->id_usuario) == $usuario->id ? 'selected' : '' }}>
-                                {{ $usuario->nombre }} {{ $usuario->apellido }} ({{ $usuario->correo }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('id_usuario')
+                    <label for="correo">Correo Electrónico <span class="text-danger">*</span></label>
+                    <input type="email" name="correo" id="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo', $transportista->usuario->correo) }}" required>
+                    @error('correo')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasena">Nueva Contraseña</label>
+                    <input type="password" name="contrasena" id="contrasena" class="form-control @error('contrasena') is-invalid @enderror">
+                    @error('contrasena')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                    <small class="form-text text-muted">Dejar en blanco para mantener la contraseña actual. Mínimo 6 caracteres.</small>
                 </div>
 
                 <div class="row">
@@ -51,16 +75,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="estado">Estado <span class="text-danger">*</span></label>
-                    <select name="estado" id="estado" class="form-control @error('estado') is-invalid @enderror" required>
+                    <label for="estado_id">Estado <span class="text-danger">*</span></label>
+                    <select name="estado_id" id="estado_id" class="form-control @error('estado_id') is-invalid @enderror" required>
                         <option value="">Seleccione un estado</option>
-                        @foreach(\App\Models\Transportista::ESTADOS as $estado)
-                            <option value="{{ $estado }}" {{ old('estado', $transportista->estado) == $estado ? 'selected' : '' }}>{{ $estado }}</option>
+                        @foreach($estados as $estado)
+                            <option value="{{ $estado->id }}" {{ old('estado_id', $transportista->estado_id) == $estado->id ? 'selected' : '' }}>
+                                {{ $estado->nombre }}
+                            </option>
                         @endforeach
                     </select>
-                    @error('estado')
+                    @error('estado_id')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> <strong>Fecha de registro:</strong> {{ $transportista->usuario->fecha_registro->format('d/m/Y H:i') }}
                 </div>
 
                 <div class="form-group">

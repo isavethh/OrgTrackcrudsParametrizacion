@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('direccionsegmento', function (Blueprint $table) {
+        Schema::create('tamano_transporte', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('direccion_id')->constrained('direccion')->onDelete('cascade');
-            $table->text('segmentogeojson');
+            $table->string('nombre', 50)->unique();
         });
     }
 
@@ -23,7 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('direccionsegmento');
+        Schema::dropIfExists('tamano_transporte');
     }
 };
-

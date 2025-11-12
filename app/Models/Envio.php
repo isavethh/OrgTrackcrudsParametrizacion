@@ -19,13 +19,12 @@ class Envio extends Model
         'estado',
         'volumen',
         'peso',
-        'fecha_envio',
-        'fecha_entrega_estimada'
+        'fecha_entrega',
+        'hora_entrega_estimada'
     ];
 
     protected $casts = [
-        'fecha_envio' => 'datetime',
-        'fecha_entrega_estimada' => 'datetime',
+        'fecha_entrega' => 'date',
         'volumen' => 'decimal:2',
         'peso' => 'decimal:2'
     ];

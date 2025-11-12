@@ -50,11 +50,15 @@
                         <td><strong>{{ $transportista->ci }}</strong></td>
                         <td>{{ $transportista->telefono ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-{{ $transportista->estado == 'Disponible' ? 'success' : ($transportista->estado == 'En ruta' ? 'warning' : 'secondary') }}">
-                                {{ $transportista->estado }}
-                            </span>
+                            @if($transportista->estado)
+                                <span class="badge badge-{{ $transportista->estado->nombre == 'Disponible' ? 'success' : ($transportista->estado->nombre == 'En ruta' ? 'warning' : 'secondary') }}">
+                                    {{ $transportista->estado->nombre }}
+                                </span>
+                            @else
+                                <span class="badge badge-secondary">Sin estado</span>
+                            @endif
                         </td>
-                        <td>{{ $transportista->fecha_registro ? $transportista->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
+                        <td>{{ $transportista->usuario && $transportista->usuario->fecha_registro ? $transportista->usuario->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
                         <td>
                             <a href="{{ route('transportistas.edit', $transportista) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i>

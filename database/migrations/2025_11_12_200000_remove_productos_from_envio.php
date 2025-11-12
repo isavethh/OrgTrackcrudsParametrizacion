@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('asignacioncarga', function (Blueprint $table) {
-            $table->foreignId('id_asignacion')->constrained('asignacionmultiple');
-            $table->foreignId('id_carga')->constrained('carga');
-            $table->primary(['id_asignacion', 'id_carga']);
+        Schema::table('envio', function (Blueprint $table) {
+            // Quitar el campo productos JSON
+            $table->dropColumn('productos');
         });
     }
 
@@ -23,7 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('asignacioncarga');
+        Schema::table('envio', function (Blueprint $table) {
+            $table->json('productos')->nullable();
+        });
     }
 };
-

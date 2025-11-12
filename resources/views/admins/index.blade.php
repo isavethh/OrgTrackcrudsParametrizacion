@@ -24,7 +24,6 @@
                         <th>ID</th>
                         <th>Nombre Completo</th>
                         <th>Correo</th>
-                        <th>Nivel de Acceso</th>
                         <th>Fecha Registro</th>
                         <th>Acciones</th>
                     </tr>
@@ -35,9 +34,6 @@
                         <td>{{ $admin->id }}</td>
                         <td>{{ $admin->usuario->nombre }} {{ $admin->usuario->apellido }}</td>
                         <td>{{ $admin->usuario->correo }}</td>
-                        <td>
-                            <span class="badge badge-info">Nivel {{ $admin->nivel_acceso }}</span>
-                        </td>
                         <td>{{ $admin->usuario->fecha_registro ? $admin->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
                         <td>
                             <a href="{{ route('admins.show', $admin->id) }}" class="btn btn-info btn-sm">

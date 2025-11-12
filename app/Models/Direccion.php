@@ -18,12 +18,22 @@ class Direccion extends Model
         'descripcion',
         'latitud',
         'longitud',
-        'orden'
+        'orden',
+        'punto_recogida_lat',
+        'punto_recogida_lng',
+        'nombre_punto_recogida',
+        'punto_entrega_lat',
+        'punto_entrega_lng',
+        'nombre_punto_entrega'
     ];
 
     protected $casts = [
         'latitud' => 'decimal:8',
         'longitud' => 'decimal:8',
+        'punto_recogida_lat' => 'decimal:8',
+        'punto_recogida_lng' => 'decimal:8',
+        'punto_entrega_lat' => 'decimal:8',
+        'punto_entrega_lng' => 'decimal:8',
         'orden' => 'integer'
     ];
 

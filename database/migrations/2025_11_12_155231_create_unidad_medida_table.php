@@ -12,12 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('firmaenvio', function (Blueprint $table) {
+        Schema::create('unidad_medida', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_asignacion')->unique()->constrained('asignacionmultiple')->onDelete('cascade');
-            $table->text('imagenfirma');
-            $table->timestampTz('fechafirma')->default(DB::raw('now()'));
+            $table->string('nombre', 20)->unique();
         });
+
+        // Insertar datos iniciales
+        DB::table('unidad_medida')->insert([
+            ['nombre' => 'kg'],
+            ['nombre' => 'litros'],
+            ['nombre' => 'toneladas'],
+        ]);
     }
 
     /**
@@ -25,7 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('firmaenvio');
+        Schema::dropIfExists('unidad_medida');
     }
 };
-
