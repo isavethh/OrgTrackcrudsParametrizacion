@@ -36,9 +36,6 @@
                         <td>{{ $admin->usuario->correo }}</td>
                         <td>{{ $admin->usuario->fecha_registro ? $admin->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
                         <td>
-                            <a href="{{ route('admins.show', $admin->id) }}" class="btn btn-info btn-sm">
-                                <i class="fas fa-eye"></i>
-                            </a>
                             <a href="{{ route('admins.edit', $admin->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>

@@ -69,9 +69,6 @@
                         <td>{{ $envio->fecha_envio ? $envio->fecha_envio->format('d/m/Y H:i') : '-' }}</td>
                         <td>{{ $envio->fecha_entrega_estimada ? $envio->fecha_entrega_estimada->format('d/m/Y H:i') : '-' }}</td>
                         <td>
-                            <a href="{{ route('envios.show', $envio) }}" class="btn btn-info btn-sm" title="Ver">
-                                <i class="fas fa-eye"></i>
-                            </a>
                             <a href="{{ route('envios.edit', $envio) }}" class="btn btn-primary btn-sm" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>
