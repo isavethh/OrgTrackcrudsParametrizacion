@@ -77,12 +77,20 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label for="marca">Marca</label>
+                    <input type="text" name="marca" id="marca" class="form-control @error('marca') is-invalid @enderror" value="{{ old('marca') }}">
+                    @error('marca')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="marca">Marca</label>
-                            <input type="text" name="marca" id="marca" class="form-control @error('marca') is-invalid @enderror" value="{{ old('marca') }}">
-                            @error('marca')
+                            <label for="capacidad_carga">Capacidad de Carga</label>
+                            <input type="number" step="0.01" name="capacidad_carga" id="capacidad_carga" class="form-control @error('capacidad_carga') is-invalid @enderror" value="{{ old('capacidad_carga') }}">
+                            @error('capacidad_carga')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
@@ -90,9 +98,16 @@
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="modelo">Modelo</label>
-                            <input type="text" name="modelo" id="modelo" class="form-control @error('modelo') is-invalid @enderror" value="{{ old('modelo') }}">
-                            @error('modelo')
+                            <label for="unidad_medida_carga_id">Unidad de Medida de Carga</label>
+                            <select name="unidad_medida_carga_id" id="unidad_medida_carga_id" class="form-control @error('unidad_medida_carga_id') is-invalid @enderror">
+                                <option value="">Seleccione una unidad</option>
+                                @foreach($unidadesMedida as $unidad)
+                                    <option value="{{ $unidad->id }}" {{ old('unidad_medida_carga_id') == $unidad->id ? 'selected' : '' }}>
+                                        {{ $unidad->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('unidad_medida_carga_id')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>

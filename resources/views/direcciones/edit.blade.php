@@ -9,13 +9,13 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('direcciones.update', $direccione->id) }}" method="POST">
+            <form action="{{ route('direcciones.update', $direccion) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
                 <div class="form-group">
                     <label for="nombre_ruta">Nombre de Ruta <span class="text-danger">*</span></label>
-                    <input type="text" name="nombre_ruta" id="nombre_ruta" class="form-control @error('nombre_ruta') is-invalid @enderror" value="{{ old('nombre_ruta', $direccione->nombre_ruta) }}" required placeholder="Ej: Ruta La Paz - El Alto">
+                    <input type="text" name="nombre_ruta" id="nombre_ruta" class="form-control @error('nombre_ruta') is-invalid @enderror" value="{{ old('nombre_ruta', $direccion->nombre_ruta) }}" required placeholder="Ej: Ruta La Paz - El Alto">
                     @error('nombre_ruta')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
@@ -23,7 +23,7 @@
 
                 <div class="form-group">
                     <label for="descripcion">Descripción</label>
-                    <textarea name="descripcion" id="descripcion" class="form-control @error('descripcion') is-invalid @enderror" rows="3" placeholder="Detalles adicionales de la ruta">{{ old('descripcion', $direccione->descripcion) }}</textarea>
+                    <textarea name="descripcion" id="descripcion" class="form-control @error('descripcion') is-invalid @enderror" rows="3" placeholder="Detalles adicionales de la ruta">{{ old('descripcion', $direccion->descripcion) }}</textarea>
                     @error('descripcion')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
@@ -48,7 +48,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="nombre_punto_recogida">Nombre del Punto de Recogida</label>
-                            <input type="text" name="nombre_punto_recogida" id="nombre_punto_recogida" class="form-control @error('nombre_punto_recogida') is-invalid @enderror" value="{{ old('nombre_punto_recogida', $direccione->nombre_punto_recogida) }}" placeholder="Ej: Av. Principal #123, La Paz">
+                            <input type="text" name="nombre_punto_recogida" id="nombre_punto_recogida" class="form-control @error('nombre_punto_recogida') is-invalid @enderror" value="{{ old('nombre_punto_recogida', $direccion->nombre_punto_recogida) }}" placeholder="Ej: Av. Principal #123, La Paz">
                             @error('nombre_punto_recogida')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -58,7 +58,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="punto_recogida_lat">Latitud</label>
-                                    <input type="number" step="0.000001" name="punto_recogida_lat" id="punto_recogida_lat" class="form-control @error('punto_recogida_lat') is-invalid @enderror" value="{{ old('punto_recogida_lat', $direccione->punto_recogida_lat) }}" placeholder="-16.5000" readonly>
+                                    <input type="number" step="0.000001" name="punto_recogida_lat" id="punto_recogida_lat" class="form-control @error('punto_recogida_lat') is-invalid @enderror" value="{{ old('punto_recogida_lat', $direccion->punto_recogida_lat) }}" placeholder="-16.5000" readonly>
                                     @error('punto_recogida_lat')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -68,7 +68,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="punto_recogida_lng">Longitud</label>
-                                    <input type="number" step="0.000001" name="punto_recogida_lng" id="punto_recogida_lng" class="form-control @error('punto_recogida_lng') is-invalid @enderror" value="{{ old('punto_recogida_lng', $direccione->punto_recogida_lng) }}" placeholder="-68.1500" readonly>
+                                    <input type="number" step="0.000001" name="punto_recogida_lng" id="punto_recogida_lng" class="form-control @error('punto_recogida_lng') is-invalid @enderror" value="{{ old('punto_recogida_lng', $direccion->punto_recogida_lng) }}" placeholder="-68.1500" readonly>
                                     @error('punto_recogida_lng')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -86,7 +86,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="nombre_punto_entrega">Nombre del Punto de Entrega</label>
-                            <input type="text" name="nombre_punto_entrega" id="nombre_punto_entrega" class="form-control @error('nombre_punto_entrega') is-invalid @enderror" value="{{ old('nombre_punto_entrega', $direccione->nombre_punto_entrega) }}" placeholder="Ej: Calle Comercio #456, El Alto">
+                            <input type="text" name="nombre_punto_entrega" id="nombre_punto_entrega" class="form-control @error('nombre_punto_entrega') is-invalid @enderror" value="{{ old('nombre_punto_entrega', $direccion->nombre_punto_entrega) }}" placeholder="Ej: Calle Comercio #456, El Alto">
                             @error('nombre_punto_entrega')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -96,7 +96,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="punto_entrega_lat">Latitud</label>
-                                    <input type="number" step="0.000001" name="punto_entrega_lat" id="punto_entrega_lat" class="form-control @error('punto_entrega_lat') is-invalid @enderror" value="{{ old('punto_entrega_lat', $direccione->punto_entrega_lat) }}" placeholder="-16.5000" readonly>
+                                    <input type="number" step="0.000001" name="punto_entrega_lat" id="punto_entrega_lat" class="form-control @error('punto_entrega_lat') is-invalid @enderror" value="{{ old('punto_entrega_lat', $direccion->punto_entrega_lat) }}" placeholder="-16.5000" readonly>
                                     @error('punto_entrega_lat')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -106,7 +106,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="punto_entrega_lng">Longitud</label>
-                                    <input type="number" step="0.000001" name="punto_entrega_lng" id="punto_entrega_lng" class="form-control @error('punto_entrega_lng') is-invalid @enderror" value="{{ old('punto_entrega_lng', $direccione->punto_entrega_lng) }}" placeholder="-68.1500" readonly>
+                                    <input type="number" step="0.000001" name="punto_entrega_lng" id="punto_entrega_lng" class="form-control @error('punto_entrega_lng') is-invalid @enderror" value="{{ old('punto_entrega_lng', $direccion->punto_entrega_lng) }}" placeholder="-68.1500" readonly>
                                     @error('punto_entrega_lng')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -145,8 +145,8 @@
         $(document).ready(function() {
 
             // Obtener coordenadas existentes desde la base de datos
-            var initialLat = {{ $direccione->punto_recogida_lat ?? -16.5000 }};
-            var initialLng = {{ $direccione->punto_recogida_lng ?? -68.1500 }};
+            var initialLat = {{ $direccion->punto_recogida_lat ?? -16.5000 }};
+            var initialLng = {{ $direccion->punto_recogida_lng ?? -68.1500 }};
 
             // Inicializar mapa
             var map = L.map('map').setView([initialLat, initialLng], 13);
@@ -243,8 +243,8 @@
             }, 100);
 
             // Variables para nombres de lugares
-            var pickupPlaceName = '{{ $direccione->nombre_punto_recogida ?? '' }}';
-            var deliveryPlaceName = '{{ $direccione->nombre_punto_entrega ?? '' }}';
+            var pickupPlaceName = '{{ $direccion->nombre_punto_recogida ?? '' }}';
+            var deliveryPlaceName = '{{ $direccion->nombre_punto_entrega ?? '' }}';
 
             // Función de geocodificación inversa
             function reverseGeocode(lat, lng, callback) {
@@ -330,20 +330,20 @@
             }
 
             // Cargar marcadores existentes si hay coordenadas guardadas
-            @if($direccione->punto_recogida_lat && $direccione->punto_recogida_lng)
-                pickupMarker = L.marker([{{ $direccione->punto_recogida_lat }}, {{ $direccione->punto_recogida_lng }}], {icon: pickupIcon})
+            @if($direccion->punto_recogida_lat && $direccion->punto_recogida_lng)
+                pickupMarker = L.marker([{{ $direccion->punto_recogida_lat }}, {{ $direccion->punto_recogida_lng }}], {icon: pickupIcon})
                     .addTo(map)
                     .bindPopup('<b>Punto de Recogida</b><br>' + pickupPlaceName);
             @endif
 
-            @if($direccione->punto_entrega_lat && $direccione->punto_entrega_lng)
-                deliveryMarker = L.marker([{{ $direccione->punto_entrega_lat }}, {{ $direccione->punto_entrega_lng }}], {icon: deliveryIcon})
+            @if($direccion->punto_entrega_lat && $direccion->punto_entrega_lng)
+                deliveryMarker = L.marker([{{ $direccion->punto_entrega_lat }}, {{ $direccion->punto_entrega_lng }}], {icon: deliveryIcon})
                     .addTo(map)
                     .bindPopup('<b>Punto de Entrega</b><br>' + deliveryPlaceName);
             @endif
 
             // Dibujar ruta existente si ambos puntos están definidos
-            @if($direccione->punto_recogida_lat && $direccione->punto_recogida_lng && $direccione->punto_entrega_lat && $direccione->punto_entrega_lng)
+            @if($direccion->punto_recogida_lat && $direccion->punto_recogida_lng && $direccion->punto_entrega_lat && $direccion->punto_entrega_lng)
                 drawRoute();
             @endif
 
@@ -396,5 +396,6 @@
         });
     </script>
 @stop
+
 
 

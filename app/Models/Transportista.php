@@ -15,6 +15,7 @@ class Transportista extends Model
     protected $fillable = [
         'usuario_id',
         'ci',
+        'licencia',
         'telefono',
         'estado_id',
         'fecha_registro'

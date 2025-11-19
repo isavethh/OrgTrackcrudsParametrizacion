@@ -41,7 +41,7 @@
                             <a href="{{ route('tipos-empaque.edit', $tipo->id) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('tipos-empaque.destroy', $tipo->id) }}" method="POST" style="display: inline-block;">
+                            <form action="{{ route('tipos-empaque.destroy', $tipo) }}" method="POST" style="display: inline-block;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro?')">

@@ -33,7 +33,6 @@
                         <th>Tamaño</th>
                         <th>Placa</th>
                         <th>Marca</th>
-                        <th>Modelo</th>
                         <th>Estado</th>
                         <th>Fecha Registro</th>
                         <th>Acciones</th>
@@ -48,7 +47,6 @@
                         <td>{{ $vehiculo->tamanoTransporte->nombre }}</td>
                         <td><strong>{{ $vehiculo->placa }}</strong></td>
                         <td>{{ $vehiculo->marca ?? '-' }}</td>
-                        <td>{{ $vehiculo->modelo ?? '-' }}</td>
                         <td>
                             <span class="badge badge-{{ $vehiculo->estado == 'Disponible' ? 'success' : ($vehiculo->estado == 'En ruta' ? 'warning' : 'secondary') }}">
                                 {{ $vehiculo->estado }}

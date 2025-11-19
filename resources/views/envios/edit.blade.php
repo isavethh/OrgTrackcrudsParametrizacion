@@ -37,7 +37,7 @@
                             <select name="unidad_medida_id" id="unidad_medida_id" class="form-control @error('unidad_medida_id') is-invalid @enderror">
                                 <option value="">Seleccione una unidad</option>
                                 @foreach($unidadesMedida as $unidad)
-                                    <option value="{{ $unidad->id }}" {{ old('unidad_medida_id', $envio->unidad_medida_id) == $unidad->id ? 'selected' : '' }}>
+                                    <option value="{{ $unidad->id }}" data-unidad="{{ $unidad->nombre }}" {{ old('unidad_medida_id', $envio->unidad_medida_id) == $unidad->id ? 'selected' : '' }}>
                                         {{ $unidad->nombre }}
                                     </option>
                                 @endforeach
@@ -79,7 +79,7 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="peso_por_unidad">Peso por Unidad (kg)</label>
+                            <label for="peso_por_unidad" id="label_peso_unidad">Peso por Unidad (kg)</label>
                             <input type="number" step="0.01" name="peso_por_unidad" id="peso_por_unidad" class="form-control @error('peso_por_unidad') is-invalid @enderror" value="{{ old('peso_por_unidad', $envio->peso_por_unidad) }}">
                             @error('peso_por_unidad')
                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -99,7 +99,7 @@
 
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="peso">Peso Total (kg) <small class="text-muted">(Calculado automáticamente)</small></label>
+                            <label for="peso" id="label_peso_total">Peso Total (kg) <small class="text-muted">(Calculado automáticamente)</small></label>
                             <input type="number" step="0.01" name="peso" id="peso" class="form-control @error('peso') is-invalid @enderror" value="{{ old('peso', $envio->peso) }}" readonly style="background-color: #e9ecef;">
                             @error('peso')
                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -163,6 +163,13 @@
                 width: '100%'
             });
 
+            // Función para actualizar las etiquetas según la unidad de medida
+            function actualizarEtiquetas() {
+                var unidadSeleccionada = $('#unidad_medida_id option:selected').data('unidad') || 'kg';
+                $('#label_peso_unidad').html('Peso por Unidad (' + unidadSeleccionada + ')');
+                $('#label_peso_total').html('Peso Total (' + unidadSeleccionada + ') <small class="text-muted">(Calculado automáticamente)</small>');
+            }
+
             // Calcular peso total automáticamente
             function calcularPesoTotal() {
                 var pesoPorUnidad = parseFloat($('#peso_por_unidad').val()) || 0;
@@ -176,12 +183,18 @@
                 }
             }
 
+            // Actualizar etiquetas cuando cambie la unidad de medida
+            $('#unidad_medida_id').on('change', function() {
+                actualizarEtiquetas();
+            });
+
             // Ejecutar cálculo cuando cambien los campos
             $('#peso_por_unidad, #cantidad_productos').on('input change', function() {
                 calcularPesoTotal();
             });
 
-            // Calcular al cargar si hay valores antiguos
+            // Ejecutar al cargar la página
+            actualizarEtiquetas();
             calcularPesoTotal();
         });
     </script>

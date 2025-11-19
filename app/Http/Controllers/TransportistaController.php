@@ -31,6 +31,7 @@ class TransportistaController extends Controller
             'contrasena' => 'required|min:6',
             'ci' => 'required|string|max:20|unique:transportista,ci',
             'telefono' => 'nullable|string|max:20',
+            'licencia' => 'nullable|string|max:50',
             'estado_id' => 'required|exists:estado_transportista,id',
         ]);
 
@@ -44,6 +45,7 @@ class TransportistaController extends Controller
         Transportista::create([
             'usuario_id' => $usuario->id,
             'ci' => $request->ci,
+            'licencia' => $request->licencia,
             'telefono' => $request->telefono,
             'estado_id' => $request->estado_id,
         ]);
@@ -67,6 +69,7 @@ class TransportistaController extends Controller
             'correo' => 'required|email|unique:usuario,correo,' . $transportista->usuario_id,
             'ci' => 'required|string|max:20|unique:transportista,ci,' . $transportista->id,
             'telefono' => 'nullable|string|max:20',
+            'licencia' => 'nullable|string|max:50',
             'estado_id' => 'required|exists:estado_transportista,id',
         ]);
 
@@ -84,6 +87,7 @@ class TransportistaController extends Controller
 
         $transportista->update([
             'ci' => $request->ci,
+            'licencia' => $request->licencia,
             'telefono' => $request->telefono,
             'estado_id' => $request->estado_id,
         ]);

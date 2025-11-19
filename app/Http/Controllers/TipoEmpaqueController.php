@@ -35,7 +35,8 @@ class TipoEmpaqueController extends Controller
 
     public function edit(TipoEmpaque $tiposEmpaque)
     {
-        return view('tipos-empaque.edit', compact('tiposEmpaque'));
+        $tipoEmpaque = $tiposEmpaque;
+        return view('tipos-empaque.edit', compact('tipoEmpaque'));
     }
 
     public function update(Request $request, TipoEmpaque $tiposEmpaque)

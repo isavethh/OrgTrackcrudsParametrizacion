@@ -18,7 +18,8 @@ class Vehiculo extends Model
         'tamano_transporte_id',
         'placa',
         'marca',
-        'modelo',
+        'capacidad_carga',
+        'unidad_medida_carga_id',
         'estado'
     ];
 
@@ -48,5 +49,11 @@ class Vehiculo extends Model
     public function pesoSoportado()
     {
         return $this->hasOne(PesoSoportado::class);
+    }
+
+    // Relación con Unidad de Medida de Carga
+    public function unidadMedidaCarga()
+    {
+        return $this->belongsTo(UnidadMedida::class, 'unidad_medida_carga_id');
     }
 }

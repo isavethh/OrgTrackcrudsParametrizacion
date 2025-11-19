@@ -75,6 +75,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="licencia">Licencia de Conducir</label>
+                    <input type="text" name="licencia" id="licencia" class="form-control @error('licencia') is-invalid @enderror" value="{{ old('licencia', $transportista->licencia) }}">
+                    @error('licencia')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label for="estado_id">Estado <span class="text-danger">*</span></label>
                     <select name="estado_id" id="estado_id" class="form-control @error('estado_id') is-invalid @enderror" required>
                         <option value="">Seleccione un estado</option>

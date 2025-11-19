@@ -9,13 +9,13 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('tipos-empaque.update', $tiposEmpaque) }}" method="POST">
+            <form action="{{ route('tipos-empaque.update', $tipoEmpaque) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
                 <div class="form-group">
                     <label for="nombre">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $tiposEmpaque->nombre) }}" required>
+                    <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $tipoEmpaque->nombre) }}" required>
                     @error('nombre')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror

@@ -21,8 +21,9 @@ class VehiculoController extends Controller
         $transportistas = Transportista::with('usuario')->get();
         $tiposTransporte = TipoTransporte::all();
         $tamanosTransporte = TamanoTransporte::all();
+        $unidadesMedida = \App\Models\UnidadMedida::all();
         
-        return view('vehiculos.create', compact('transportistas', 'tiposTransporte', 'tamanosTransporte'));
+        return view('vehiculos.create', compact('transportistas', 'tiposTransporte', 'tamanosTransporte', 'unidadesMedida'));
     }
 
     public function store(Request $request)
@@ -33,7 +34,8 @@ class VehiculoController extends Controller
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa',
             'marca' => 'nullable|string|max:50',
-            'modelo' => 'nullable|string|max:50',
+            'capacidad_carga' => 'nullable|numeric|min:0',
+            'unidad_medida_carga_id' => 'nullable|exists:unidad_medida,id',
             'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 
@@ -48,8 +50,9 @@ class VehiculoController extends Controller
         $transportistas = Transportista::with('usuario')->get();
         $tiposTransporte = TipoTransporte::all();
         $tamanosTransporte = TamanoTransporte::all();
+        $unidadesMedida = \App\Models\UnidadMedida::all();
         
-        return view('vehiculos.edit', compact('vehiculo', 'transportistas', 'tiposTransporte', 'tamanosTransporte'));
+        return view('vehiculos.edit', compact('vehiculo', 'transportistas', 'tiposTransporte', 'tamanosTransporte', 'unidadesMedida'));
     }
 
     public function update(Request $request, Vehiculo $vehiculo)
@@ -60,7 +63,8 @@ class VehiculoController extends Controller
             'tamano_transporte_id' => 'required|exists:tamano_transporte,id',
             'placa' => 'required|string|max:20|unique:vehiculo,placa,' . $vehiculo->id,
             'marca' => 'nullable|string|max:50',
-            'modelo' => 'nullable|string|max:50',
+            'capacidad_carga' => 'nullable|numeric|min:0',
+            'unidad_medida_carga_id' => 'nullable|exists:unidad_medida,id',
             'estado' => 'required|in:Disponible,En ruta,No Disponible,Mantenimiento',
         ]);
 
