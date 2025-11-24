@@ -35,7 +35,8 @@ class TamanoTransporteController extends Controller
 
     public function edit(TamanoTransporte $tamanosTransporte)
     {
-        return view('tamanos-transporte.edit', compact('tamanosTransporte'));
+        $tamanoTransporte = $tamanosTransporte;
+        return view('tamanos-transporte.edit', compact('tamanoTransporte'));
     }
 
     public function update(Request $request, TamanoTransporte $tamanosTransporte)

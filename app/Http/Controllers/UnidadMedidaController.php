@@ -33,26 +33,27 @@ class UnidadMedidaController extends Controller
             ->with('success', 'Unidad de medida creada exitosamente.');
     }
 
-    public function edit(UnidadMedida $unidadesMedidum)
+    public function edit(UnidadMedida $unidadesMedida)
     {
-        return view('unidades-medida.edit', compact('unidadesMedidum'));
+        $unidadMedida = $unidadesMedida;
+        return view('unidades-medida.edit', compact('unidadMedida'));
     }
 
-    public function update(Request $request, UnidadMedida $unidadesMedidum)
+    public function update(Request $request, UnidadMedida $unidadesMedida)
     {
         $request->validate([
-            'nombre' => 'required|string|max:20|unique:unidad_medida,nombre,' . $unidadesMedidum->id,
+            'nombre' => 'required|string|max:50|unique:unidad_medida,nombre,' . $unidadesMedida->id,
         ]);
 
-        $unidadesMedidum->update($request->all());
+        $unidadesMedida->update($request->all());
 
         return redirect()->route('unidades-medida.index')
             ->with('success', 'Unidad de medida actualizada exitosamente.');
     }
 
-    public function destroy(UnidadMedida $unidadesMedidum)
+    public function destroy(UnidadMedida $unidadesMedida)
     {
-        $unidadesMedidum->delete();
+        $unidadesMedida->delete();
 
         return redirect()->route('unidades-medida.index')
             ->with('success', 'Unidad de medida eliminada exitosamente.');

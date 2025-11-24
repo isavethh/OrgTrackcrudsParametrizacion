@@ -36,12 +36,12 @@ class DireccionController extends Controller
             ->with('success', 'Dirección creada exitosamente.');
     }
 
-    public function edit(Direccion $direccione)
+    public function edit(Direccion $direccion)
     {
-        return view('direcciones.edit', compact('direccione'));
+        return view('direcciones.edit', compact('direccion'));
     }
 
-    public function update(Request $request, Direccion $direccione)
+    public function update(Request $request, Direccion $direccion)
     {
         $validated = $request->validate([
             'nombreorigen' => 'required|string|max:200',
@@ -53,15 +53,15 @@ class DireccionController extends Controller
             'rutageojson' => 'nullable|string',
         ]);
 
-        $direccione->update($validated);
+        $direccion->update($validated);
 
         return redirect()->route('direcciones.index')
             ->with('success', 'Dirección actualizada exitosamente.');
     }
 
-    public function destroy(Direccion $direccione)
+    public function destroy(Direccion $direccion)
     {
-        $direccione->delete();
+        $direccion->delete();
 
         return redirect()->route('direcciones.index')
             ->with('success', 'Dirección eliminada exitosamente.');

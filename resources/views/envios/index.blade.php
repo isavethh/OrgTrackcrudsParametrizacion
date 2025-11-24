@@ -77,9 +77,6 @@
                         <td>{{ $envio->fecha_inicio ? \Carbon\Carbon::parse($envio->fecha_inicio)->format('d/m/Y H:i') : '-' }}</td>
                         <td>{{ $envio->fecha_entrega ? \Carbon\Carbon::parse($envio->fecha_entrega)->format('d/m/Y H:i') : '-' }}</td>
                         <td>
-                            <a href="{{ route('envios.show', $envio) }}" class="btn btn-info btn-sm" title="Ver">
-                                <i class="fas fa-eye"></i>
-                            </a>
                             <a href="{{ route('envios.edit', $envio) }}" class="btn btn-primary btn-sm" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>

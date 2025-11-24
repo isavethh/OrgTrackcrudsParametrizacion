@@ -9,7 +9,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('direcciones.update', $direccione->id) }}" method="POST">
+            <form action="{{ route('direcciones.update', $direccion) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
@@ -383,5 +383,6 @@
         });
     </script>
 @stop
+
 
 
