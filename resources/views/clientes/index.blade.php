@@ -7,21 +7,31 @@
 @stop
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
-            <a href="{{ route('clientes.create') }}" class="btn btn-success">
-                <i class="fas fa-plus"></i> Crear Cliente
-            </a>
+            <h3 class="card-title">Lista de Clientes</h3>
+            <div class="card-tools">
+                <a href="{{ route('clientes.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nuevo Cliente
+                </a>
+            </div>
         </div>
         <div class="card-body">
-            <table class="table table-bordered table-striped" id="clientesTable">
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Nombre Completo</th>
+                        <th>Nombre</th>
+                        <th>CI</th>
                         <th>Correo</th>
                         <th>Teléfono</th>
-                        <th>Fecha Registro</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -29,10 +39,10 @@
                     @foreach($clientes as $cliente)
                     <tr>
                         <td>{{ $cliente->id }}</td>
-                        <td>{{ $cliente->usuario->nombre }} {{ $cliente->usuario->apellido }}</td>
-                        <td>{{ $cliente->usuario->correo }}</td>
-                        <td>{{ $cliente->telefono ?? '-' }}</td>
-                        <td>{{ $cliente->usuario->fecha_registro ? $cliente->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
+                        <td>{{ $cliente->persona->nombre }} {{ $cliente->persona->apellido }}</td>
+                        <td>{{ $cliente->persona->ci }}</td>
+                        <td>{{ $cliente->correo }}</td>
+                        <td>{{ $cliente->persona->telefono }}</td>
                         <td>
                             <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>

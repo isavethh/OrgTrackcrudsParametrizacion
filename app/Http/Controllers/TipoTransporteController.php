@@ -21,7 +21,7 @@ class TipoTransporteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nombre' => 'required|string|max:50|unique:tipo_transporte,nombre',
+            'nombre' => 'required|string|max:50|unique:tipotransporte,nombre',
         ]);
 
         TipoTransporte::create($request->all());
@@ -38,7 +38,7 @@ class TipoTransporteController extends Controller
     public function update(Request $request, TipoTransporte $tipoTransporte)
     {
         $request->validate([
-            'nombre' => 'required|string|max:50|unique:tipo_transporte,nombre,' . $tipoTransporte->id,
+            'nombre' => 'required|string|max:50|unique:tipotransporte,nombre,' . $tipoTransporte->id,
         ]);
 
         $tipoTransporte->update($request->all());

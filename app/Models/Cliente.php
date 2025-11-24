@@ -10,22 +10,15 @@ class Cliente extends Model
     use HasFactory;
 
     protected $table = 'cliente';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario_id',
-        'telefono'
+        'id_usuario',
     ];
 
-    // Relación con Usuario
     public function usuario()
     {
-        return $this->belongsTo(Usuario::class, 'usuario_id');
-    }
-
-    // Relación con QR Tokens
-    public function qrtokens()
-    {
-        return $this->hasMany(QrToken::class, 'cliente_id');
+        return $this->belongsTo(Usuario::class, 'id_usuario');
     }
 }

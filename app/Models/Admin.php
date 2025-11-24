@@ -10,27 +10,16 @@ class Admin extends Model
     use HasFactory;
 
     protected $table = 'admin';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario_id'
+        'id_usuario',
+        'nivel_acceso',
     ];
 
-    // Relación con Usuario
     public function usuario()
     {
-        return $this->belongsTo(Usuario::class, 'usuario_id');
-    }
-
-    // Relación con Vehículos
-    public function vehiculos()
-    {
-        return $this->hasMany(Vehiculo::class, 'admin_id');
-    }
-
-    // Relación con Envíos
-    public function envios()
-    {
-        return $this->hasMany(Envio::class, 'admin_id');
+        return $this->belongsTo(Usuario::class, 'id_usuario');
     }
 }

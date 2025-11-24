@@ -9,36 +9,28 @@ class Transportista extends Model
 {
     use HasFactory;
 
-    protected $table = 'transportista';
+    protected $table = 'transportistas';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario_id',
         'ci',
         'telefono',
-        'estado_id',
-        'fecha_registro'
+        'licencia',
+        'id_estado_transportista',
     ];
 
     protected $casts = [
         'fecha_registro' => 'datetime',
     ];
 
-    // Relación con Usuario
-    public function usuario()
+    public function estadoTransportista()
     {
-        return $this->belongsTo(Usuario::class, 'usuario_id');
+        return $this->belongsTo(EstadoTransportista::class, 'id_estado_transportista');
     }
 
-    // Relación con Estado
-    public function estado()
-    {
-        return $this->belongsTo(EstadoTransportista::class, 'estado_id');
-    }
-
-    // Relación con Asignaciones
     public function asignaciones()
     {
-        return $this->hasMany(AsignacionMultiple::class, 'transportista_id');
+        return $this->hasMany(AsignacionMultiple::class, 'id_transportista');
     }
 }

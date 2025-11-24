@@ -9,10 +9,10 @@ class TipoTransporte extends Model
 {
     use HasFactory;
 
-    protected $table = 'tipo_transporte';
+    protected $table = 'tipotransporte';
     public $timestamps = false;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = ['nombre', 'descripcion'];
 
     // Relación con Vehículos
     public function vehiculos()

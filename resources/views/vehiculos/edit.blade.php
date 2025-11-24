@@ -16,84 +16,19 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="transportista_id">Transportista <span class="text-danger">*</span></label>
-                            <select name="transportista_id" id="transportista_id" class="form-control @error('transportista_id') is-invalid @enderror" required>
-                                <option value="">Seleccione un transportista</option>
-                                @foreach($transportistas as $transportista)
-                                    <option value="{{ $transportista->id }}" {{ old('transportista_id', $vehiculo->transportista_id) == $transportista->id ? 'selected' : '' }}>
-                                        {{ $transportista->usuario->nombre }} {{ $transportista->usuario->apellido }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('transportista_id')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="tipo_transporte_id">Tipo de Transporte <span class="text-danger">*</span></label>
-                            <select name="tipo_transporte_id" id="tipo_transporte_id" class="form-control @error('tipo_transporte_id') is-invalid @enderror" required>
-                                <option value="">Seleccione un tipo</option>
-                                @foreach($tiposTransporte as $tipo)
-                                    <option value="{{ $tipo->id }}" {{ old('tipo_transporte_id', $vehiculo->tipo_transporte_id) == $tipo->id ? 'selected' : '' }}>
-                                        {{ $tipo->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('tipo_transporte_id')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="tamano_transporte_id">Tamaño de Transporte <span class="text-danger">*</span></label>
-                            <select name="tamano_transporte_id" id="tamano_transporte_id" class="form-control @error('tamano_transporte_id') is-invalid @enderror" required>
-                                <option value="">Seleccione un tamaño</option>
-                                @foreach($tamanosTransporte as $tamano)
-                                    <option value="{{ $tamano->id }}" {{ old('tamano_transporte_id', $vehiculo->tamano_transporte_id) == $tamano->id ? 'selected' : '' }}>
-                                        {{ $tamano->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('tamano_transporte_id')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
                             <label for="placa">Placa <span class="text-danger">*</span></label>
-                            <input type="text" name="placa" id="placa" class="form-control @error('placa') is-invalid @enderror" value="{{ old('placa', $vehiculo->placa) }}" required>
+                            <input type="text" name="placa" id="placa" class="form-control @error('placa') is-invalid @enderror" value="{{ old('placa', $vehiculo->placa) }}" required placeholder="Ej: ABC-1234">
                             @error('placa')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="marca">Marca</label>
-                            <input type="text" name="marca" id="marca" class="form-control @error('marca') is-invalid @enderror" value="{{ old('marca', $vehiculo->marca) }}">
-                            @error('marca')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="modelo">Modelo</label>
-                            <input type="text" name="modelo" id="modelo" class="form-control @error('modelo') is-invalid @enderror" value="{{ old('modelo', $vehiculo->modelo) }}">
-                            @error('modelo')
+                            <label for="capacidad">Capacidad (kg) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="capacidad" id="capacidad" class="form-control @error('capacidad') is-invalid @enderror" value="{{ old('capacidad', $vehiculo->capacidad) }}" required placeholder="Ej: 1000.50">
+                            @error('capacidad')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
@@ -103,20 +38,40 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="estado">Estado <span class="text-danger">*</span></label>
-                            <select name="estado" id="estado" class="form-control @error('estado') is-invalid @enderror" required>
-                                <option value="">Seleccione un estado</option>
-                                <option value="Disponible" {{ old('estado', $vehiculo->estado) == 'Disponible' ? 'selected' : '' }}>Disponible</option>
-                                <option value="En ruta" {{ old('estado', $vehiculo->estado) == 'En ruta' ? 'selected' : '' }}>En ruta</option>
-                                <option value="No Disponible" {{ old('estado', $vehiculo->estado) == 'No Disponible' ? 'selected' : '' }}>No Disponible</option>
-                                <option value="Mantenimiento" {{ old('estado', $vehiculo->estado) == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
+                            <label for="id_tipo_vehiculo">Tipo de Vehículo <span class="text-danger">*</span></label>
+                            <select name="id_tipo_vehiculo" id="id_tipo_vehiculo" class="form-control @error('id_tipo_vehiculo') is-invalid @enderror" required>
+                                <option value="">Seleccione un tipo</option>
+                                @foreach($tiposVehiculo as $tipo)
+                                    <option value="{{ $tipo->id }}" {{ old('id_tipo_vehiculo', $vehiculo->id_tipo_vehiculo) == $tipo->id ? 'selected' : '' }}>
+                                        {{ $tipo->nombre }}
+                                    </option>
+                                @endforeach
                             </select>
-                            @error('estado')
+                            @error('id_tipo_vehiculo')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_estado_vehiculo">Estado del Vehículo <span class="text-danger">*</span></label>
+                            <select name="id_estado_vehiculo" id="id_estado_vehiculo" class="form-control @error('id_estado_vehiculo') is-invalid @enderror" required>
+                                <option value="">Seleccione un estado</option>
+                                @foreach($estadosVehiculo as $estado)
+                                    <option value="{{ $estado->id }}" {{ old('id_estado_vehiculo', $vehiculo->id_estado_vehiculo) == $estado->id ? 'selected' : '' }}>
+                                        {{ $estado->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('id_estado_vehiculo')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
                 </div>
+
+
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">

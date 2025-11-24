@@ -10,13 +10,15 @@ class UnidadMedida extends Model
     use HasFactory;
 
     protected $table = 'unidad_medida';
-    public $timestamps = false;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = [
+        'nombre',
+        'abreviatura',
+        'descripcion',
+    ];
 
-    // Relación con Envíos
-    public function envios()
+    public function envioProductos()
     {
-        return $this->hasMany(Envio::class, 'unidad_medida_id');
+        return $this->hasMany(EnvioProducto::class, 'id_unidad_medida');
     }
 }

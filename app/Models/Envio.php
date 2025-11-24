@@ -9,74 +9,61 @@ class Envio extends Model
 {
     use HasFactory;
 
-    protected $table = 'envio';
+    protected $table = 'envios';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'admin_id',
-        'tipo_empaque_id',
-        'unidad_medida_id',
-        'estado',
-        'volumen',
-        'peso',
-        'peso_por_unidad',
-        'cantidad_productos',
-        'fecha_envio',
-        'fecha_entrega_estimada'
+        'id_usuario',
+        'id_direccion',
+        'fecha_creacion',
+        'fecha_inicio',
+        'fecha_entrega',
+        'fecha_entrega_aproximada',
+        'hora_entrega_aproximada',
+        'peso_total_envio',
+        'costo_total_envio',
+        'ubicacion_actual_lng',
+        'ubicacion_actual_lat',
+        'estado_tracking',
+        'fecha_inicio_tracking',
+        'fecha_fin_tracking',
+        'codigo_qr',
     ];
 
     protected $casts = [
-        'fecha_envio' => 'datetime',
-        'fecha_entrega_estimada' => 'datetime',
-        'volumen' => 'decimal:2',
-        'peso' => 'decimal:2',
-        'peso_por_unidad' => 'decimal:2',
-        'cantidad_productos' => 'integer'
+        'fecha_creacion' => 'datetime',
+        'fecha_inicio' => 'datetime',
+        'fecha_entrega' => 'datetime',
+        'fecha_entrega_aproximada' => 'date',
+        'fecha_inicio_tracking' => 'datetime',
+        'fecha_fin_tracking' => 'datetime',
+        'peso_total_envio' => 'decimal:2',
+        'costo_total_envio' => 'decimal:2',
     ];
 
-    // Relación con Admin
-    public function admin()
+    public function usuario()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->belongsTo(Usuario::class, 'id_usuario');
     }
 
-    // Relación con Tipo de Empaque
-    public function tipoEmpaque()
+    public function direccion()
     {
-        return $this->belongsTo(TipoEmpaque::class, 'tipo_empaque_id');
+        return $this->belongsTo(Direccion::class, 'id_direccion');
     }
 
-    // Relación con Unidad de Medida
-    public function unidadMedida()
-    {
-        return $this->belongsTo(UnidadMedida::class, 'unidad_medida_id');
-    }
-
-    // Relación con Direcciones
-    public function direcciones()
-    {
-        return $this->hasMany(Direccion::class);
-    }
-
-    // Relación con Asignaciones
     public function asignaciones()
     {
-        return $this->hasMany(AsignacionMultiple::class);
+        return $this->hasMany(AsignacionMultiple::class, 'id_envio');
     }
 
-    // Relación con Checklists
-    public function checklistsCondicionCliente()
+    public function historialEstados()
     {
-        return $this->hasMany(ChecklistCondicionCliente::class);
+        return $this->hasMany(HistorialEstado::class, 'id_envio')->orderBy('fecha', 'desc');
     }
 
-    public function checklistsCondicionTransportista()
+    public function productos()
     {
-        return $this->hasMany(ChecklistCondicionTransportista::class);
-    }
-
-    public function checklistsIncidente()
-    {
-        return $this->hasMany(ChecklistIncidenteTransporte::class);
+        return $this->hasMany(EnvioProducto::class, 'id_envio');
     }
 }

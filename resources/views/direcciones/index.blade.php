@@ -28,11 +28,10 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Envío</th>
-                        <th>Nombre de Ruta</th>
-                        <th>Descripción</th>
-                        <th>Orden</th>
-                        <th>Coordenadas</th>
+                        <th>Origen</th>
+                        <th>Destino</th>
+                        <th>Coordenadas Origen</th>
+                        <th>Coordenadas Destino</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -41,33 +40,24 @@
                     <tr>
                         <td>{{ $direccion->id }}</td>
                         <td>
-                            @if($direccion->envio)
-                                <strong>#{{ $direccion->envio->id }}</strong>
-                                @if($direccion->envio->admin)
-                                    <br><small>Admin: {{ $direccion->envio->admin->usuario->nombre }}</small>
-                                @endif
-                            @else
-                                <span class="text-muted">Sin envío</span>
-                            @endif
-                        </td>
-                        <td><strong>{{ $direccion->nombre_ruta }}</strong></td>
-                        <td>{{ $direccion->descripcion ?? '-' }}</td>
-                        <td>
-                            @if($direccion->orden)
-                                <span class="badge badge-info">{{ $direccion->orden }}</span>
-                            @else
-                                -
-                            @endif
+                            <i class="fas fa-map-marker-alt text-success"></i> 
+                            <strong>{{ $direccion->nombreorigen }}</strong>
                         </td>
                         <td>
-                            @if($direccion->latitud && $direccion->longitud)
-                                <small>
-                                    Lat: {{ number_format($direccion->latitud, 6) }}<br>
-                                    Lng: {{ number_format($direccion->longitud, 6) }}
-                                </small>
-                            @else
-                                <span class="text-muted">Sin coordenadas</span>
-                            @endif
+                            <i class="fas fa-flag-checkered text-info"></i> 
+                            <strong>{{ $direccion->nombredestino }}</strong>
+                        </td>
+                        <td>
+                            <small>
+                                Lat: {{ number_format($direccion->origen_lat, 6) }}<br>
+                                Lng: {{ number_format($direccion->origen_lng, 6) }}
+                            </small>
+                        </td>
+                        <td>
+                            <small>
+                                Lat: {{ number_format($direccion->destino_lat, 6) }}<br>
+                                Lng: {{ number_format($direccion->destino_lng, 6) }}
+                            </small>
                         </td>
                         <td>
                             <a href="{{ route('direcciones.edit', $direccion) }}" class="btn btn-primary btn-sm">

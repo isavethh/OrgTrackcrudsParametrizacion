@@ -7,6 +7,16 @@
 @stop
 
 @section('content')
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-body">
             <form action="{{ route('admins.store') }}" method="POST">
@@ -34,26 +44,64 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="correo">Correo Electrónico <span class="text-danger">*</span></label>
-                    <input type="email" name="correo" id="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo') }}" required>
-                    @error('correo')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="ci">CI <span class="text-danger">*</span></label>
+                            <input type="text" name="ci" id="ci" class="form-control @error('ci') is-invalid @enderror" value="{{ old('ci') }}" required>
+                            @error('ci')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="telefono">Teléfono <span class="text-danger">*</span></label>
+                            <input type="text" name="telefono" id="telefono" class="form-control @error('telefono') is-invalid @enderror" value="{{ old('telefono') }}" required>
+                            @error('telefono')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="correo">Correo Electrónico <span class="text-danger">*</span></label>
+                            <input type="email" name="correo" id="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo') }}" required>
+                            @error('correo')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="contrasena">Contraseña <span class="text-danger">*</span></label>
+                            <input type="password" name="contrasena" id="contrasena" class="form-control @error('contrasena') is-invalid @enderror" required>
+                            @error('contrasena')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="contrasena">Contraseña <span class="text-danger">*</span></label>
-                    <input type="password" name="contrasena" id="contrasena" class="form-control @error('contrasena') is-invalid @enderror" required>
-                    @error('contrasena')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
-                    <small class="form-text text-muted">Mínimo 6 caracteres</small>
+                    <label for="nivel_acceso">Nivel de Acceso <span class="text-danger">*</span></label>
+                    <select name="nivel_acceso" id="nivel_acceso" class="form-control" required>
+                        <option value="1">1 - Básico</option>
+                        <option value="2">2 - Medio</option>
+                        <option value="3" selected>3 - Avanzado</option>
+                        <option value="4">4 - Supervisor</option>
+                        <option value="5">5 - Super Admin</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar Administrador
+                        <i class="fas fa-save"></i> Guardar
                     </button>
                     <a href="{{ route('admins.index') }}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancelar

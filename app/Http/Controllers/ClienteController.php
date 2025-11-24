@@ -2,117 +2,147 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Cliente;
 use App\Models\Usuario;
+use App\Models\Persona;
+use App\Models\RolUsuario;
+use App\Models\Cliente;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $clientes = Cliente::with('usuario')->get();
+        $clientes = Usuario::with(['persona', 'rol', 'cliente'])
+            ->whereHas('rol', function($query) {
+                $query->where('codigo', 'CLIENT');
+            })
+            ->get();
+        
         return view('clientes.index', compact('clientes'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('clientes.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'correo' => 'required|email|unique:usuario,correo',
-            'contrasena' => 'required|min:6',
-            'telefono' => 'nullable|string|max:20',
-        ]);
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:100',
+                'apellido' => 'required|string|max:100',
+                'ci' => 'required|string|max:20|unique:persona,ci',
+                'telefono' => 'required|string|max:20',
+                'correo' => 'required|email|max:100|unique:usuarios,correo',
+                'contrasena' => 'required|string|min:6|max:100',
+            ]);
 
-        $usuario = Usuario::create([
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            'correo' => $request->correo,
-            'contrasena' => Hash::make($request->contrasena),
-        ]);
+            // Buscar el rol de cliente
+            $rolCliente = RolUsuario::where('codigo', 'CLIENT')->first();
 
-        Cliente::create([
-            'usuario_id' => $usuario->id,
-            'telefono' => $request->telefono,
-        ]);
+            // Crear persona
+            $persona = Persona::create([
+                'nombre' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
+            ]);
 
-        return redirect()->route('clientes.index')->with('success', 'Cliente creado exitosamente');
+            // Crear usuario
+            $usuario = Usuario::create([
+                'correo' => $validated['correo'],
+                'contrasena' => Hash::make($validated['contrasena']),
+                'id_rol' => $rolCliente->id,
+                'id_persona' => $persona->id,
+            ]);
+
+            // Crear cliente
+            Cliente::create([
+                'id_usuario' => $usuario->id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('clientes.index')
+                ->with('success', 'Cliente creado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Error al crear el cliente: ' . $e->getMessage()]);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit($id)
     {
-        $cliente = Cliente::with('usuario')->findOrFail($id);
-        return view('clientes.show', compact('cliente'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $cliente = Cliente::with('usuario')->findOrFail($id);
+        $cliente = Usuario::with(['persona', 'cliente'])->findOrFail($id);
         return view('clientes.edit', compact('cliente'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $cliente = Cliente::findOrFail($id);
-        
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'correo' => 'required|email|unique:usuario,correo,' . $cliente->usuario_id,
-            'telefono' => 'nullable|string|max:20',
-        ]);
+        DB::beginTransaction();
+        try {
+            $usuario = Usuario::with('persona')->findOrFail($id);
 
-        $cliente->usuario->update([
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            'correo' => $request->correo,
-        ]);
-
-        if ($request->filled('contrasena')) {
-            $cliente->usuario->update([
-                'contrasena' => Hash::make($request->contrasena),
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:100',
+                'apellido' => 'required|string|max:100',
+                'ci' => 'required|string|max:20|unique:persona,ci,' . $usuario->id_persona,
+                'telefono' => 'required|string|max:20',
+                'correo' => 'required|email|max:100|unique:usuarios,correo,' . $usuario->id,
             ]);
+
+            // Actualizar persona
+            $usuario->persona->update([
+                'nombre' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
+            ]);
+
+            // Actualizar usuario
+            $usuarioData = [
+                'correo' => $validated['correo'],
+            ];
+
+            if ($request->filled('contrasena')) {
+                $usuarioData['contrasena'] = Hash::make($request->contrasena);
+            }
+
+            $usuario->update($usuarioData);
+
+            DB::commit();
+
+            return redirect()->route('clientes.index')
+                ->with('success', 'Cliente actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Error al actualizar el cliente: ' . $e->getMessage()]);
         }
-
-        $cliente->update([
-            'telefono' => $request->telefono,
-        ]);
-
-        return redirect()->route('clientes.index')->with('success', 'Cliente actualizado exitosamente');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $cliente = Cliente::findOrFail($id);
-        $cliente->usuario->delete(); // Esto también eliminará el cliente por CASCADE
-        
-        return redirect()->route('clientes.index')->with('success', 'Cliente eliminado exitosamente');
+        DB::beginTransaction();
+        try {
+            $usuario = Usuario::with('persona')->findOrFail($id);
+            $persona = $usuario->persona;
+            $usuario->delete();
+            $persona->delete();
+
+            DB::commit();
+
+            return redirect()->route('clientes.index')
+                ->with('success', 'Cliente eliminado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Error al eliminar el cliente: ' . $e->getMessage()]);
+        }
     }
 }

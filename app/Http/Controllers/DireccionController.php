@@ -9,7 +9,7 @@ class DireccionController extends Controller
 {
     public function index()
     {
-        $direcciones = Direccion::with('envio')->get();
+        $direcciones = Direccion::all();
         return view('direcciones.index', compact('direcciones'));
     }
 
@@ -21,14 +21,13 @@ class DireccionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre_ruta' => 'required|string|max:200',
-            'descripcion' => 'nullable|string|max:500',
-            'punto_recogida_lat' => 'nullable|numeric|between:-90,90',
-            'punto_recogida_lng' => 'nullable|numeric|between:-180,180',
-            'nombre_punto_recogida' => 'nullable|string|max:200',
-            'punto_entrega_lat' => 'nullable|numeric|between:-90,90',
-            'punto_entrega_lng' => 'nullable|numeric|between:-180,180',
-            'nombre_punto_entrega' => 'nullable|string|max:200',
+            'nombreorigen' => 'required|string|max:200',
+            'origen_lat' => 'required|numeric|between:-90,90',
+            'origen_lng' => 'required|numeric|between:-180,180',
+            'nombredestino' => 'required|string|max:200',
+            'destino_lat' => 'required|numeric|between:-90,90',
+            'destino_lng' => 'required|numeric|between:-180,180',
+            'rutageojson' => 'nullable|string',
         ]);
 
         Direccion::create($validated);
@@ -45,14 +44,13 @@ class DireccionController extends Controller
     public function update(Request $request, Direccion $direccione)
     {
         $validated = $request->validate([
-            'nombre_ruta' => 'required|string|max:200',
-            'descripcion' => 'nullable|string|max:500',
-            'punto_recogida_lat' => 'nullable|numeric|between:-90,90',
-            'punto_recogida_lng' => 'nullable|numeric|between:-180,180',
-            'nombre_punto_recogida' => 'nullable|string|max:200',
-            'punto_entrega_lat' => 'nullable|numeric|between:-90,90',
-            'punto_entrega_lng' => 'nullable|numeric|between:-180,180',
-            'nombre_punto_entrega' => 'nullable|string|max:200',
+            'nombreorigen' => 'required|string|max:200',
+            'origen_lat' => 'required|numeric|between:-90,90',
+            'origen_lng' => 'required|numeric|between:-180,180',
+            'nombredestino' => 'required|string|max:200',
+            'destino_lat' => 'required|numeric|between:-90,90',
+            'destino_lng' => 'required|numeric|between:-180,180',
+            'rutageojson' => 'nullable|string',
         ]);
 
         $direccione->update($validated);

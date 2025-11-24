@@ -10,13 +10,14 @@ class TipoEmpaque extends Model
     use HasFactory;
 
     protected $table = 'tipo_empaque';
-    public $timestamps = false;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = [
+        'nombre',
+        'descripcion',
+    ];
 
-    // Relación con Envíos
-    public function envios()
+    public function envioProductos()
     {
-        return $this->hasMany(Envio::class, 'tipo_empaque_id');
+        return $this->hasMany(EnvioProducto::class, 'id_tipo_empaque');
     }
 }

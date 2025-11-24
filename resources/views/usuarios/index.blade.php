@@ -16,9 +16,9 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Lista de Usuarios</h3>
+            <h3 class="card-title">Usuarios del Sistema</h3>
             <div class="card-tools">
-                <a href="{{ route('usuarios.create') }}" class="btn btn-success btn-sm">
+                <a href="{{ route('usuarios.create') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Nuevo Usuario
                 </a>
             </div>
@@ -29,10 +29,11 @@
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
-                        <th>Apellido</th>
+                        <th>CI</th>
                         <th>Correo</th>
+                        <th>Teléfono</th>
                         <th>Rol</th>
-                        <th>Fecha Registro</th>
+                        <th>Nivel Acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -40,23 +41,77 @@
                     @foreach($usuarios as $usuario)
                     <tr>
                         <td>{{ $usuario->id }}</td>
-                        <td>{{ $usuario->nombre }}</td>
-                        <td>{{ $usuario->apellido }}</td>
+                        <td>{{ $usuario->persona->nombre }} {{ $usuario->persona->apellido }}</td>
+                        <td>{{ $usuario->persona->ci }}</td>
                         <td>{{ $usuario->correo }}</td>
+                        <td>{{ $usuario->persona->telefono }}</td>
                         <td>
-                            <span class="badge badge-{{ $usuario->rol == 'admin' ? 'danger' : ($usuario->rol == 'transportista' ? 'warning' : 'info') }}">
-                                {{ ucfirst($usuario->rol) }}
+                            <span class="badge badge-{{ $usuario->rol->codigo === 'ADMIN' ? 'danger' : ($usuario->rol->codigo === 'CLIENT' ? 'info' : 'secondary') }}">
+                                {{ $usuario->rol->nombre }}
                             </span>
                         </td>
-                        <td>{{ $usuario->fecha_registro ? $usuario->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
                         <td>
-                            <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-primary btn-sm">
+                            @if($usuario->admin)
+                                {{ $usuario->admin->nivel_acceso }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('usuarios.destroy', $usuario) }}" method="POST" style="display: inline-block;">
+                            <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" style="display: inline-block;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este usuario?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h3 class="card-title">Transportistas (Sin Usuario)</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped" id="transportistas-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>CI</th>
+                        <th>Teléfono</th>
+                        <th>Estado</th>
+                        <th>Fecha Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($transportistas as $transportista)
+                    <tr>
+                        <td>{{ $transportista->id }}</td>
+                        <td>{{ $transportista->ci }}</td>
+                        <td>{{ $transportista->telefono }}</td>
+                        <td>
+                            <span class="badge badge-{{ $transportista->estadoTransportista->nombre === 'Activo' ? 'success' : 'secondary' }}">
+                                {{ $transportista->estadoTransportista->nombre }}
+                            </span>
+                        </td>
+                        <td>{{ $transportista->fecha_registro }}</td>
+                        <td>
+                            <a href="{{ route('usuarios.edit-transportista', $transportista->id) }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('usuarios.destroy-transportista', $transportista->id) }}" method="POST" style="display: inline-block;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este transportista?')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>

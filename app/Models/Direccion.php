@@ -10,36 +10,33 @@ class Direccion extends Model
     use HasFactory;
 
     protected $table = 'direccion';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'envio_id',
-        'nombre_ruta',
-        'descripcion',
-        'latitud',
-        'longitud',
-        'orden',
-        'punto_recogida_lat',
-        'punto_recogida_lng',
-        'nombre_punto_recogida',
-        'punto_entrega_lat',
-        'punto_entrega_lng',
-        'nombre_punto_entrega'
+        'nombreorigen',
+        'origen_lng',
+        'origen_lat',
+        'nombredestino',
+        'destino_lng',
+        'destino_lat',
+        'rutageojson',
     ];
 
     protected $casts = [
-        'latitud' => 'decimal:8',
-        'longitud' => 'decimal:8',
-        'punto_recogida_lat' => 'decimal:8',
-        'punto_recogida_lng' => 'decimal:8',
-        'punto_entrega_lat' => 'decimal:8',
-        'punto_entrega_lng' => 'decimal:8',
-        'orden' => 'integer'
+        'origen_lat' => 'decimal:8',
+        'origen_lng' => 'decimal:11',
+        'destino_lat' => 'decimal:8',
+        'destino_lng' => 'decimal:11',
     ];
 
-    // Relación con Envío
-    public function envio()
+    public function envios()
     {
-        return $this->belongsTo(Envio::class);
+        return $this->hasMany(Envio::class, 'id_direccion');
+    }
+
+    public function segmentos()
+    {
+        return $this->hasMany(DireccionSegmento::class, 'direccion_id');
     }
 }

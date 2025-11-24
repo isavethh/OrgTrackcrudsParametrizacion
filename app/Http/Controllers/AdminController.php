@@ -2,110 +2,153 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Admin;
 use App\Models\Usuario;
+use App\Models\Persona;
+use App\Models\RolUsuario;
+use App\Models\Admin;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $admins = Admin::with('usuario')->get();
+        $admins = Usuario::with(['persona', 'rol', 'admin'])
+            ->whereHas('rol', function($query) {
+                $query->where('codigo', 'ADMIN');
+            })
+            ->get();
+        
         return view('admins.index', compact('admins'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('admins.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'correo' => 'required|email|unique:usuario,correo',
-            'contrasena' => 'required|min:6',
-        ]);
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:100',
+                'apellido' => 'required|string|max:100',
+                'ci' => 'required|string|max:20|unique:persona,ci',
+                'telefono' => 'required|string|max:20',
+                'correo' => 'required|email|max:100|unique:usuarios,correo',
+                'contrasena' => 'required|string|min:6|max:100',
+                'nivel_acceso' => 'required|integer|min:1|max:5',
+            ]);
 
-        $usuario = Usuario::create([
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            'correo' => $request->correo,
-            'contrasena' => Hash::make($request->contrasena),
-        ]);
+            // Buscar el rol de admin
+            $rolAdmin = RolUsuario::where('codigo', 'ADMIN')->first();
 
-        Admin::create([
-            'usuario_id' => $usuario->id,
-        ]);
+            // Crear persona
+            $persona = Persona::create([
+                'nombre' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
+            ]);
 
-        return redirect()->route('admins.index')->with('success', 'Administrador creado exitosamente');
+            // Crear usuario
+            $usuario = Usuario::create([
+                'correo' => $validated['correo'],
+                'contrasena' => Hash::make($validated['contrasena']),
+                'id_rol' => $rolAdmin->id,
+                'id_persona' => $persona->id,
+            ]);
+
+            // Crear admin
+            Admin::create([
+                'id_usuario' => $usuario->id,
+                'nivel_acceso' => $validated['nivel_acceso'],
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admins.index')
+                ->with('success', 'Administrador creado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Error al crear el administrador: ' . $e->getMessage()]);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit($id)
     {
-        $admin = Admin::with('usuario')->findOrFail($id);
-        return view('admins.show', compact('admin'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $admin = Admin::with('usuario')->findOrFail($id);
+        $admin = Usuario::with(['persona', 'admin'])->findOrFail($id);
         return view('admins.edit', compact('admin'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $admin = Admin::findOrFail($id);
-        
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'correo' => 'required|email|unique:usuario,correo,' . $admin->usuario_id,
-        ]);
+        DB::beginTransaction();
+        try {
+            $usuario = Usuario::with('persona')->findOrFail($id);
 
-        $admin->usuario->update([
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            'correo' => $request->correo,
-        ]);
-
-        if ($request->filled('contrasena')) {
-            $admin->usuario->update([
-                'contrasena' => Hash::make($request->contrasena),
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:100',
+                'apellido' => 'required|string|max:100',
+                'ci' => 'required|string|max:20|unique:persona,ci,' . $usuario->id_persona,
+                'telefono' => 'required|string|max:20',
+                'correo' => 'required|email|max:100|unique:usuarios,correo,' . $usuario->id,
+                'nivel_acceso' => 'required|integer|min:1|max:5',
             ]);
-        }
 
-        return redirect()->route('admins.index')->with('success', 'Administrador actualizado exitosamente');
+            // Actualizar persona
+            $usuario->persona->update([
+                'nombre' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
+            ]);
+
+            // Actualizar usuario
+            $usuarioData = [
+                'correo' => $validated['correo'],
+            ];
+
+            if ($request->filled('contrasena')) {
+                $usuarioData['contrasena'] = Hash::make($request->contrasena);
+            }
+
+            $usuario->update($usuarioData);
+
+            // Actualizar admin
+            $usuario->admin->update(['nivel_acceso' => $validated['nivel_acceso']]);
+
+            DB::commit();
+
+            return redirect()->route('admins.index')
+                ->with('success', 'Administrador actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Error al actualizar el administrador: ' . $e->getMessage()]);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $admin = Admin::findOrFail($id);
-        $admin->usuario->delete(); // Esto también eliminará el admin por CASCADE
-        
-        return redirect()->route('admins.index')->with('success', 'Administrador eliminado exitosamente');
+        DB::beginTransaction();
+        try {
+            $usuario = Usuario::with('persona')->findOrFail($id);
+            $persona = $usuario->persona;
+            $usuario->delete();
+            $persona->delete();
+
+            DB::commit();
+
+            return redirect()->route('admins.index')
+                ->with('success', 'Administrador eliminado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Error al eliminar el administrador: ' . $e->getMessage()]);
+        }
     }
 }

@@ -3,106 +3,189 @@
 namespace App\Http\Controllers;
 
 use App\Models\Envio;
-use App\Models\Admin;
+use App\Models\Usuario;
+use App\Models\Direccion;
+use App\Models\EstadoEnvio;
+use App\Models\HistorialEstado;
+use App\Models\EnvioProducto;
 use App\Models\TipoEmpaque;
 use App\Models\UnidadMedida;
-use App\Models\Direccion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EnvioController extends Controller
 {
     public function index()
     {
-        $envios = Envio::with(['tipoEmpaque', 'unidadMedida', 'direcciones'])
-            ->orderBy('fecha_envio', 'desc')
+        $envios = Envio::with(['usuario.persona', 'direccion', 'historialEstados.estadoEnvio'])
+            ->orderBy('fecha_creacion', 'desc')
             ->get();
         return view('envios.index', compact('envios'));
     }
 
     public function create()
     {
-        $tiposEmpaque = TipoEmpaque::all();
-        $unidadesMedida = UnidadMedida::all();
+        $usuarios = Usuario::with('persona')->get();
         $direcciones = Direccion::all();
+        $tiposEmpaque = TipoEmpaque::orderBy('nombre')->get();
+        $unidadesMedida = UnidadMedida::orderBy('nombre')->get();
         
-        return view('envios.create', compact('tiposEmpaque', 'unidadesMedida', 'direcciones'));
+        return view('envios.create', compact('usuarios', 'direcciones', 'tiposEmpaque', 'unidadesMedida'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tipo_empaque_id' => 'nullable|exists:tipo_empaque,id',
-            'unidad_medida_id' => 'nullable|exists:unidad_medida,id',
-            'peso_por_unidad' => 'nullable|numeric|min:0',
-            'cantidad_productos' => 'nullable|integer|min:1',
-            'peso' => 'nullable|numeric|min:0',
-            'fecha_envio' => 'required|date',
-            'fecha_entrega_estimada' => 'nullable|date|after_or_equal:fecha_envio',
-            'direccion_id' => 'nullable|exists:direccion,id',
+            'id_usuario' => 'required|exists:usuarios,id',
+            'id_direccion' => 'required|exists:direccion,id',
+            'fecha_entrega_aproximada' => 'nullable|date',
+            'hora_entrega_aproximada' => 'nullable|date_format:H:i',
+            'productos' => 'required|array|min:1',
+            'productos.*.categoria' => 'required|string|in:Verduras,Frutas',
+            'productos.*.producto' => 'required|string',
+            'productos.*.cantidad' => 'required|integer|min:1',
+            'productos.*.peso_por_unidad' => 'required|numeric|min:0',
+            'productos.*.costo_unitario' => 'required|numeric|min:0',
+            'productos.*.id_tipo_empaque' => 'required|exists:tipo_empaque,id',
+            'productos.*.id_unidad_medida' => 'required|exists:unidad_medida,id',
         ]);
 
-        // Calcular peso total si hay peso por unidad y cantidad
-        if (!empty($validated['peso_por_unidad']) && !empty($validated['cantidad_productos'])) {
-            $validated['peso'] = $validated['peso_por_unidad'] * $validated['cantidad_productos'];
+        DB::beginTransaction();
+        try {
+            // Calcular totales
+            $pesoTotal = 0;
+            $costoTotal = 0;
+
+            foreach ($validated['productos'] as $prod) {
+                $pesoTotal += $prod['cantidad'] * $prod['peso_por_unidad'];
+                $costoTotal += $prod['cantidad'] * $prod['costo_unitario'];
+            }
+
+            // Crear envío
+            $envio = Envio::create([
+                'id_usuario' => $validated['id_usuario'],
+                'id_direccion' => $validated['id_direccion'],
+                'fecha_entrega_aproximada' => $validated['fecha_entrega_aproximada'] ?? null,
+                'hora_entrega_aproximada' => $validated['hora_entrega_aproximada'] ?? null,
+                'peso_total_envio' => $pesoTotal,
+                'costo_total_envio' => $costoTotal,
+            ]);
+
+            // Crear productos del envío
+            foreach ($validated['productos'] as $prod) {
+                EnvioProducto::create([
+                    'id_envio' => $envio->id,
+                    'categoria' => $prod['categoria'],
+                    'producto' => $prod['producto'],
+                    'cantidad' => $prod['cantidad'],
+                    'peso_por_unidad' => $prod['peso_por_unidad'],
+                    'peso_total' => $prod['cantidad'] * $prod['peso_por_unidad'],
+                    'costo_unitario' => $prod['costo_unitario'],
+                    'costo_total' => $prod['cantidad'] * $prod['costo_unitario'],
+                    'id_tipo_empaque' => $prod['id_tipo_empaque'],
+                    'id_unidad_medida' => $prod['id_unidad_medida'],
+                ]);
+            }
+
+            // Crear el primer estado del envío como "Pendiente"
+            $estadoPendiente = EstadoEnvio::where('nombre', 'Pendiente')->first();
+            if ($estadoPendiente) {
+                HistorialEstado::create([
+                    'id_envio' => $envio->id,
+                    'id_estado_envio' => $estadoPendiente->id,
+                    'observaciones' => 'Envío creado',
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('envios.index')
+                ->with('success', 'Envío creado exitosamente con ' . count($validated['productos']) . ' producto(s).');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Error al crear envío: ' . $e->getMessage());
         }
-
-        $envio = Envio::create($validated);
-
-        // Asignar la dirección al envío si se seleccionó una
-        if (!empty($validated['direccion_id'])) {
-            $direccion = Direccion::find($validated['direccion_id']);
-            $direccion->envio_id = $envio->id;
-            $direccion->save();
-        }
-
-        return redirect()->route('envios.index')
-            ->with('success', 'Envío creado exitosamente.');
     }
 
     public function show(Envio $envio)
     {
-        $envio->load(['tipoEmpaque', 'unidadMedida', 'direcciones']);
+        $envio->load(['usuario.persona', 'direccion', 'historialEstados.estadoEnvio', 'asignaciones']);
         return view('envios.show', compact('envio'));
     }
 
     public function edit(Envio $envio)
     {
-        $tiposEmpaque = TipoEmpaque::all();
-        $unidadesMedida = UnidadMedida::all();
+        $usuarios = Usuario::with('persona')->get();
         $direcciones = Direccion::all();
+        $tiposEmpaque = TipoEmpaque::orderBy('nombre')->get();
+        $unidadesMedida = UnidadMedida::orderBy('nombre')->get();
+        $envio->load('productos');
         
-        return view('envios.edit', compact('envio', 'tiposEmpaque', 'unidadesMedida', 'direcciones'));
+        return view('envios.edit', compact('envio', 'usuarios', 'direcciones', 'tiposEmpaque', 'unidadesMedida'));
     }
 
     public function update(Request $request, Envio $envio)
     {
         $validated = $request->validate([
-            'tipo_empaque_id' => 'nullable|exists:tipo_empaque,id',
-            'unidad_medida_id' => 'nullable|exists:unidad_medida,id',
-            'peso_por_unidad' => 'nullable|numeric|min:0',
-            'cantidad_productos' => 'nullable|integer|min:1',
-            'peso' => 'nullable|numeric|min:0',
-            'fecha_envio' => 'required|date',
-            'fecha_entrega_estimada' => 'nullable|date|after_or_equal:fecha_envio',
-            'direccion_id' => 'nullable|exists:direccion,id',
+            'id_usuario' => 'required|exists:usuarios,id',
+            'id_direccion' => 'required|exists:direccion,id',
+            'fecha_entrega_aproximada' => 'nullable|date',
+            'hora_entrega_aproximada' => 'nullable|date_format:H:i',
+            'productos' => 'required|array|min:1',
+            'productos.*.categoria' => 'required|string|in:Verduras,Frutas',
+            'productos.*.producto' => 'required|string',
+            'productos.*.cantidad' => 'required|integer|min:1',
+            'productos.*.peso_por_unidad' => 'required|numeric|min:0',
+            'productos.*.costo_unitario' => 'required|numeric|min:0',
+            'productos.*.id_tipo_empaque' => 'required|exists:tipo_empaque,id',
+            'productos.*.id_unidad_medida' => 'required|exists:unidad_medida,id',
         ]);
 
-        // Calcular peso total si hay peso por unidad y cantidad
-        if (!empty($validated['peso_por_unidad']) && !empty($validated['cantidad_productos'])) {
-            $validated['peso'] = $validated['peso_por_unidad'] * $validated['cantidad_productos'];
+        DB::beginTransaction();
+        try {
+            // Calcular totales
+            $pesoTotal = 0;
+            $costoTotal = 0;
+
+            foreach ($validated['productos'] as $prod) {
+                $pesoTotal += $prod['cantidad'] * $prod['peso_por_unidad'];
+                $costoTotal += $prod['cantidad'] * $prod['costo_unitario'];
+            }
+
+            // Actualizar envío
+            $envio->update([
+                'id_usuario' => $validated['id_usuario'],
+                'id_direccion' => $validated['id_direccion'],
+                'fecha_entrega_aproximada' => $validated['fecha_entrega_aproximada'] ?? null,
+                'hora_entrega_aproximada' => $validated['hora_entrega_aproximada'] ?? null,
+                'peso_total_envio' => $pesoTotal,
+                'costo_total_envio' => $costoTotal,
+            ]);
+
+            // Eliminar productos anteriores y crear nuevos
+            $envio->productos()->delete();
+
+            foreach ($validated['productos'] as $prod) {
+                EnvioProducto::create([
+                    'id_envio' => $envio->id,
+                    'categoria' => $prod['categoria'],
+                    'producto' => $prod['producto'],
+                    'cantidad' => $prod['cantidad'],
+                    'peso_por_unidad' => $prod['peso_por_unidad'],
+                    'peso_total' => $prod['cantidad'] * $prod['peso_por_unidad'],
+                    'costo_unitario' => $prod['costo_unitario'],
+                    'costo_total' => $prod['cantidad'] * $prod['costo_unitario'],
+                    'id_tipo_empaque' => $prod['id_tipo_empaque'],
+                    'id_unidad_medida' => $prod['id_unidad_medida'],
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('envios.index')
+                ->with('success', 'Envío actualizado exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Error al actualizar envío: ' . $e->getMessage());
         }
-
-        $envio->update($validated);
-
-        // Asignar la dirección al envío si se seleccionó una
-        if (!empty($validated['direccion_id'])) {
-            $direccion = Direccion::find($validated['direccion_id']);
-            $direccion->envio_id = $envio->id;
-            $direccion->save();
-        }
-
-        return redirect()->route('envios.index')
-            ->with('success', 'Envío actualizado exitosamente.');
     }
 
     public function destroy(Envio $envio)

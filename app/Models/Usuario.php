@@ -9,15 +9,15 @@ class Usuario extends Model
 {
     use HasFactory;
 
-    protected $table = 'usuario';
+    protected $table = 'usuarios';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'nombre',
-        'apellido',
         'correo',
         'contrasena',
-        'fecha_registro'
+        'id_rol',
+        'id_persona',
     ];
 
     protected $hidden = [
@@ -28,30 +28,28 @@ class Usuario extends Model
         'fecha_registro' => 'datetime',
     ];
 
-    // Relación con Admin
+    public function rol()
+    {
+        return $this->belongsTo(RolUsuario::class, 'id_rol');
+    }
+
+    public function persona()
+    {
+        return $this->belongsTo(Persona::class, 'id_persona');
+    }
+
     public function admin()
     {
-        return $this->hasOne(Admin::class, 'usuario_id');
+        return $this->hasOne(Admin::class, 'id_usuario');
     }
 
-    // Relación con Cliente
     public function cliente()
     {
-        return $this->hasOne(Cliente::class, 'usuario_id');
+        return $this->hasOne(Cliente::class, 'id_usuario');
     }
 
-    // Relación con Transportista
-    public function transportista()
+    public function envios()
     {
-        return $this->hasOne(Transportista::class, 'usuario_id');
-    }
-
-    // Método helper para determinar el rol
-    public function getRolAttribute()
-    {
-        if ($this->admin) return 'admin';
-        if ($this->cliente) return 'cliente';
-        if ($this->transportista) return 'transportista';
-        return null;
+        return $this->hasMany(Envio::class, 'id_usuario');
     }
 }

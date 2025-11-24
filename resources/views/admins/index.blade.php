@@ -7,24 +7,32 @@
 @stop
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
-            <a href="{{ route('admins.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nuevo Administrador
-            </a>
+            <h3 class="card-title">Lista de Administradores</h3>
+            <div class="card-tools">
+                <a href="{{ route('admins.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nuevo Administrador
+                </a>
+            </div>
         </div>
         <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
-            <table class="table table-bordered table-striped" id="adminsTable">
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Nombre Completo</th>
+                        <th>Nombre</th>
+                        <th>CI</th>
                         <th>Correo</th>
-                        <th>Fecha Registro</th>
+                        <th>Teléfono</th>
+                        <th>Nivel Acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -32,13 +40,14 @@
                     @foreach($admins as $admin)
                     <tr>
                         <td>{{ $admin->id }}</td>
-                        <td>{{ $admin->usuario->nombre }} {{ $admin->usuario->apellido }}</td>
-                        <td>{{ $admin->usuario->correo }}</td>
-                        <td>{{ $admin->usuario->fecha_registro ? $admin->usuario->fecha_registro->format('d/m/Y') : '-' }}</td>
+                        <td>{{ $admin->persona->nombre }} {{ $admin->persona->apellido }}</td>
+                        <td>{{ $admin->persona->ci }}</td>
+                        <td>{{ $admin->correo }}</td>
+                        <td>{{ $admin->persona->telefono }}</td>
                         <td>
-                            <a href="{{ route('admins.show', $admin->id) }}" class="btn btn-info btn-sm">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <span class="badge badge-danger">{{ $admin->admin->nivel_acceso }}</span>
+                        </td>
+                        <td>
                             <a href="{{ route('admins.edit', $admin->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>

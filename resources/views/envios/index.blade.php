@@ -28,14 +28,12 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Admin</th>
+                        <th>Usuario</th>
+                        <th>Dirección</th>
                         <th>Estado</th>
-                        <th>Tipo Empaque</th>
-                        <th>Peso</th>
-                        <th>Volumen</th>
-                        <th>Rutas</th>
-                        <th>Fecha Envío</th>
-                        <th>Entrega Estimada</th>
+                        <th>Fecha Creación</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Entrega</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -43,31 +41,41 @@
                     @foreach($envios as $envio)
                     <tr>
                         <td><strong>#{{ $envio->id }}</strong></td>
-                        <td>{{ $envio->admin ? $envio->admin->usuario->nombre : '-' }}</td>
                         <td>
-                            <span class="badge badge-{{
-                                $envio->estado == 'Entregado' ? 'success' :
-                                ($envio->estado == 'En curso' ? 'primary' :
-                                ($envio->estado == 'Asignado' ? 'info' :
-                                ($envio->estado == 'Parcialmente entregado' ? 'warning' : 'secondary')))
-                            }}">
-                                {{ $envio->estado }}
-                            </span>
-                        </td>
-                        <td>{{ $envio->tipoEmpaque->nombre ?? '-' }}</td>
-                        <td>
-                            @if($envio->peso)
-                                {{ number_format($envio->peso, 2) }} {{ $envio->unidadMedida->nombre ?? '' }}
+                            @if($envio->usuario && $envio->usuario->persona)
+                                {{ $envio->usuario->persona->nombre }} {{ $envio->usuario->persona->apellido }}
                             @else
                                 -
                             @endif
                         </td>
-                        <td>{{ $envio->volumen ? number_format($envio->volumen, 2) . ' m³' : '-' }}</td>
                         <td>
-                            <span class="badge badge-secondary">{{ $envio->direcciones->count() }} rutas</span>
+                            @if($envio->direccion)
+                                <i class="fas fa-map-marker-alt text-success"></i> {{ $envio->direccion->nombreorigen }}
+                                <br>
+                                <i class="fas fa-flag-checkered text-info"></i> {{ $envio->direccion->nombredestino }}
+                            @else
+                                <span class="text-danger">Sin dirección asignada</span>
+                            @endif
                         </td>
-                        <td>{{ $envio->fecha_envio ? $envio->fecha_envio->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $envio->fecha_entrega_estimada ? $envio->fecha_entrega_estimada->format('d/m/Y H:i') : '-' }}</td>
+                        <td>
+                            @php
+                                $estadoActual = $envio->historialEstados->first();
+                            @endphp
+                            @if($estadoActual && $estadoActual->estadoEnvio)
+                                <span class="badge badge-{{
+                                    $estadoActual->estadoEnvio->nombre == 'Entregado' ? 'success' :
+                                    ($estadoActual->estadoEnvio->nombre == 'En curso' || $estadoActual->estadoEnvio->nombre == 'En tránsito' ? 'primary' :
+                                    ($estadoActual->estadoEnvio->nombre == 'Pendiente' ? 'warning' : 'secondary'))
+                                }}">
+                                    {{ $estadoActual->estadoEnvio->nombre }}
+                                </span>
+                            @else
+                                <span class="badge badge-secondary">Sin estado</span>
+                            @endif
+                        </td>
+                        <td>{{ $envio->fecha_creacion ? \Carbon\Carbon::parse($envio->fecha_creacion)->format('d/m/Y H:i') : '-' }}</td>
+                        <td>{{ $envio->fecha_inicio ? \Carbon\Carbon::parse($envio->fecha_inicio)->format('d/m/Y H:i') : '-' }}</td>
+                        <td>{{ $envio->fecha_entrega ? \Carbon\Carbon::parse($envio->fecha_entrega)->format('d/m/Y H:i') : '-' }}</td>
                         <td>
                             <a href="{{ route('envios.show', $envio) }}" class="btn btn-info btn-sm" title="Ver">
                                 <i class="fas fa-eye"></i>

@@ -25,22 +25,40 @@ class DashboardController extends Controller
             'total_direcciones' => Direccion::count(),
             
             // Estados de vehículos
-            'vehiculos_disponibles' => Vehiculo::where('estado', 'Disponible')->count(),
-            'vehiculos_en_ruta' => Vehiculo::where('estado', 'En ruta')->count(),
-            'vehiculos_mantenimiento' => Vehiculo::where('estado', 'Mantenimiento')->count(),
-            
-            // Estados de transportistas (usando la tabla estado_transportista)
-            'transportistas_disponibles' => Transportista::whereHas('estado', function($q) {
+            'vehiculos_disponibles' => Vehiculo::whereHas('estadoVehiculo', function($q) {
                 $q->where('nombre', 'Disponible');
             })->count(),
-            'transportistas_en_ruta' => Transportista::whereHas('estado', function($q) {
+            'vehiculos_en_ruta' => Vehiculo::whereHas('estadoVehiculo', function($q) {
+                $q->where('nombre', 'En ruta');
+            })->count(),
+            'vehiculos_mantenimiento' => Vehiculo::whereHas('estadoVehiculo', function($q) {
+                $q->where('nombre', 'Mantenimiento');
+            })->count(),
+            
+            // Estados de transportistas
+            'transportistas_disponibles' => Transportista::whereHas('estadoTransportista', function($q) {
+                $q->where('nombre', 'Disponible');
+            })->count(),
+            'transportistas_en_ruta' => Transportista::whereHas('estadoTransportista', function($q) {
                 $q->where('nombre', 'En ruta');
             })->count(),
             
-            // Estados de envíos
-            'envios_pendientes' => Envio::where('estado', 'Pendiente')->count(),
-            'envios_en_curso' => Envio::where('estado', 'En curso')->count(),
-            'envios_entregados' => Envio::where('estado', 'Entregado')->count(),
+            // Estados de envíos (basado en último estado en historialestados)
+            'envios_pendientes' => Envio::whereHas('historialEstados', function($q) {
+                $q->whereHas('estadoEnvio', function($sq) {
+                    $sq->where('nombre', 'Pendiente');
+                })->whereRaw('fecha = (SELECT MAX(fecha) FROM historialestados WHERE id_envio = envios.id)');
+            })->count(),
+            'envios_en_curso' => Envio::whereHas('historialEstados', function($q) {
+                $q->whereHas('estadoEnvio', function($sq) {
+                    $sq->where('nombre', 'En curso');
+                })->whereRaw('fecha = (SELECT MAX(fecha) FROM historialestados WHERE id_envio = envios.id)');
+            })->count(),
+            'envios_entregados' => Envio::whereHas('historialEstados', function($q) {
+                $q->whereHas('estadoEnvio', function($sq) {
+                    $sq->where('nombre', 'Entregado');
+                })->whereRaw('fecha = (SELECT MAX(fecha) FROM historialestados WHERE id_envio = envios.id)');
+            })->count(),
         ];
 
         return view('dashboard', compact('stats'));

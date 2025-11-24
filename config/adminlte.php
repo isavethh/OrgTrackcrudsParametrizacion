@@ -334,37 +334,10 @@ return [
                 [
                     'text' => 'Transportistas',
                     'url' => 'transportistas',
-                    'icon' => 'fas fa-fw fa-user-tie',
+                    'icon' => 'fas fa-fw fa-id-card',
                     'active' => ['transportistas', 'transportistas/*'],
                 ],
             ],
-        ],
-        
-        ['header' => 'CATÁLOGOS'],
-        
-        [
-            'text' => 'Unidades de Medida',
-            'url' => 'unidades-medida',
-            'icon' => 'fas fa-fw fa-weight',
-            'active' => ['unidades-medida', 'unidades-medida/*'],
-        ],
-        [
-            'text' => 'Tipos de Empaque',
-            'url' => 'tipos-empaque',
-            'icon' => 'fas fa-fw fa-box',
-            'active' => ['tipos-empaque', 'tipos-empaque/*'],
-        ],
-        [
-            'text' => 'Tipos de Transporte',
-            'url' => 'tipo-transportes',
-            'icon' => 'fas fa-fw fa-truck-moving',
-            'active' => ['tipo-transportes', 'tipo-transportes/*'],
-        ],
-        [
-            'text' => 'Tamaños de Transporte',
-            'url' => 'tamanos-transporte',
-            'icon' => 'fas fa-fw fa-ruler-combined',
-            'active' => ['tamanos-transporte', 'tamanos-transporte/*'],
         ],
         
         ['header' => 'GESTIÓN OPERATIVA'],
@@ -386,6 +359,45 @@ return [
             'url' => 'direcciones',
             'icon' => 'fas fa-fw fa-map-marked-alt',
             'active' => ['direcciones', 'direcciones/*'],
+        ],
+        [
+            'text' => 'Rutas en Tiempo Real',
+            'url' => 'rutas-tiempo-real',
+            'icon' => 'fas fa-fw fa-route',
+            'active' => ['rutas-tiempo-real', 'rutas-tiempo-real/*'],
+        ],
+        [
+            'text' => 'Códigos QR',
+            'url' => 'qr',
+            'icon' => 'fas fa-fw fa-qrcode',
+            'active' => ['qr', 'qr/*'],
+        ],
+        
+        ['header' => 'CATÁLOGOS'],
+        
+        [
+            'text' => 'Tipos de Vehículo',
+            'url' => 'tipos-vehiculo',
+            'icon' => 'fas fa-fw fa-list',
+            'active' => ['tipos-vehiculo', 'tipos-vehiculo/*'],
+        ],
+        [
+            'text' => 'Estados de Vehículo',
+            'url' => 'estados-vehiculo',
+            'icon' => 'fas fa-fw fa-check-circle',
+            'active' => ['estados-vehiculo', 'estados-vehiculo/*'],
+        ],
+        [
+            'text' => 'Tipos de Empaque',
+            'url' => 'tipos-empaque',
+            'icon' => 'fas fa-fw fa-box',
+            'active' => ['tipos-empaque', 'tipos-empaque/*'],
+        ],
+        [
+            'text' => 'Unidades de Medida',
+            'url' => 'unidades-medida',
+            'icon' => 'fas fa-fw fa-balance-scale',
+            'active' => ['unidades-medida', 'unidades-medida/*'],
         ],
     ],
 

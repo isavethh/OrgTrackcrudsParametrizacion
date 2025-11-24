@@ -9,14 +9,14 @@ class EstadoTransportista extends Model
 {
     use HasFactory;
 
-    protected $table = 'estado_transportista';
+    protected $table = 'estados_transportista';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = ['nombre'];
 
-    // Relación con Transportistas
     public function transportistas()
     {
-        return $this->hasMany(Transportista::class, 'estado_id');
+        return $this->hasMany(Transportista::class, 'id_estado_transportista');
     }
 }

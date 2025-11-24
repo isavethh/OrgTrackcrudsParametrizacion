@@ -28,12 +28,9 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Admin</th>
-                        <th>Tipo Transporte</th>
-                        <th>Tamaño</th>
                         <th>Placa</th>
-                        <th>Marca</th>
-                        <th>Modelo</th>
+                        <th>Capacidad (kg)</th>
+                        <th>Tipo de Vehículo</th>
                         <th>Estado</th>
                         <th>Fecha Registro</th>
                         <th>Acciones</th>
@@ -43,18 +40,15 @@
                     @foreach($vehiculos as $vehiculo)
                     <tr>
                         <td>{{ $vehiculo->id }}</td>
-                        <td>{{ $vehiculo->admin ? $vehiculo->admin->usuario->nombre : '-' }}</td>
-                        <td>{{ $vehiculo->tipoTransporte->nombre }}</td>
-                        <td>{{ $vehiculo->tamanoTransporte->nombre }}</td>
                         <td><strong>{{ $vehiculo->placa }}</strong></td>
-                        <td>{{ $vehiculo->marca ?? '-' }}</td>
-                        <td>{{ $vehiculo->modelo ?? '-' }}</td>
+                        <td>{{ number_format($vehiculo->capacidad, 2) }}</td>
+                        <td>{{ $vehiculo->tipoVehiculo->nombre }}</td>
                         <td>
-                            <span class="badge badge-{{ $vehiculo->estado == 'Disponible' ? 'success' : ($vehiculo->estado == 'En ruta' ? 'warning' : 'secondary') }}">
-                                {{ $vehiculo->estado }}
+                            <span class="badge badge-{{ $vehiculo->estadoVehiculo->nombre == 'Disponible' ? 'success' : ($vehiculo->estadoVehiculo->nombre == 'En ruta' ? 'warning' : 'secondary') }}">
+                                {{ $vehiculo->estadoVehiculo->nombre }}
                             </span>
                         </td>
-                        <td>{{ $vehiculo->fecha_registro ? $vehiculo->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
+                        <td>{{ $vehiculo->fecha_registro ? \Carbon\Carbon::parse($vehiculo->fecha_registro)->format('d/m/Y H:i') : '-' }}</td>
                         <td>
                             <a href="{{ route('vehiculos.edit', $vehiculo) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i>
