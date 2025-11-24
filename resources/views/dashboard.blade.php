@@ -3,7 +3,17 @@
 @section('title', 'Dashboard - OrgTrack')
 
 @section('content_header')
-    <h1>Dashboard</h1>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        </div>
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                <li class="breadcrumb-item active">Dashboard</li>
+            </ol>
+        </div>
+    </div>
 @stop
 
 @section('content')
@@ -189,7 +199,34 @@
 @stop
 
 @section('css')
+<style>
+    .small-box {
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .small-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .info-box {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>
 @stop
 
 @section('js')
+<script>
+    console.log('Dashboard loaded successfully');
+</script>
 @stop

@@ -3,7 +3,17 @@
 @section('title', 'Vehículos')
 
 @section('content_header')
-    <h1>Gestión de Vehículos</h1>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1><i class="fas fa-truck text-success"></i> Gestión de Vehículos</h1>
+        </div>
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Vehículos</li>
+            </ol>
+        </div>
+    </div>
 @stop
 
 @section('content')
@@ -14,11 +24,11 @@
         </div>
     @endif
 
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Lista de Vehículos</h3>
+    <div class="card shadow-sm">
+        <div class="card-header bg-gradient-success">
+            <h3 class="card-title"><i class="fas fa-list"></i> Lista de Vehículos</h3>
             <div class="card-tools">
-                <a href="{{ route('vehiculos.create') }}" class="btn btn-success btn-sm">
+                <a href="{{ route('vehiculos.create') }}" class="btn btn-light btn-sm">
                     <i class="fas fa-plus"></i> Nuevo Vehículo
                 </a>
             </div>
@@ -71,6 +81,27 @@
 
 @section('css')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+    <style>
+        .card {
+            border-radius: 10px;
+            border: none;
+        }
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .table thead th {
+            background: #f8f9fa;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .badge {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+        }
+    </style>
 @stop
 
 @section('js')

@@ -3,7 +3,17 @@
 @section('title', 'Códigos QR de Envíos')
 
 @section('content_header')
-    <h1><i class="fas fa-qrcode"></i> Gestión de Códigos QR</h1>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1><i class="fas fa-qrcode text-primary"></i> Gestión de Códigos QR</h1>
+        </div>
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Códigos QR</li>
+            </ol>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -33,6 +43,7 @@
         padding: 30px;
         border-radius: 15px;
         margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
     .loading-spinner {
         display: none;
