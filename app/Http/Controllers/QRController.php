@@ -15,10 +15,7 @@ class QRController extends Controller
 {
     public function index()
     {
-        $clientes = Usuario::with('persona')
-            ->whereHas('persona', function($q) {
-                $q->whereNotNull('nombre');
-            })
+        $clientes = Usuario::whereNotNull('nombre')
             ->get();
             
         return view('qr.index', compact('clientes'));
@@ -101,7 +98,7 @@ class QRController extends Controller
     public function documento($codigo)
     {
         $envio = Envio::with([
-            'usuario.persona',
+            'usuario',
             'direccion',
             'productos.tipoEmpaque',
             'productos.unidadMedida',

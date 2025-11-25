@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
-use App\Models\Persona;
 use App\Models\RolUsuario;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
@@ -14,7 +13,7 @@ class ClienteController extends Controller
 {
     public function index()
     {
-        $clientes = Usuario::with(['persona', 'rol', 'cliente'])
+        $clientes = Usuario::with(['rol', 'cliente'])
             ->whereHas('rol', function($query) {
                 $query->where('codigo', 'CLIENT');
             })
@@ -35,7 +34,7 @@ class ClienteController extends Controller
             $validated = $request->validate([
                 'nombre' => 'required|string|max:100',
                 'apellido' => 'required|string|max:100',
-                'ci' => 'required|string|max:20|unique:persona,ci',
+                'ci' => 'required|string|max:20|unique:usuarios,ci',
                 'telefono' => 'required|string|max:20',
                 'correo' => 'required|email|max:100|unique:usuarios,correo',
                 'contrasena' => 'required|string|min:6|max:100',
@@ -44,20 +43,15 @@ class ClienteController extends Controller
             // Buscar el rol de cliente
             $rolCliente = RolUsuario::where('codigo', 'CLIENT')->first();
 
-            // Crear persona
-            $persona = Persona::create([
-                'nombre' => $validated['nombre'],
-                'apellido' => $validated['apellido'],
-                'ci' => $validated['ci'],
-                'telefono' => $validated['telefono'],
-            ]);
-
-            // Crear usuario
+            // Crear usuario con datos de persona
             $usuario = Usuario::create([
                 'correo' => $validated['correo'],
                 'contrasena' => Hash::make($validated['contrasena']),
                 'id_rol' => $rolCliente->id,
-                'id_persona' => $persona->id,
+                'nombre' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
             ]);
 
             // Crear cliente
@@ -78,7 +72,7 @@ class ClienteController extends Controller
 
     public function edit($id)
     {
-        $cliente = Usuario::with(['persona', 'cliente'])->findOrFail($id);
+        $cliente = Usuario::with(['cliente'])->findOrFail($id);
         return view('clientes.edit', compact('cliente'));
     }
 
@@ -86,27 +80,23 @@ class ClienteController extends Controller
     {
         DB::beginTransaction();
         try {
-            $usuario = Usuario::with('persona')->findOrFail($id);
+            $usuario = Usuario::findOrFail($id);
 
             $validated = $request->validate([
                 'nombre' => 'required|string|max:100',
                 'apellido' => 'required|string|max:100',
-                'ci' => 'required|string|max:20|unique:persona,ci,' . $usuario->id_persona,
+                'ci' => 'required|string|max:20|unique:usuarios,ci,' . $usuario->id,
                 'telefono' => 'required|string|max:20',
                 'correo' => 'required|email|max:100|unique:usuarios,correo,' . $usuario->id,
             ]);
 
-            // Actualizar persona
-            $usuario->persona->update([
+            // Actualizar usuario con datos de persona
+            $usuarioData = [
+                'correo' => $validated['correo'],
                 'nombre' => $validated['nombre'],
                 'apellido' => $validated['apellido'],
                 'ci' => $validated['ci'],
                 'telefono' => $validated['telefono'],
-            ]);
-
-            // Actualizar usuario
-            $usuarioData = [
-                'correo' => $validated['correo'],
             ];
 
             if ($request->filled('contrasena')) {
@@ -130,10 +120,8 @@ class ClienteController extends Controller
     {
         DB::beginTransaction();
         try {
-            $usuario = Usuario::with('persona')->findOrFail($id);
-            $persona = $usuario->persona;
+            $usuario = Usuario::findOrFail($id);
             $usuario->delete();
-            $persona->delete();
 
             DB::commit();
 

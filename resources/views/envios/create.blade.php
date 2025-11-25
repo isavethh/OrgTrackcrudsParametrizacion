@@ -7,6 +7,25 @@
 @stop
 
 @section('content')
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Error:</strong> {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Errores de validación:</strong>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('envios.store') }}" method="POST" id="form-envio">
         @csrf
         
@@ -22,11 +41,9 @@
                             <select name="id_usuario" id="id_usuario" class="form-control @error('id_usuario') is-invalid @enderror" required>
                                 <option value="">Seleccione un usuario</option>
                                 @foreach($usuarios as $usuario)
-                                    @if($usuario->persona)
-                                        <option value="{{ $usuario->id }}" {{ old('id_usuario') == $usuario->id ? 'selected' : '' }}>
-                                            {{ $usuario->persona->nombre }} {{ $usuario->persona->apellido }} ({{ $usuario->correo }})
-                                        </option>
-                                    @endif
+                                    <option value="{{ $usuario->id }}" {{ old('id_usuario') == $usuario->id ? 'selected' : '' }}>
+                                        {{ $usuario->nombre }} {{ $usuario->apellido }} ({{ $usuario->correo }})
+                                    </option>
                                 @endforeach
                             </select>
                             @error('id_usuario')

@@ -15,20 +15,20 @@ class Envio extends Model
 
     protected $fillable = [
         'id_usuario',
-        'id_direccion',
         'fecha_creacion',
         'fecha_inicio',
         'fecha_entrega',
         'fecha_entrega_aproximada',
         'hora_entrega_aproximada',
+        'id_direccion',
         'peso_total_envio',
         'costo_total_envio',
-        'ubicacion_actual_lng',
-        'ubicacion_actual_lat',
+        'codigo_qr',
         'estado_tracking',
         'fecha_inicio_tracking',
         'fecha_fin_tracking',
-        'codigo_qr',
+        'ubicacion_actual_lat',
+        'ubicacion_actual_lng',
     ];
 
     protected $casts = [
@@ -65,5 +65,16 @@ class Envio extends Model
     public function productos()
     {
         return $this->hasMany(EnvioProducto::class, 'id_envio');
+    }
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($model) {
+            if (!$model->fecha_creacion) {
+                $model->fecha_creacion = now();
+            }
+        });
     }
 }

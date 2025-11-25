@@ -14,16 +14,20 @@ class Transportista extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_usuario',
         'ci',
-        'licencia',
         'telefono',
-        'licencia',
         'id_estado_transportista',
     ];
 
     protected $casts = [
         'fecha_registro' => 'datetime',
     ];
+
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario');
+    }
 
     public function estadoTransportista()
     {

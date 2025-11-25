@@ -5,25 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class QrToken extends Model
+class IncidenteTransporte extends Model
 {
     use HasFactory;
 
-    protected $table = 'qrtoken';
+    protected $table = 'incidentes_transporte';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
         'id_asignacion',
-        'id_estado_qrtoken',
-        'token',
-        'imagenqr',
-        'fecha_creacion',
-        'fecha_expiracion',
+        'id_tipo_incidente',
+        'descripcion_incidente',
+        'fecha',
     ];
 
     protected $casts = [
-        'fecha_creacion' => 'datetime',
-        'fecha_expiracion' => 'datetime',
+        'fecha' => 'datetime',
     ];
 
     public function asignacion()
@@ -31,8 +29,8 @@ class QrToken extends Model
         return $this->belongsTo(AsignacionMultiple::class, 'id_asignacion');
     }
 
-    public function estadoQrToken()
+    public function tipoIncidente()
     {
-        return $this->belongsTo(EstadoQrToken::class, 'id_estado_qrtoken');
+        return $this->belongsTo(TipoIncidenteTransporte::class, 'id_tipo_incidente');
     }
 }

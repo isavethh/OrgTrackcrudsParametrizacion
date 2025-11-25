@@ -5,20 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Model
+class EstadoQrToken extends Model
 {
     use HasFactory;
 
-    protected $table = 'admin';
+    protected $table = 'estados_qrtoken';
     protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'id_usuario',
+        'nombre',
     ];
 
-    public function usuario()
+    public function qrTokens()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario');
+        return $this->hasMany(QrToken::class, 'id_estado_qrtoken');
     }
 }

@@ -40,30 +40,24 @@
                     @foreach($transportistas as $transportista)
                     <tr>
                         <td>{{ $transportista->id }}</td>
-                        <td>
-                            @if($transportista->usuario)
-                                {{ $transportista->usuario->nombre }} {{ $transportista->usuario->apellido }}
-                            @else
-                                <span class="text-muted">Sin usuario</span>
-                            @endif
-                        </td>
+                        <td>{{ $transportista->nombre }} {{ $transportista->apellido }}</td>
                         <td><strong>{{ $transportista->ci }}</strong></td>
                         <td>{{ $transportista->telefono ?? '-' }}</td>
                         <td>
-                            @if($transportista->estado)
-                                <span class="badge badge-{{ $transportista->estado->nombre == 'Disponible' ? 'success' : ($transportista->estado->nombre == 'En ruta' ? 'warning' : 'secondary') }}">
-                                    {{ $transportista->estado->nombre }}
+                            @if($transportista->transportista && $transportista->transportista->estadoTransportista)
+                                <span class="badge badge-{{ $transportista->transportista->estadoTransportista->nombre == 'Disponible' ? 'success' : ($transportista->transportista->estadoTransportista->nombre == 'En ruta' ? 'warning' : 'secondary') }}">
+                                    {{ $transportista->transportista->estadoTransportista->nombre }}
                                 </span>
                             @else
                                 <span class="badge badge-secondary">Sin estado</span>
                             @endif
                         </td>
-                        <td>{{ $transportista->usuario && $transportista->usuario->fecha_registro ? $transportista->usuario->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
+                        <td>{{ $transportista->fecha_registro ? $transportista->fecha_registro->format('d/m/Y H:i') : '-' }}</td>
                         <td>
-                            <a href="{{ route('transportistas.edit', $transportista) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ route('transportistas.edit', $transportista->id) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('transportistas.destroy', $transportista) }}" method="POST" style="display: inline-block;">
+                            <form action="{{ route('transportistas.destroy', $transportista->id) }}" method="POST" style="display: inline-block;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este transportista?')">

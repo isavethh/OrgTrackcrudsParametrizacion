@@ -1,7 +1,3 @@
-    .scan-overlay.detected {
-        border-color: #ffc107;
-        box-shadow: 0 0 25px rgba(255,193,7,0.65) inset;
-    }
 @extends('adminlte::page')
 
 @section('title', 'Leer Código QR')
@@ -74,6 +70,10 @@
         border-radius: 20px;
         pointer-events: none;
         box-shadow: 0 0 25px rgba(0,0,0,0.35) inset;
+    }
+    .scan-overlay.detected {
+        border-color: #ffc107;
+        box-shadow: 0 0 25px rgba(255,193,7,0.65) inset;
     }
     .scan-overlay .laser {
         position: absolute;

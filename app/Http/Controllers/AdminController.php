@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
-use App\Models\Persona;
 use App\Models\RolUsuario;
 use App\Models\Admin;
 use Illuminate\Http\Request;
@@ -14,7 +13,7 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $admins = Usuario::with(['persona', 'rol', 'admin'])
+        $admins = Usuario::with(['rol', 'admin'])
             ->whereHas('rol', function($query) {
                 $query->where('codigo', 'ADMIN');
             })
@@ -35,36 +34,29 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'nombre' => 'required|string|max:100',
                 'apellido' => 'required|string|max:100',
-                'ci' => 'required|string|max:20|unique:persona,ci',
+                'ci' => 'required|string|max:20|unique:usuarios,ci',
                 'telefono' => 'required|string|max:20',
                 'correo' => 'required|email|max:100|unique:usuarios,correo',
                 'contrasena' => 'required|string|min:6|max:100',
-                'nivel_acceso' => 'required|integer|min:1|max:5',
             ]);
 
             // Buscar el rol de admin
             $rolAdmin = RolUsuario::where('codigo', 'ADMIN')->first();
 
-            // Crear persona
-            $persona = Persona::create([
+            // Crear usuario con datos de persona
+            $usuario = Usuario::create([
+                'correo' => $validated['correo'],
+                'contrasena' => Hash::make($validated['contrasena']),
+                'id_rol' => $rolAdmin->id,
                 'nombre' => $validated['nombre'],
                 'apellido' => $validated['apellido'],
                 'ci' => $validated['ci'],
                 'telefono' => $validated['telefono'],
             ]);
 
-            // Crear usuario
-            $usuario = Usuario::create([
-                'correo' => $validated['correo'],
-                'contrasena' => Hash::make($validated['contrasena']),
-                'id_rol' => $rolAdmin->id,
-                'id_persona' => $persona->id,
-            ]);
-
             // Crear admin
             Admin::create([
                 'id_usuario' => $usuario->id,
-                'nivel_acceso' => $validated['nivel_acceso'],
             ]);
 
             DB::commit();
@@ -80,7 +72,7 @@ class AdminController extends Controller
 
     public function edit($id)
     {
-        $admin = Usuario::with(['persona', 'admin'])->findOrFail($id);
+        $admin = Usuario::with(['admin'])->findOrFail($id);
         return view('admins.edit', compact('admin'));
     }
 
@@ -88,28 +80,23 @@ class AdminController extends Controller
     {
         DB::beginTransaction();
         try {
-            $usuario = Usuario::with('persona')->findOrFail($id);
+            $usuario = Usuario::findOrFail($id);
 
             $validated = $request->validate([
                 'nombre' => 'required|string|max:100',
                 'apellido' => 'required|string|max:100',
-                'ci' => 'required|string|max:20|unique:persona,ci,' . $usuario->id_persona,
+                'ci' => 'required|string|max:20|unique:usuarios,ci,' . $usuario->id,
                 'telefono' => 'required|string|max:20',
                 'correo' => 'required|email|max:100|unique:usuarios,correo,' . $usuario->id,
-                'nivel_acceso' => 'required|integer|min:1|max:5',
             ]);
 
-            // Actualizar persona
-            $usuario->persona->update([
+            // Actualizar usuario con datos de persona
+            $usuarioData = [
+                'correo' => $validated['correo'],
                 'nombre' => $validated['nombre'],
                 'apellido' => $validated['apellido'],
                 'ci' => $validated['ci'],
                 'telefono' => $validated['telefono'],
-            ]);
-
-            // Actualizar usuario
-            $usuarioData = [
-                'correo' => $validated['correo'],
             ];
 
             if ($request->filled('contrasena')) {
@@ -117,9 +104,6 @@ class AdminController extends Controller
             }
 
             $usuario->update($usuarioData);
-
-            // Actualizar admin
-            $usuario->admin->update(['nivel_acceso' => $validated['nivel_acceso']]);
 
             DB::commit();
 
@@ -136,10 +120,8 @@ class AdminController extends Controller
     {
         DB::beginTransaction();
         try {
-            $usuario = Usuario::with('persona')->findOrFail($id);
-            $persona = $usuario->persona;
+            $usuario = Usuario::findOrFail($id);
             $usuario->delete();
-            $persona->delete();
 
             DB::commit();
 

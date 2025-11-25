@@ -43,7 +43,6 @@
                         <th>Correo</th>
                         <th>Teléfono</th>
                         <th>Rol</th>
-                        <th>Nivel Acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -51,21 +50,14 @@
                     @foreach($usuarios as $usuario)
                     <tr>
                         <td>{{ $usuario->id }}</td>
-                        <td>{{ $usuario->persona->nombre }} {{ $usuario->persona->apellido }}</td>
-                        <td>{{ $usuario->persona->ci }}</td>
+                        <td>{{ $usuario->nombre }} {{ $usuario->apellido }}</td>
+                        <td>{{ $usuario->ci }}</td>
                         <td>{{ $usuario->correo }}</td>
-                        <td>{{ $usuario->persona->telefono }}</td>
+                        <td>{{ $usuario->telefono }}</td>
                         <td>
                             <span class="badge badge-{{ $usuario->rol->codigo === 'ADMIN' ? 'danger' : ($usuario->rol->codigo === 'CLIENT' ? 'info' : 'secondary') }}">
                                 {{ $usuario->rol->nombre }}
                             </span>
-                        </td>
-                        <td>
-                            @if($usuario->admin)
-                                {{ $usuario->admin->nivel_acceso }}
-                            @else
-                                -
-                            @endif
                         </td>
                         <td>
                             <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-warning btn-sm">

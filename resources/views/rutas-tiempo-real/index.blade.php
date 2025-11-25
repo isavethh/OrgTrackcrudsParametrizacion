@@ -122,7 +122,7 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <p><strong><i class="fas fa-user"></i> Cliente:</strong> {{ $envio->usuario->persona->nombre ?? 'N/A' }} {{ $envio->usuario->persona->apellido ?? '' }}</p>
+                            <p><strong><i class="fas fa-user"></i> Cliente:</strong> {{ $envio->usuario->nombre ?? 'N/A' }} {{ $envio->usuario->apellido ?? '' }}</p>
                             
                             @if($envio->direccion)
                                 <p><strong><i class="fas fa-map-pin"></i> Origen:</strong> {{ $envio->direccion->nombreorigen }}</p>
@@ -175,18 +175,18 @@
     </div>
 
     <!-- Completion Modal -->
-    <div class="modal fade" id="completionModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="completionModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-success">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title"><i class="fas fa-check-circle"></i> Ruta Terminada</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body text-center py-5">
                     <div class="mb-4">
-                        <i class="fas fa-check-circle fa-5x text-success" style="animation: pulse 1s ease-in-out;"></i>
+                        <i class="fas fa-check-circle fa-5x text-success"></i>
                     </div>
                     <h2 class="text-success mb-3"><strong>¡ENVÍO ENTREGADO!</strong></h2>
                     <h4 class="mb-3">El paquete llegó exitosamente a su destino</h4>
@@ -194,8 +194,8 @@
                         <i class="fas fa-clock"></i> Entrega completada el día de hoy
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success btn-lg" data-dismiss="modal">
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-success btn-lg px-5" data-dismiss="modal">
                         <i class="fas fa-thumbs-up"></i> Excelente
                     </button>
                 </div>
@@ -433,10 +433,16 @@
                         });
                     }
 
-                    // Auto-complete si llegó al destino
-                    if (simulationStep >= routeCoordinates.length - 1 || data.envio.estado_tracking === 'completada') {
+                    // Auto-complete si llegó al destino (solo si está en ruta)
+                    if (simulationStep >= routeCoordinates.length - 1 && data.envio.estado_tracking !== 'completada') {
                         clearInterval(trackingInterval);
                         completeTracking(envioId);
+                    }
+                    
+                    // Si ya está completada, detener tracking sin mostrar modal
+                    if (data.envio.estado_tracking === 'completada') {
+                        clearInterval(trackingInterval);
+                        updateTrackingStatus('completada');
                     }
                 }
             }).catch(error => {
@@ -445,6 +451,12 @@
         }
 
         function completeTracking(envioId) {
+            // Evitar múltiples llamadas
+            if (window.isCompleting) {
+                return;
+            }
+            window.isCompleting = true;
+            
             clearInterval(trackingInterval);
             
             // Actualizar UI inmediatamente sin esperar respuesta del servidor
@@ -461,21 +473,28 @@
                 currentMarker.bindPopup('<b style="color:#28a745;">✓ ENVÍO ENTREGADO</b>').openPopup();
             }
             
-            showCompletionModal();
-            
-            // Guardar en segundo plano sin esperar
+            // Guardar en servidor
             fetch(`/rutas-tiempo-real/${envioId}/complete`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 }
-            }).then(() => {
-                // Recargar después de guardar
-                setTimeout(() => location.reload(), 3000);
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar modal solo una vez
+                    showCompletionModal();
+                    
+                    // Recargar después de cerrar el modal
+                    $('#completionModal').on('hidden.bs.modal', function () {
+                        location.reload();
+                    });
+                }
             }).catch(err => {
                 console.error('Error al guardar:', err);
-                setTimeout(() => location.reload(), 3000);
+                alert('Error al completar el envío');
+                window.isCompleting = false;
             });
         }
 

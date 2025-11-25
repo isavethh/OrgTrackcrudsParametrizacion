@@ -42,8 +42,9 @@
                         <th>Dirección</th>
                         <th>Estado</th>
                         <th>Fecha Creación</th>
-                        <th>Fecha Inicio</th>
-                        <th>Fecha Entrega</th>
+                        <th>Entrega Estimada</th>
+                        <th>Peso Total</th>
+                        <th>Costo Total</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -52,8 +53,8 @@
                     <tr>
                         <td><strong>#{{ $envio->id }}</strong></td>
                         <td>
-                            @if($envio->usuario && $envio->usuario->persona)
-                                {{ $envio->usuario->persona->nombre }} {{ $envio->usuario->persona->apellido }}
+                            @if($envio->usuario)
+                                {{ $envio->usuario->nombre }} {{ $envio->usuario->apellido }}
                             @else
                                 -
                             @endif
@@ -84,8 +85,18 @@
                             @endif
                         </td>
                         <td>{{ $envio->fecha_creacion ? \Carbon\Carbon::parse($envio->fecha_creacion)->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $envio->fecha_inicio ? \Carbon\Carbon::parse($envio->fecha_inicio)->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $envio->fecha_entrega ? \Carbon\Carbon::parse($envio->fecha_entrega)->format('d/m/Y H:i') : '-' }}</td>
+                        <td>
+                            @if($envio->fecha_entrega_aproximada)
+                                {{ \Carbon\Carbon::parse($envio->fecha_entrega_aproximada)->format('d/m/Y') }}
+                                @if($envio->hora_entrega_aproximada)
+                                    {{ \Carbon\Carbon::parse($envio->hora_entrega_aproximada)->format('H:i') }}
+                                @endif
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td><span class="badge badge-info">{{ number_format($envio->peso_total_envio ?? 0, 2) }} kg</span></td>
+                        <td><span class="badge badge-success">Bs. {{ number_format($envio->costo_total_envio ?? 0, 2) }}</span></td>
                         <td>
                             <a href="{{ route('envios.edit', $envio) }}" class="btn btn-primary btn-sm" title="Editar">
                                 <i class="fas fa-edit"></i>

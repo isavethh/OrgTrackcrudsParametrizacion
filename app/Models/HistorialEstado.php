@@ -20,6 +20,21 @@ class HistorialEstado extends Model
     protected $casts = [
         'fecha' => 'datetime',
     ];
+    
+    protected $attributes = [
+        'fecha' => null, // Se asignará en el boot
+    ];
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($model) {
+            if (!$model->fecha) {
+                $model->fecha = now();
+            }
+        });
+    }
 
     public function envio()
     {

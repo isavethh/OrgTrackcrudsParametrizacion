@@ -20,11 +20,9 @@
                             <select name="id_usuario" id="id_usuario" class="form-control @error('id_usuario') is-invalid @enderror" required>
                                 <option value="">Seleccione un usuario</option>
                                 @foreach($usuarios as $usuario)
-                                    @if($usuario->persona)
-                                        <option value="{{ $usuario->id }}" {{ old('id_usuario', $envio->id_usuario) == $usuario->id ? 'selected' : '' }}>
-                                            {{ $usuario->persona->nombre }} {{ $usuario->persona->apellido }} ({{ $usuario->correo }})
-                                        </option>
-                                    @endif
+                                    <option value="{{ $usuario->id }}" {{ old('id_usuario', $envio->id_usuario) == $usuario->id ? 'selected' : '' }}>
+                                        {{ $usuario->nombre }} {{ $usuario->apellido }} ({{ $usuario->correo }})
+                                    </option>
                                 @endforeach
                             </select>
                             @error('id_usuario')

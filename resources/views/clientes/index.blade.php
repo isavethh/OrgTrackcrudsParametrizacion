@@ -49,10 +49,10 @@
                     @foreach($clientes as $cliente)
                     <tr>
                         <td>{{ $cliente->id }}</td>
-                        <td>{{ $cliente->persona->nombre }} {{ $cliente->persona->apellido }}</td>
-                        <td>{{ $cliente->persona->ci }}</td>
+                        <td>{{ $cliente->nombre }} {{ $cliente->apellido }}</td>
+                        <td>{{ $cliente->ci }}</td>
                         <td>{{ $cliente->correo }}</td>
-                        <td>{{ $cliente->persona->telefono }}</td>
+                        <td>{{ $cliente->telefono }}</td>
                         <td>
                             <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>

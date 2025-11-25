@@ -89,17 +89,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="nivel_acceso">Nivel de Acceso <span class="text-danger">*</span></label>
-                    <select name="nivel_acceso" id="nivel_acceso" class="form-control" required>
-                        <option value="1">1 - Básico</option>
-                        <option value="2">2 - Medio</option>
-                        <option value="3" selected>3 - Avanzado</option>
-                        <option value="4">4 - Supervisor</option>
-                        <option value="5">5 - Super Admin</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Guardar
                     </button>

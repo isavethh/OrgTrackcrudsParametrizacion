@@ -1,91 +1,113 @@
 -- ===============================
--- Catálogos parametrizables
+-- NUEVO ESQUEMA POSTGRESQL
 -- ===============================
+DROP TABLE IF EXISTS firmatransportista CASCADE;
+DROP TABLE IF EXISTS firmaenvio CASCADE;
+DROP TABLE IF EXISTS incidentes_transporte CASCADE;
+DROP TABLE IF EXISTS checklist_condicion_detalle CASCADE;
+DROP TABLE IF EXISTS checklist_condicion CASCADE;
+DROP TABLE IF EXISTS asignacioncarga CASCADE;
+DROP TABLE IF EXISTS qrtoken CASCADE;
+DROP TABLE IF EXISTS asignacionmultiple CASCADE;
+DROP TABLE IF EXISTS carga CASCADE;
+DROP TABLE IF EXISTS historialestados CASCADE;
+DROP TABLE IF EXISTS envios CASCADE;
+DROP TABLE IF EXISTS direccionsegmento CASCADE;
+DROP TABLE IF EXISTS direccion CASCADE;
+DROP TABLE IF EXISTS recogidaentrega CASCADE;
+DROP TABLE IF EXISTS transportistas CASCADE;
+DROP TABLE IF EXISTS vehiculos CASCADE;
+DROP TABLE IF EXISTS admin CASCADE;
+DROP TABLE IF EXISTS cliente CASCADE;
+DROP TABLE IF EXISTS usuarios CASCADE;
+DROP TABLE IF EXISTS persona CASCADE;
+DROP TABLE IF EXISTS tipos_incidente_transporte CASCADE;
+DROP TABLE IF EXISTS condiciones_transporte CASCADE;
+DROP TABLE IF EXISTS catalogo_carga CASCADE;
+DROP TABLE IF EXISTS tipotransporte CASCADE;
+DROP TABLE IF EXISTS estados_asignacion_multiple CASCADE;
+DROP TABLE IF EXISTS estados_qrtoken CASCADE;
+DROP TABLE IF EXISTS estados_envio CASCADE;
+DROP TABLE IF EXISTS estados_transportista CASCADE;
+DROP TABLE IF EXISTS estados_vehiculo CASCADE;
+DROP TABLE IF EXISTS tipos_vehiculo CASCADE;
+DROP TABLE IF EXISTS roles_usuario CASCADE;
+-- Laravel framework tables
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS cache CASCADE;
 DROP TABLE IF EXISTS cache_locks CASCADE;
 DROP TABLE IF EXISTS jobs CASCADE;
 DROP TABLE IF EXISTS job_batches CASCADE;
 DROP TABLE IF EXISTS failed_jobs CASCADE;
-DROP TABLE IF EXISTS estado_transportista CASCADE;
-DROP TABLE IF EXISTS tipo_transporte CASCADE;
-DROP TABLE IF EXISTS tamano_transporte CASCADE;
-DROP TABLE IF EXISTS tipo_empaque CASCADE;
-DROP TABLE IF EXISTS unidad_medida CASCADE;
-DROP TABLE IF EXISTS usuario CASCADE;
-DROP TABLE IF EXISTS admin CASCADE;
-DROP TABLE IF EXISTS cliente CASCADE;
-DROP TABLE IF EXISTS transportista CASCADE;
-DROP TABLE IF EXISTS qrtoken CASCADE;
-DROP TABLE IF EXISTS vehiculo CASCADE;
-DROP TABLE IF EXISTS peso_soportado CASCADE;
-DROP TABLE IF EXISTS envio CASCADE;
-DROP TABLE IF EXISTS direccion CASCADE;
-DROP TABLE IF EXISTS asignacionmultiple CASCADE;
-DROP TABLE IF EXISTS checklistcondicioncliente CASCADE;
-DROP TABLE IF EXISTS checklistcondiciontransportista CASCADE;
-DROP TABLE IF EXISTS checklistincidentetransporte CASCADE;
 
 -- ===============================
--- Tablas de Laravel (sesiones, cache, jobs)
+-- TABLAS DE CATÁLOGO
 -- ===============================
-CREATE TABLE sessions (
-  id VARCHAR(255) PRIMARY KEY,
-  user_id BIGINT NULL,
-  ip_address VARCHAR(45) NULL,
-  user_agent TEXT NULL,
-  payload TEXT NOT NULL,
-  last_activity INTEGER NOT NULL
+
+CREATE TABLE roles_usuario (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(30)  NOT NULL UNIQUE,
+    nombre      VARCHAR(50)  NOT NULL,
+    descripcion VARCHAR(150)
 );
 
-CREATE INDEX sessions_user_id_index ON sessions(user_id);
-CREATE INDEX sessions_last_activity_index ON sessions(last_activity);
-
-CREATE TABLE cache (
-  key VARCHAR(255) PRIMARY KEY,
-  value TEXT NOT NULL,
-  expiration INTEGER NOT NULL
+CREATE TABLE tipos_vehiculo (
+    id          SERIAL PRIMARY KEY,
+    nombre      VARCHAR(50)  NOT NULL UNIQUE,
+    descripcion VARCHAR(150)
 );
 
-CREATE TABLE cache_locks (
-  key VARCHAR(255) PRIMARY KEY,
-  owner VARCHAR(255) NOT NULL,
-  expiration INTEGER NOT NULL
+CREATE TABLE estados_vehiculo (
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(30) NOT NULL UNIQUE
 );
 
-CREATE TABLE jobs (
-  id BIGSERIAL PRIMARY KEY,
-  queue VARCHAR(255) NOT NULL,
-  payload TEXT NOT NULL,
-  attempts SMALLINT NOT NULL,
-  reserved_at INTEGER NULL,
-  available_at INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
+CREATE TABLE estados_transportista (
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(30) NOT NULL UNIQUE
 );
 
-CREATE INDEX jobs_queue_index ON jobs(queue);
-
-CREATE TABLE job_batches (
-  id VARCHAR(255) PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  total_jobs INTEGER NOT NULL,
-  pending_jobs INTEGER NOT NULL,
-  failed_jobs INTEGER NOT NULL,
-  failed_job_ids TEXT NOT NULL,
-  options TEXT NULL,
-  cancelled_at INTEGER NULL,
-  created_at INTEGER NOT NULL,
-  finished_at INTEGER NULL
+CREATE TABLE estados_envio (
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE failed_jobs (
-  id BIGSERIAL PRIMARY KEY,
-  uuid VARCHAR(255) UNIQUE NOT NULL,
-  connection TEXT NOT NULL,
-  queue TEXT NOT NULL,
-  payload TEXT NOT NULL,
-  exception TEXT NOT NULL,
-  failed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE estados_asignacion_multiple (
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE tipotransporte (
+    id          SERIAL PRIMARY KEY,
+    nombre      VARCHAR(50)  NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE catalogo_carga (
+    id          SERIAL PRIMARY KEY,
+    tipo        VARCHAR(50) NOT NULL,
+    variedad    VARCHAR(50) NOT NULL,
+    empaque     VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(150)
+);
+
+CREATE TABLE condiciones_transporte (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(50)  NOT NULL UNIQUE,
+    titulo      VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE tipos_incidente_transporte (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(50)  NOT NULL UNIQUE,
+    titulo      VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE estados_qrtoken (
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(30) NOT NULL UNIQUE
 );
 
 CREATE TABLE estado_transportista (

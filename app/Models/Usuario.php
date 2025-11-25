@@ -17,7 +17,10 @@ class Usuario extends Model
         'correo',
         'contrasena',
         'id_rol',
-        'id_persona',
+        'nombre',
+        'apellido',
+        'ci',
+        'telefono',
     ];
 
     protected $hidden = [
@@ -33,11 +36,6 @@ class Usuario extends Model
         return $this->belongsTo(RolUsuario::class, 'id_rol');
     }
 
-    public function persona()
-    {
-        return $this->belongsTo(Persona::class, 'id_persona');
-    }
-
     public function admin()
     {
         return $this->hasOne(Admin::class, 'id_usuario');
@@ -46,6 +44,11 @@ class Usuario extends Model
     public function cliente()
     {
         return $this->hasOne(Cliente::class, 'id_usuario');
+    }
+
+    public function transportista()
+    {
+        return $this->hasOne(Transportista::class, 'id_usuario');
     }
 
     public function envios()

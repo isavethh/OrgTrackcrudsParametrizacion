@@ -27,7 +27,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="nombre">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $usuario->persona->nombre) }}" required>
+                            <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $usuario->nombre) }}" required>
                             @error('nombre')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -37,7 +37,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="apellido">Apellido <span class="text-danger">*</span></label>
-                            <input type="text" name="apellido" id="apellido" class="form-control @error('apellido') is-invalid @enderror" value="{{ old('apellido', $usuario->persona->apellido) }}" required>
+                            <input type="text" name="apellido" id="apellido" class="form-control @error('apellido') is-invalid @enderror" value="{{ old('apellido', $usuario->apellido) }}" required>
                             @error('apellido')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -49,7 +49,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="ci">CI <span class="text-danger">*</span></label>
-                            <input type="text" name="ci" id="ci" class="form-control @error('ci') is-invalid @enderror" value="{{ old('ci', $usuario->persona->ci) }}" required>
+                            <input type="text" name="ci" id="ci" class="form-control @error('ci') is-invalid @enderror" value="{{ old('ci', $usuario->ci) }}" required>
                             @error('ci')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -59,7 +59,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="telefono">Teléfono <span class="text-danger">*</span></label>
-                            <input type="text" name="telefono" id="telefono" class="form-control @error('telefono') is-invalid @enderror" value="{{ old('telefono', $usuario->persona->telefono) }}" required>
+                            <input type="text" name="telefono" id="telefono" class="form-control @error('telefono') is-invalid @enderror" value="{{ old('telefono', $usuario->telefono) }}" required>
                             @error('telefono')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -103,19 +103,6 @@
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
                 </div>
-
-                @if($usuario->admin)
-                    <div class="form-group">
-                        <label for="nivel_acceso">Nivel de Acceso</label>
-                        <select name="nivel_acceso" id="nivel_acceso" class="form-control">
-                            <option value="1" {{ old('nivel_acceso', $usuario->admin->nivel_acceso) == 1 ? 'selected' : '' }}>1 - Básico</option>
-                            <option value="2" {{ old('nivel_acceso', $usuario->admin->nivel_acceso) == 2 ? 'selected' : '' }}>2 - Medio</option>
-                            <option value="3" {{ old('nivel_acceso', $usuario->admin->nivel_acceso) == 3 ? 'selected' : '' }}>3 - Avanzado</option>
-                            <option value="4" {{ old('nivel_acceso', $usuario->admin->nivel_acceso) == 4 ? 'selected' : '' }}>4 - Supervisor</option>
-                            <option value="5" {{ old('nivel_acceso', $usuario->admin->nivel_acceso) == 5 ? 'selected' : '' }}>5 - Super Admin</option>
-                        </select>
-                    </div>
-                @endif
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">

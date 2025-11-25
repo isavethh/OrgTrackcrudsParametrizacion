@@ -32,7 +32,6 @@
                         <th>CI</th>
                         <th>Correo</th>
                         <th>Teléfono</th>
-                        <th>Nivel Acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -40,13 +39,10 @@
                     @foreach($admins as $admin)
                     <tr>
                         <td>{{ $admin->id }}</td>
-                        <td>{{ $admin->persona->nombre }} {{ $admin->persona->apellido }}</td>
-                        <td>{{ $admin->persona->ci }}</td>
+                        <td>{{ $admin->nombre }} {{ $admin->apellido }}</td>
+                        <td>{{ $admin->ci }}</td>
                         <td>{{ $admin->correo }}</td>
-                        <td>{{ $admin->persona->telefono }}</td>
-                        <td>
-                            <span class="badge badge-danger">{{ $admin->admin->nivel_acceso }}</span>
-                        </td>
+                        <td>{{ $admin->telefono }}</td>
                         <td>
                             <a href="{{ route('admins.edit', $admin->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>

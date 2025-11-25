@@ -177,16 +177,16 @@
         <div class="seccion-body">
             <div class="info-row">
                 <div class="info-label">Nombre Completo:</div>
-                <div class="info-value">{{ $envio->usuario->persona->nombre }} {{ $envio->usuario->persona->apellido }}</div>
+                <div class="info-value">{{ $envio->usuario->nombre }} {{ $envio->usuario->apellido }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">Correo Electrónico:</div>
                 <div class="info-value">{{ $envio->usuario->correo }}</div>
             </div>
-            @if($envio->usuario->persona->telefono)
+            @if($envio->usuario->telefono)
             <div class="info-row">
                 <div class="info-label">Teléfono:</div>
-                <div class="info-value">{{ $envio->usuario->persona->telefono }}</div>
+                <div class="info-value">{{ $envio->usuario->telefono }}</div>
             </div>
             @endif
         </div>

@@ -17,7 +17,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="nombre">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $cliente->usuario->nombre) }}" required>
+                            <input type="text" name="nombre" id="nombre" class="form-control @error('nombre') is-invalid @enderror" value="{{ old('nombre', $cliente->nombre) }}" required>
                             @error('nombre')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -27,7 +27,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="apellido">Apellido <span class="text-danger">*</span></label>
-                            <input type="text" name="apellido" id="apellido" class="form-control @error('apellido') is-invalid @enderror" value="{{ old('apellido', $cliente->usuario->apellido) }}" required>
+                            <input type="text" name="apellido" id="apellido" class="form-control @error('apellido') is-invalid @enderror" value="{{ old('apellido', $cliente->apellido) }}" required>
                             @error('apellido')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
@@ -37,7 +37,7 @@
 
                 <div class="form-group">
                     <label for="correo">Correo Electrónico <span class="text-danger">*</span></label>
-                    <input type="email" name="correo" id="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo', $cliente->usuario->correo) }}" required>
+                    <input type="email" name="correo" id="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo', $cliente->correo) }}" required>
                     @error('correo')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> <strong>Fecha de registro:</strong> {{ $cliente->usuario->fecha_registro->format('d/m/Y H:i') }}
+                    <i class="fas fa-info-circle"></i> <strong>Fecha de registro:</strong> {{ $cliente->fecha_registro ? $cliente->fecha_registro->format('d/m/Y H:i') : 'N/A' }}
                 </div>
 
                 <div class="form-group">

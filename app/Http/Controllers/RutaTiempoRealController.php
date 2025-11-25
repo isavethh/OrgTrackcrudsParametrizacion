@@ -14,7 +14,7 @@ class RutaTiempoRealController extends Controller
      */
     public function index()
     {
-        $envios = Envio::with(['direccion', 'usuario.persona'])
+        $envios = Envio::with(['direccion', 'usuario'])
             ->orderBy('fecha_creacion', 'desc')
             ->get();
 

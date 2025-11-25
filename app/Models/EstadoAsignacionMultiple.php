@@ -5,20 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Model
+class EstadoAsignacionMultiple extends Model
 {
     use HasFactory;
 
-    protected $table = 'admin';
+    protected $table = 'estados_asignacion_multiple';
     protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'id_usuario',
+        'nombre',
     ];
 
-    public function usuario()
+    public function asignaciones()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario');
+        return $this->hasMany(AsignacionMultiple::class, 'id_estado_asignacion');
     }
 }

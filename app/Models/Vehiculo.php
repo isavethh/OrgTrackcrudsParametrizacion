@@ -14,9 +14,9 @@ class Vehiculo extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_tipo_vehiculo',
         'placa',
         'capacidad',
-        'id_tipo_vehiculo',
         'id_estado_vehiculo',
     ];
 

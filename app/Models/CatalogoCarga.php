@@ -5,20 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Model
+class CatalogoCarga extends Model
 {
     use HasFactory;
 
-    protected $table = 'admin';
+    protected $table = 'catalogo_carga';
     protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'id_usuario',
+        'tipo',
+        'variedad',
+        'empaque',
+        'descripcion',
     ];
 
-    public function usuario()
+    public function cargas()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario');
+        return $this->hasMany(Carga::class, 'id_catalogo_carga');
     }
 }

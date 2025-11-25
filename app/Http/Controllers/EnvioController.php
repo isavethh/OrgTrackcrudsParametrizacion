@@ -17,7 +17,7 @@ class EnvioController extends Controller
 {
     public function index()
     {
-        $envios = Envio::with(['usuario.persona', 'direccion', 'historialEstados.estadoEnvio'])
+        $envios = Envio::with(['usuario', 'direccion', 'historialEstados.estadoEnvio'])
             ->orderBy('fecha_creacion', 'desc')
             ->get();
         return view('envios.index', compact('envios'));
@@ -25,7 +25,7 @@ class EnvioController extends Controller
 
     public function create()
     {
-        $usuarios = Usuario::with('persona')->get();
+        $usuarios = Usuario::all();
         $direcciones = Direccion::all();
         $tiposEmpaque = TipoEmpaque::orderBy('nombre')->get();
         $unidadesMedida = UnidadMedida::orderBy('nombre')->get();
@@ -35,20 +35,24 @@ class EnvioController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuarios,id',
-            'id_direccion' => 'required|exists:direccion,id',
-            'fecha_entrega_aproximada' => 'nullable|date',
-            'hora_entrega_aproximada' => 'nullable|date_format:H:i',
-            'productos' => 'required|array|min:1',
-            'productos.*.categoria' => 'required|string|in:Verduras,Frutas',
-            'productos.*.producto' => 'required|string',
-            'productos.*.cantidad' => 'required|integer|min:1',
-            'productos.*.peso_por_unidad' => 'required|numeric|min:0',
-            'productos.*.costo_unitario' => 'required|numeric|min:0',
-            'productos.*.id_tipo_empaque' => 'required|exists:tipo_empaque,id',
-            'productos.*.id_unidad_medida' => 'required|exists:unidad_medida,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'id_usuario' => 'required|exists:usuarios,id',
+                'id_direccion' => 'required|exists:direccion,id',
+                'fecha_entrega_aproximada' => 'nullable|date',
+                'hora_entrega_aproximada' => 'nullable|date_format:H:i',
+                'productos' => 'required|array|min:1',
+                'productos.*.categoria' => 'required|string|in:Verduras,Frutas',
+                'productos.*.producto' => 'required|string',
+                'productos.*.cantidad' => 'required|integer|min:1',
+                'productos.*.peso_por_unidad' => 'required|numeric|min:0',
+                'productos.*.costo_unitario' => 'required|numeric|min:0',
+                'productos.*.id_tipo_empaque' => 'required|exists:tipo_empaque,id',
+                'productos.*.id_unidad_medida' => 'required|exists:unidad_medida,id',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withInput()->withErrors($e->errors())->with('error', 'Error de validación. Verifique los datos ingresados.');
+        }
 
         DB::beginTransaction();
         try {
@@ -108,13 +112,13 @@ class EnvioController extends Controller
 
     public function show(Envio $envio)
     {
-        $envio->load(['usuario.persona', 'direccion', 'historialEstados.estadoEnvio', 'asignaciones']);
+        $envio->load(['usuario', 'direccion', 'historialEstados.estadoEnvio', 'asignaciones']);
         return view('envios.show', compact('envio'));
     }
 
     public function edit(Envio $envio)
     {
-        $usuarios = Usuario::with('persona')->get();
+        $usuarios = Usuario::all();
         $direcciones = Direccion::all();
         $tiposEmpaque = TipoEmpaque::orderBy('nombre')->get();
         $unidadesMedida = UnidadMedida::orderBy('nombre')->get();

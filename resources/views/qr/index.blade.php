@@ -66,11 +66,9 @@
                 <select id="cliente-select" class="form-control form-control-lg">
                     <option value="">-- Selecciona un cliente --</option>
                     @foreach($clientes as $cliente)
-                        @if($cliente->persona)
-                            <option value="{{ $cliente->id }}">
-                                {{ $cliente->persona->nombre }} {{ $cliente->persona->apellido }}
-                            </option>
-                        @endif
+                        <option value="{{ $cliente->id }}">
+                            {{ $cliente->nombre }} {{ $cliente->apellido }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -259,19 +257,33 @@ $(document).ready(function() {
             timeout: 5000, // 5 segundos timeout
             success: function(response) {
                 if (response.success) {
-                    // Actualizar solo esta tarjeta sin recargar todo
+                    // Obtener datos existentes antes de actualizar
                     const cardBody = card.find('.card-body');
-                    const pesoTotal = cardBody.find('.info-box-number').first().text();
-                    const costoTotal = cardBody.find('.info-box-number').last().text();
-                    const direccionHTML = cardBody.find('p.text-left').parent().html() || '';
+                    const pesoText = cardBody.find('.info-box-number').eq(0).text().trim();
+                    const costoText = cardBody.find('.info-box-number').eq(1).text().trim();
                     
+                    // Extraer solo los párrafos de dirección (sin duplicar)
+                    const origenText = cardBody.find('p.text-left').eq(0).text().trim();
+                    const destinoText = cardBody.find('p.text-left').eq(1).text().trim();
+                    
+                    let direccionHTML = '';
+                    if (origenText || destinoText) {
+                        direccionHTML = `
+                            <p class="text-left mb-1"><small><i class="fas fa-map-pin text-success"></i> <strong>Origen:</strong> ${origenText.replace(/Origen:\s*/, '')}</small></p>
+                            <p class="text-left mb-3"><small><i class="fas fa-flag-checkered text-danger"></i> <strong>Destino:</strong> ${destinoText.replace(/Destino:\s*/, '')}</small></p>
+                        `;
+                    }
+                    
+                    // Reconstruir el contenido completo
                     cardBody.html(`
-                        <img src="/qr/generar/${envioId}?t=${Date.now()}" class="qr-image mb-3" alt="QR Code" loading="lazy">
-                        <div class="alert alert-success" style="font-size: 1.1rem;">
-                            <i class="fas fa-key"></i> <strong>Código para escanear:</strong><br>
-                            <span style="font-size: 1.3rem; font-weight: bold; letter-spacing: 1px;">${response.codigo}</span>
+                        <div class="text-center">
+                            <img src="/qr/generar/${envioId}?t=${Date.now()}" class="qr-image mb-3" alt="QR Code" loading="lazy">
+                            <div class="alert alert-success" style="font-size: 1.1rem;">
+                                <i class="fas fa-key"></i> <strong>Código para escanear:</strong><br>
+                                <span style="font-size: 1.3rem; font-weight: bold; letter-spacing: 1px;">${response.codigo}</span>
+                            </div>
+                            <p class="text-muted"><small>Usa este código en "Leer Código QR"</small></p>
                         </div>
-                        <p class="text-muted"><small>Usa este código en "Leer Código QR"</small></p>
                         
                         <div class="row mb-3">
                             <div class="col-6">
@@ -279,7 +291,7 @@ $(document).ready(function() {
                                     <span class="info-box-icon"><i class="fas fa-weight-hanging"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">Peso</span>
-                                        <span class="info-box-number">${pesoTotal}</span>
+                                        <span class="info-box-number">${pesoText}</span>
                                     </div>
                                 </div>
                             </div>
@@ -288,7 +300,7 @@ $(document).ready(function() {
                                     <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">Costo</span>
-                                        <span class="info-box-number">${costoTotal}</span>
+                                        <span class="info-box-number">${costoText}</span>
                                     </div>
                                 </div>
                             </div>
