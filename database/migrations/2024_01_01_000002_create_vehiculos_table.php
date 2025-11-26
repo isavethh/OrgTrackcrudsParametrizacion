@@ -14,15 +14,12 @@ return new class extends Migration
     {
         Schema::create('vehiculos', function (Blueprint $table) {
             $table->id();
-            $table->string('tipo', 50);
+            $table->foreignId('id_tipo_vehiculo')->constrained('tipos_vehiculo');
             $table->string('placa', 20)->unique();
             $table->decimal('capacidad', 10, 2);
-            $table->string('estado', 20);
+            $table->foreignId('id_estado_vehiculo')->constrained('estados_vehiculo');
             $table->timestampTz('fecha_registro')->default(DB::raw('now()'));
         });
-        
-        DB::statement("ALTER TABLE vehiculos ADD CONSTRAINT chk_vehiculos_estado CHECK (estado IN ('Mantenimiento','No Disponible','En ruta','Disponible'))");
-        DB::statement("ALTER TABLE vehiculos ADD CONSTRAINT ck_vehiculos_tipo_detallado CHECK (tipo IN ('Pesado - Ventilado','Pesado - Aislado','Pesado - Refrigerado','Mediano - Ventilado','Mediano - Aislado','Mediano - Refrigerado','Ligero - Ventilado','Ligero - Aislado','Ligero - Refrigerado'))");
     }
 
     /**

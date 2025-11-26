@@ -13,12 +13,30 @@ class Carga extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'tipo',
-        'variedad',
+        'id_catalogo_carga',
         'cantidad',
-        'empaquetado',
         'peso',
     ];
+
+    protected $casts = [
+        'cantidad' => 'integer',
+        'peso' => 'decimal:2',
+    ];
+
+    public function catalogoCarga()
+    {
+        return $this->belongsTo(CatalogoCarga::class, 'id_catalogo_carga', 'id');
+    }
+
+    public function asignaciones()
+    {
+        return $this->belongsToMany(
+            AsignacionMultiple::class,
+            'asignacioncarga',
+            'id_carga',
+            'id_asignacion'
+        );
+    }
 }
 
 

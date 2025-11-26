@@ -15,9 +15,8 @@ class Transportista extends Model
 
     protected $fillable = [
         'id_usuario',
-        'ci',
-        'telefono',
-        'estado',
+        'id_estado_transportista',
+        'fecha_registro',
     ];
 
     protected $casts = [
@@ -25,7 +24,7 @@ class Transportista extends Model
     ];
 
     /**
-     * Relación con el modelo Usuario
+     * Relación con el usuario
      */
     public function usuario(): BelongsTo
     {
@@ -33,18 +32,38 @@ class Transportista extends Model
     }
 
     /**
+     * Relación con el estado del transportista
+     */
+    public function estadoTransportista(): BelongsTo
+    {
+        return $this->belongsTo(EstadosTransportista::class, 'id_estado_transportista', 'id');
+    }
+
+    /**
+     * Relación con las asignaciones
+     */
+    public function asignaciones()
+    {
+        return $this->hasMany(AsignacionMultiple::class, 'id_transportista', 'id');
+    }
+
+    /**
      * Scope para obtener transportistas disponibles
      */
     public function scopeDisponibles($query)
     {
-        return $query->where('estado', 'Disponible');
+        return $query->whereHas('estadoTransportista', function($q) {
+            $q->where('nombre', 'Disponible');
+        });
     }
 
     /**
      * Scope para obtener transportistas por estado
      */
-    public function scopePorEstado($query, $estado)
+    public function scopePorEstado($query, $estadoNombre)
     {
-        return $query->where('estado', $estado);
+        return $query->whereHas('estadoTransportista', function($q) use ($estadoNombre) {
+            $q->where('nombre', $estadoNombre);
+        });
     }
 }

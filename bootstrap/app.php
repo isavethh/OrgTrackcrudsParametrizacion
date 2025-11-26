@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registrar alias para middleware JWT
         $middleware->alias([
             'jwt' => \App\Http\Middleware\JwtMiddleware::class,
+            'cors' => \App\Http\Middleware\CorsMiddleware::class,
+        ]);
+        
+        // Aplicar CORS a todas las rutas de API
+        $middleware->api(prepend: [
+            \App\Http\Middleware\CorsMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

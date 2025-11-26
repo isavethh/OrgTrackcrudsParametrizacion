@@ -22,6 +22,28 @@ class Direccion extends Model
         'destino_lat',
         'rutageojson',
     ];
+
+    protected $casts = [
+        'origen_lng' => 'double',
+        'origen_lat' => 'double',
+        'destino_lng' => 'double',
+        'destino_lat' => 'double',
+    ];
+
+    public function segmentos()
+    {
+        return $this->hasMany(DireccionSegmento::class, 'direccion_id', 'id');
+    }
+
+    public function envios()
+    {
+        return $this->hasMany(Envio::class, 'id_direccion', 'id');
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario', 'id');
+    }
 }
 
 

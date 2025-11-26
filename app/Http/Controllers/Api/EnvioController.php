@@ -12,8 +12,17 @@ use App\Models\Tipotransporte;
 use App\Models\Direccion;
 use App\Models\Transportista;
 use App\Models\Vehiculo;
-use App\Models\ChecklistCondicionTransporte;
-use App\Models\ChecklistIncidenteTransporte;
+use App\Models\ChecklistCondicion;
+use App\Models\ChecklistCondicionDetalle;
+use App\Models\IncidentesTransporte;
+use App\Models\CatalogoCarga;
+use App\Models\EstadosAsignacionMultiple;
+use App\Models\EstadosEnvio;
+use App\Models\EstadosVehiculo;
+use App\Models\EstadosTransportista;
+use App\Models\EstadosQrToken;
+use App\Http\Controllers\Api\Helpers\EstadoHelper;
+use App\Http\Controllers\Api\Helpers\UsuarioHelper;
 use App\Models\FirmaEnvio;
 use App\Models\FirmaTransportista;
 use App\Models\QrToken;
@@ -38,20 +47,20 @@ class EnvioController extends Controller
             return response()->json(['error' => 'Faltan datos para crear el envío (dirección o particiones)'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Validar que la dirección exista y sea del usuario
-        $direccion = \App\Models\Direccion::where('id', $idDireccion)
-            ->where('id_usuario', $idUsuario)
-            ->first();
+        // Validar que la dirección exista
+        $direccion = Direccion::find($idDireccion);
         if (!$direccion) {
-            return response()->json(['error' => 'La dirección no existe o no pertenece al usuario'], Response::HTTP_BAD_REQUEST);
+            return response()->json(['error' => 'La dirección no existe'], Response::HTTP_BAD_REQUEST);
         }
 
         return DB::transaction(function () use ($idUsuario, $idDireccion, $particiones) {
             $envio = Envio::create([
                 'id_usuario' => $idUsuario,
-                'estado' => 'Pendiente',
                 'id_direccion' => $idDireccion,
             ]);
+
+            // Crear estado inicial en historial
+            EstadoHelper::actualizarEstadoEnvio($envio->id, 'Pendiente');
 
             foreach ($particiones as $particion) {
                 $cargas = $particion['cargas'] ?? null;
@@ -75,19 +84,30 @@ class EnvioController extends Controller
                     'instrucciones_entrega' => $recogidaEntrega['instrucciones_entrega'] ?? null,
                 ]);
 
+                // Obtener o crear estado "Pendiente"
+                $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
+
                 $asignacion = AsignacionMultiple::create([
                     'id_envio' => $envio->id,
                     'id_tipo_transporte' => $idTipoTransporte,
-                    'estado' => 'Pendiente',
+                    'id_estado_asignacion' => $idEstadoPendiente,
                     'id_recogida_entrega' => $r->id,
                 ]);
 
                 foreach ($cargas as $carga) {
+                    // Buscar o crear catalogo de carga
+                    $catalogo = CatalogoCarga::firstOrCreate(
+                        [
+                            'tipo' => $carga['tipo'],
+                            'variedad' => $carga['variedad'],
+                            'empaque' => $carga['empaquetado'],
+                        ],
+                        ['descripcion' => null]
+                    );
+
                     $c = Carga::create([
-                        'tipo' => $carga['tipo'],
-                        'variedad' => $carga['variedad'],
+                        'id_catalogo_carga' => $catalogo->id,
                         'cantidad' => $carga['cantidad'],
-                        'empaquetado' => $carga['empaquetado'],
                         'peso' => $carga['peso'],
                     ]);
                     AsignacionCarga::create([
@@ -147,7 +167,6 @@ class EnvioController extends Controller
             return DB::transaction(function () use ($id_usuario_cliente, $ubicacion, $particiones) {
                 // 1. Guardar ubicación en PostgreSQL (en lugar de MongoDB)
                 $nuevaUbicacion = Direccion::create([
-                    'id_usuario' => $id_usuario_cliente,
                     'nombreorigen' => $ubicacion['nombreorigen'],
                     'origen_lng' => $ubicacion['origen_lng'],
                     'origen_lat' => $ubicacion['origen_lat'],
@@ -160,9 +179,11 @@ class EnvioController extends Controller
                 // 2. Insertar envío principal
                 $envio = Envio::create([
                     'id_usuario' => $id_usuario_cliente,
-                    'estado' => 'Asignado',
                     'id_direccion' => $nuevaUbicacion->id,
                 ]);
+
+                // Crear estado inicial en historial
+                EstadoHelper::actualizarEstadoEnvio($envio->id, 'Asignado');
 
                 // 3. Procesar cada partición
                 foreach ($particiones as $bloque) {
@@ -182,38 +203,49 @@ class EnvioController extends Controller
                     ]);
 
                     // 5. Verificar disponibilidad de transportista y vehículo
-                    $transportista = Transportista::find($id_transportista);
-                    $vehiculo = Vehiculo::find($id_vehiculo);
+                    $transportista = Transportista::with('estadoTransportista')->find($id_transportista);
+                    $vehiculo = Vehiculo::with('estadoVehiculo')->find($id_vehiculo);
 
-                    if (!$transportista || $transportista->estado !== 'Disponible') {
+                    if (!$transportista || $transportista->estadoTransportista?->nombre !== 'Disponible') {
                         throw new \Exception("Transportista {$id_transportista} no disponible");
                     }
 
-                    if (!$vehiculo || $vehiculo->estado !== 'Disponible') {
+                    if (!$vehiculo || $vehiculo->estadoVehiculo?->nombre !== 'Disponible') {
                         throw new \Exception("Vehículo {$id_vehiculo} no disponible");
                     }
 
                     // 6. Insertar Asignación
+                    $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
                     $asignacion = AsignacionMultiple::create([
                         'id_envio' => $envio->id,
                         'id_transportista' => $id_transportista,
                         'id_vehiculo' => $id_vehiculo,
-                        'estado' => 'Pendiente',
+                        'id_estado_asignacion' => $idEstadoPendiente,
                         'id_tipo_transporte' => $id_tipo_transporte,
                         'id_recogida_entrega' => $recogida->id,
                     ]);
 
                     // 7. Marcar transportista y vehículo como no disponibles
-                    $transportista->update(['estado' => 'No Disponible']);
-                    $vehiculo->update(['estado' => 'No Disponible']);
+                    $idEstadoNoDisponible = EstadoHelper::obtenerEstadoTransportistaPorNombre('No Disponible');
+                    $idEstadoVehiculoNoDisponible = EstadoHelper::obtenerEstadoVehiculoPorNombre('No Disponible');
+                    $transportista->update(['id_estado_transportista' => $idEstadoNoDisponible]);
+                    $vehiculo->update(['id_estado_vehiculo' => $idEstadoVehiculoNoDisponible]);
 
                     // 8. Insertar cargas y relacionarlas con la asignación
                     foreach ($cargas as $carga) {
+                        // Buscar o crear catalogo de carga
+                        $catalogo = CatalogoCarga::firstOrCreate(
+                            [
+                                'tipo' => $carga['tipo'],
+                                'variedad' => $carga['variedad'],
+                                'empaque' => $carga['empaquetado'],
+                            ],
+                            ['descripcion' => null]
+                        );
+
                         $nuevaCarga = Carga::create([
-                            'tipo' => $carga['tipo'],
-                            'variedad' => $carga['variedad'],
+                            'id_catalogo_carga' => $catalogo->id,
                             'cantidad' => $carga['cantidad'],
-                            'empaquetado' => $carga['empaquetado'],
                             'peso' => $carga['peso'],
                         ]);
 
@@ -264,12 +296,14 @@ class EnvioController extends Controller
 
             // Consulta básica sin relaciones complejas
             $query = Envio::with([
-                'usuario:id,nombre,apellido,rol',
-                'direccion:id,nombreorigen,nombredestino'
+                'usuario.persona:id,nombre,apellido',
+                'usuario.rol:id,codigo,nombre',
+                'direccion:id,nombreorigen,nombredestino',
+                'historialEstados.estadoEnvio:id,nombre'
             ]);
 
             // Si no es admin, solo mostrar sus envíos
-            if ($usuario['rol'] !== 'admin') {
+            if (!UsuarioHelper::tieneRol($usuario, 'admin')) {
                 $query->where('id_usuario', $usuario['id']);
                 \Log::info('Filtrando por usuario: ' . $usuario['id']);
             }
@@ -284,19 +318,20 @@ class EnvioController extends Controller
 
             // Transformar la respuesta de forma más simple
             $envios = $envios->map(function ($envio) {
+                $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
                 return [
                     'id' => $envio->id,
                     'id_usuario' => $envio->id_usuario,
-                    'estado' => $envio->estado,
+                    'estado' => $estadoActual ?? 'Pendiente',
                     'fecha_creacion' => $envio->fecha_creacion,
                     'fecha_inicio' => $envio->fecha_inicio,
                     'fecha_entrega' => $envio->fecha_entrega,
                     'id_direccion' => $envio->id_direccion,
                     'usuario' => [
                         'id' => $envio->usuario?->id,
-                        'nombre' => $envio->usuario?->nombre,
-                        'apellido' => $envio->usuario?->apellido,
-                        'rol' => $envio->usuario?->rol,
+                        'nombre' => $envio->usuario?->persona?->nombre,
+                        'apellido' => $envio->usuario?->persona?->apellido,
+                        'rol' => $envio->usuario?->rol?->codigo,
                     ],
                     'nombre_origen' => $envio->direccion?->nombreorigen ?? "—",
                     'nombre_destino' => $envio->direccion?->nombredestino ?? "—",
@@ -323,12 +358,18 @@ class EnvioController extends Controller
             $usuario = $request->attributes->get('usuario');
 
             $envio = Envio::with([
-                'usuario:id,nombre,apellido',
-                'asignaciones.transportista.usuario:id,nombre,apellido',
-                'asignaciones.vehiculo:id,placa,tipo',
+                'usuario.persona:id,nombre,apellido',
+                'usuario.rol:id,codigo,nombre',
+                'asignaciones.transportista.estadoTransportista:id,nombre',
+                'asignaciones.transportista.usuario.persona:id,nombre,apellido,ci,telefono',
+                'asignaciones.transportista:id,id_usuario',
+                'asignaciones.vehiculo.tipoVehiculo:id,nombre',
+                'asignaciones.vehiculo.estadoVehiculo:id,nombre',
+                'asignaciones.vehiculo:id,placa,capacidad',
+                'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
                 'direccion:id,nombreorigen,nombredestino,origen_lng,origen_lat,destino_lng,destino_lat,rutageojson'
             ])->find($id);
 
@@ -337,7 +378,7 @@ class EnvioController extends Controller
             }
 
             // Validar permisos
-            if ($usuario['rol'] !== 'admin' && $envio->id_usuario !== $usuario['id']) {
+            if (!UsuarioHelper::tieneRol($usuario, 'admin') && $envio->id_usuario !== $usuario['id']) {
                 return response()->json(['error' => 'No tienes permiso para ver este envío'], 403);
             }
 
@@ -356,21 +397,34 @@ class EnvioController extends Controller
 
             // Transformar asignaciones a particiones
             $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
+                $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                    return [
+                        'id' => $carga->id,
+                        'tipo' => $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'cantidad' => $carga->cantidad,
+                        'peso' => $carga->peso,
+                    ];
+                });
+
                 return [
                     'id_asignacion' => $asignacion->id,
-                    'estado' => $asignacion->estado,
+                    'id_transportista' => $asignacion->id_transportista,
+                    'id_vehiculo' => $asignacion->id_vehiculo,
+                    'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_asignacion' => $asignacion->fecha_asignacion,
                     'fecha_inicio' => $asignacion->fecha_inicio,
                     'fecha_fin' => $asignacion->fecha_fin,
                     'transportista' => [
-                        'nombre' => $asignacion->transportista?->usuario?->nombre,
-                        'apellido' => $asignacion->transportista?->usuario?->apellido,
-                        'telefono' => $asignacion->transportista?->telefono,
-                        'ci' => $asignacion->transportista?->ci,
+                        'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                        'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                        'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
+                        'ci' => $asignacion->transportista?->usuario?->persona?->ci,
                     ],
                     'vehiculo' => [
                         'placa' => $asignacion->vehiculo?->placa,
-                        'tipo' => $asignacion->vehiculo?->tipo,
+                        'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                     ],
                     'tipoTransporte' => [
                         'nombre' => $asignacion->tipoTransporte?->nombre,
@@ -383,13 +437,15 @@ class EnvioController extends Controller
                         'instrucciones_recogida' => $asignacion->recogidaEntrega?->instrucciones_recogida,
                         'instrucciones_entrega' => $asignacion->recogidaEntrega?->instrucciones_entrega,
                     ],
-                    'cargas' => $asignacion->cargas,
+                    'cargas' => $cargasTransformadas,
                 ];
             });
 
             // Calcular estado resumen
             $total = $envio->particiones->count();
-            $activos = $envio->particiones->where('estado', 'En curso')->count();
+            $activos = $envio->particiones->filter(function ($p) {
+                return $p['estado'] === 'En curso';
+            })->count();
             $envio->estado_resumen = "En curso ({$activos} de {$total} camiones activos)";
 
             return response()->json($envio);
@@ -413,14 +469,14 @@ class EnvioController extends Controller
 
             return DB::transaction(function () use ($id_asignacion, $request) {
                 // Verificar disponibilidad
-                $transportista = Transportista::find($request->id_transportista);
-                $vehiculo = Vehiculo::find($request->id_vehiculo);
+                $transportista = Transportista::with('estadoTransportista')->find($request->id_transportista);
+                $vehiculo = Vehiculo::with('estadoVehiculo')->find($request->id_vehiculo);
 
-                if (!$transportista || $transportista->estado !== 'Disponible') {
+                if (!$transportista || $transportista->estadoTransportista?->nombre !== 'Disponible') {
                     return response()->json(['error' => 'Transportista no disponible'], 400);
                 }
 
-                if (!$vehiculo || $vehiculo->estado !== 'Disponible') {
+                if (!$vehiculo || $vehiculo->estadoVehiculo?->nombre !== 'Disponible') {
                     return response()->json(['error' => 'Vehículo no disponible'], 400);
                 }
 
@@ -431,10 +487,11 @@ class EnvioController extends Controller
                 }
 
                 // Validar que la partición no esté ya completada o en curso
-                if (in_array($asignacion->estado, ['Completado', 'En curso', 'Finalizado', 'Entregado'])) {
+                $estadoActual = $asignacion->estadoAsignacion?->nombre ?? 'Pendiente';
+                if (in_array($estadoActual, ['Completado', 'En curso', 'Finalizado', 'Entregado'])) {
                     return response()->json([
-                        'error' => 'No se puede asignar a una partición que ya está ' . strtolower($asignacion->estado),
-                        'estado_actual' => $asignacion->estado
+                        'error' => 'No se puede asignar a una partición que ya está ' . strtolower($estadoActual),
+                        'estado_actual' => $estadoActual
                     ], 400);
                 }
 
@@ -453,26 +510,30 @@ class EnvioController extends Controller
                     return response()->json(['error' => 'Envío no encontrado'], 404);
                 }
 
-                if (in_array($envio->estado, ['Completado', 'Finalizado'])) {
+                $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+                if (in_array($estadoEnvio, ['Completado', 'Finalizado', 'Entregado'])) {
                     return response()->json([
-                        'error' => 'No se puede asignar a un envío que ya está ' . strtolower($envio->estado),
-                        'estado_envio' => $envio->estado
+                        'error' => 'No se puede asignar a un envío que ya está ' . strtolower($estadoEnvio),
+                        'estado_envio' => $estadoEnvio
                     ], 400);
                 }
 
                 // Actualizar la partición
+                $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
                 $asignacion->update([
                     'id_transportista' => $request->id_transportista,
                     'id_vehiculo' => $request->id_vehiculo,
-                    'estado' => 'Pendiente',
+                    'id_estado_asignacion' => $idEstadoPendiente,
                 ]);
 
                 // Marcar como no disponibles
-                $transportista->update(['estado' => 'No Disponible']);
-                $vehiculo->update(['estado' => 'No Disponible']);
+                $idEstadoNoDisponible = EstadoHelper::obtenerEstadoTransportistaPorNombre('No Disponible');
+                $idEstadoVehiculoNoDisponible = EstadoHelper::obtenerEstadoVehiculoPorNombre('No Disponible');
+                $transportista->update(['id_estado_transportista' => $idEstadoNoDisponible]);
+                $vehiculo->update(['id_estado_vehiculo' => $idEstadoVehiculoNoDisponible]);
 
-                // Actualizar estado global del envío
-                $this->actualizarEstadoGlobalEnvioInterno($asignacion->id_envio);
+                // Actualizar estado global del envío para reflejar nueva asignación
+                EstadoHelper::actualizarEstadoGlobalEnvio($asignacion->id_envio);
 
                 return response()->json(['mensaje' => 'Transportista y vehículo asignados correctamente a la partición']);
             });
@@ -491,40 +552,78 @@ class EnvioController extends Controller
     public function obtenerMisEnvios(Request $request)
     {
         try {
+            \Log::info('=== Iniciando obtenerMisEnvios ===');
+            
             $usuario = $request->attributes->get('usuario');
+            \Log::info('Usuario desde request: ', ['usuario' => $usuario]);
+            
+            if (!$usuario || !isset($usuario['id'])) {
+                \Log::error('Usuario no autenticado o sin ID');
+                return response()->json(['error' => 'Usuario no autenticado'], 401);
+            }
+            
             $userId = $usuario['id'];
+            \Log::info('User ID: ' . $userId);
 
             $envios = Envio::with([
-                'usuario:id,nombre,apellido,rol',
-                'asignaciones.transportista.usuario:id,nombre,apellido',
-                'asignaciones.vehiculo:id,placa,tipo',
+                'usuario.persona:id,nombre,apellido',
+                'usuario.rol:id,codigo,nombre',
+                'asignaciones.transportista.usuario.persona:id,nombre,apellido,ci,telefono',
+                'asignaciones.vehiculo.tipoVehiculo:id,nombre',
+                'asignaciones.vehiculo:id,placa',
+                'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
                 'direccion:id,nombreorigen,nombredestino'
             ])->where('id_usuario', $userId)->get();
 
+            \Log::info('Total de envíos encontrados: ' . $envios->count());
+            
+            if ($envios->isEmpty()) {
+                \Log::info('No hay envíos para este usuario');
+                return response()->json([]);
+            }
+
             // Transformar la respuesta
             $envios = $envios->map(function ($envio) {
+                \Log::info('Procesando envío ID: ' . $envio->id);
+                $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+                \Log::info('Estado actual: ' . $estadoActual);
+                
+                $envio->estado = $estadoActual ?? 'Pendiente';
                 $envio->nombre_origen = $envio->direccion?->nombreorigen ?? "—";
                 $envio->nombre_destino = $envio->direccion?->nombredestino ?? "—";
                 
+                \Log::info('Total de asignaciones/particiones: ' . $envio->asignaciones->count());
+                
                 $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
+                    $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                        return [
+                            'id' => $carga->id,
+                            'tipo' => $carga->catalogoCarga?->tipo,
+                            'variedad' => $carga->catalogoCarga?->variedad,
+                            'empaquetado' => $carga->catalogoCarga?->empaque,
+                            'cantidad' => $carga->cantidad,
+                            'peso' => $carga->peso,
+                        ];
+                    });
+
                     return [
                         'id_asignacion' => $asignacion->id,
-                        'estado' => $asignacion->estado,
+                        'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                         'fecha_asignacion' => $asignacion->fecha_asignacion,
                         'fecha_inicio' => $asignacion->fecha_inicio,
                         'fecha_fin' => $asignacion->fecha_fin,
                         'transportista' => [
-                            'nombre' => $asignacion->transportista?->usuario?->nombre,
-                            'apellido' => $asignacion->transportista?->usuario?->apellido,
-                            'ci' => $asignacion->transportista?->ci,
-                            'telefono' => $asignacion->transportista?->telefono,
+                            'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                            'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                            'ci' => $asignacion->transportista?->usuario?->persona?->ci,
+                            'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
                         ],
                         'vehiculo' => [
                             'placa' => $asignacion->vehiculo?->placa,
-                            'tipo' => $asignacion->vehiculo?->tipo,
+                            'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                         ],
                         'recogidaEntrega' => [
                             'fecha_recogida' => $asignacion->recogidaEntrega?->fecha_recogida,
@@ -537,7 +636,97 @@ class EnvioController extends Controller
                             'nombre' => $asignacion->tipoTransporte?->nombre,
                             'descripcion' => $asignacion->tipoTransporte?->descripcion,
                         ],
-                        'cargas' => $asignacion->cargas,
+                        'cargas' => $cargasTransformadas,
+                    ];
+                });
+
+                return $envio;
+            });
+
+            \Log::info('Respuesta preparada exitosamente');
+            return response()->json($envios);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener mis envíos: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Error al obtener tus envíos', 'detalle' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Obtener envíos de un usuario específico (para admin)
+     */
+    public function obtenerEnviosPorUsuario(Request $request, int $id_usuario)
+    {
+        try {
+            $usuarioAuth = $request->attributes->get('usuario');
+            
+            // Verificar que sea admin
+            if (!UsuarioHelper::tieneRol($usuarioAuth, 'admin')) {
+                return response()->json(['error' => 'No tienes permiso para ver envíos de otros usuarios'], 403);
+            }
+
+            $envios = Envio::with([
+                'usuario.persona:id,nombre,apellido',
+                'usuario.rol:id,codigo,nombre',
+                'asignaciones.transportista.usuario.persona:id,nombre,apellido,ci,telefono',
+                'asignaciones.vehiculo.tipoVehiculo:id,nombre',
+                'asignaciones.vehiculo:id,placa',
+                'asignaciones.estadoAsignacion:id,nombre',
+                'asignaciones.tipoTransporte:id,nombre,descripcion',
+                'asignaciones.recogidaEntrega',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'direccion:id,nombreorigen,nombredestino'
+            ])->where('id_usuario', $id_usuario)->get();
+
+            // Transformar la respuesta
+            $envios = $envios->map(function ($envio) {
+                $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+                
+                $envio->estado_nombre = $estadoActual ?? 'Pendiente';
+                $envio->nombre_origen = $envio->direccion?->nombreorigen ?? "—";
+                $envio->nombre_destino = $envio->direccion?->nombredestino ?? "—";
+                
+                $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
+                    $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                        return [
+                            'id' => $carga->id,
+                            'tipo' => $carga->catalogoCarga?->tipo,
+                            'variedad' => $carga->catalogoCarga?->variedad,
+                            'empaquetado' => $carga->catalogoCarga?->empaque,
+                            'cantidad' => $carga->cantidad,
+                            'peso' => $carga->peso,
+                        ];
+                    });
+
+                    return [
+                        'id_asignacion' => $asignacion->id,
+                        'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
+                        'fecha_asignacion' => $asignacion->fecha_asignacion,
+                        'fecha_inicio' => $asignacion->fecha_inicio,
+                        'fecha_fin' => $asignacion->fecha_fin,
+                        'transportista' => [
+                            'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                            'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                            'ci' => $asignacion->transportista?->usuario?->persona?->ci,
+                            'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
+                        ],
+                        'vehiculo' => [
+                            'placa' => $asignacion->vehiculo?->placa,
+                            'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
+                        ],
+                        'recogidaEntrega' => [
+                            'fecha_recogida' => $asignacion->recogidaEntrega?->fecha_recogida,
+                            'hora_recogida' => $asignacion->recogidaEntrega?->hora_recogida,
+                            'hora_entrega' => $asignacion->recogidaEntrega?->hora_entrega,
+                            'instrucciones_recogida' => $asignacion->recogidaEntrega?->instrucciones_recogida,
+                            'instrucciones_entrega' => $asignacion->recogidaEntrega?->instrucciones_entrega,
+                        ],
+                        'tipoTransporte' => [
+                            'nombre' => $asignacion->tipoTransporte?->nombre,
+                            'descripcion' => $asignacion->tipoTransporte?->descripcion,
+                        ],
+                        'cargas' => $cargasTransformadas,
                     ];
                 });
 
@@ -547,8 +736,8 @@ class EnvioController extends Controller
             return response()->json($envios);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener mis envíos: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener tus envíos'], 500);
+            \Log::error('Error al obtener envíos por usuario: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener los envíos del usuario'], 500);
         }
     }
 
@@ -561,7 +750,7 @@ class EnvioController extends Controller
             $usuario = $request->attributes->get('usuario');
             
             // Solo admin puede actualizar estado global manualmente
-            if ($usuario['rol'] !== 'admin') {
+            if (!UsuarioHelper::tieneRol($usuario, 'admin')) {
                 return response()->json(['error' => 'Solo los administradores pueden actualizar el estado global'], 403);
             }
 
@@ -572,7 +761,7 @@ class EnvioController extends Controller
             }
 
             // Actualizar estado global
-            $this->actualizarEstadoGlobalEnvioInterno($id_envio);
+            EstadoHelper::actualizarEstadoGlobalEnvio($id_envio);
 
             return response()->json(['mensaje' => 'Estado global del envío actualizado correctamente']);
 
@@ -585,7 +774,7 @@ class EnvioController extends Controller
     /**
      * Generar QR real usando API externa
      */
-    private function generarQRReal(string $url)
+    private function generarQRReal(string $url): string
     {
         try {
             // Usar API de QR Server para generar QR real
@@ -610,38 +799,7 @@ class EnvioController extends Controller
         }
     }
 
-    /**
-     * Generar QR placeholder (método legacy)
-     */
-    private function generarQRPlaceholder(string $url)
-    {
-        return $this->generarQRReal($url);
-    }
 
-    /**
-     * Actualizar estado global del envío (método interno)
-     */
-    private function actualizarEstadoGlobalEnvioInterno(int $id_envio)
-    {
-        $asignaciones = AsignacionMultiple::where('id_envio', $id_envio)->get();
-        $estados = $asignaciones->pluck('estado')->toArray();
-
-        $nuevoEstado = 'Asignado';
-
-        if (empty($estados)) {
-            $nuevoEstado = 'Pendiente';
-        } elseif (count(array_filter($estados, fn($e) => $e === 'Entregado')) === count($estados)) {
-            $nuevoEstado = 'Entregado';
-        } elseif (count(array_filter($estados, fn($e) => $e === 'Pendiente')) === count($estados)) {
-            $nuevoEstado = 'Asignado';
-        } elseif (in_array('Entregado', $estados) && count(array_filter($estados, fn($e) => $e !== 'Entregado')) > 0) {
-            $nuevoEstado = 'Parcialmente entregado';
-        } elseif (in_array('En curso', $estados)) {
-            $nuevoEstado = 'En curso';
-        }
-
-        Envio::where('id', $id_envio)->update(['estado' => $nuevoEstado]);
-    }
 
     /**
      * Iniciar viaje (con generación de QR)
@@ -658,17 +816,17 @@ class EnvioController extends Controller
             }
 
             return DB::transaction(function () use ($id_asignacion, $userId) {
-                // Obtener ID del transportista autenticado
                 $transportista = Transportista::where('id_usuario', $userId)->first();
                 if (!$transportista) {
                     return response()->json(['error' => 'No se encontró al transportista'], 403);
                 }
 
                 // Verificar asignación válida
-                $asignacion = AsignacionMultiple::with('envio:id,id_usuario')
+                $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
+                $asignacion = AsignacionMultiple::with(['envio:id,id_usuario', 'estadoAsignacion'])
                     ->where('id', $id_asignacion)
                     ->where('id_transportista', $transportista->id)
-                    ->where('estado', 'Pendiente')
+                    ->where('id_estado_asignacion', $idEstadoPendiente)
                     ->first();
 
                 if (!$asignacion) {
@@ -676,23 +834,26 @@ class EnvioController extends Controller
                 }
 
                 // Verificar checklist por asignación
-                $checklist = ChecklistCondicionTransporte::where('id_asignacion', $id_asignacion)->first();
+                $checklist = ChecklistCondicion::where('id_asignacion', $id_asignacion)->first();
                 if (!$checklist) {
                     return response()->json(['error' => 'Debes completar el checklist antes de iniciar el viaje'], 400);
                 }
 
                 // Actualizar asignación
+                $idEstadoEnCurso = EstadoHelper::obtenerEstadoAsignacionPorNombre('En curso');
                 $asignacion->update([
-                    'estado' => 'En curso',
+                    'id_estado_asignacion' => $idEstadoEnCurso,
                     'fecha_inicio' => now(),
                 ]);
 
                 // Actualizar estado de recursos
-                $transportista->update(['estado' => 'En ruta']);
-                $asignacion->vehiculo->update(['estado' => 'En ruta']);
+                $idEstadoEnRuta = EstadoHelper::obtenerEstadoTransportistaPorNombre('En ruta');
+                $idEstadoVehiculoEnRuta = EstadoHelper::obtenerEstadoVehiculoPorNombre('En ruta');
+                $transportista->update(['id_estado_transportista' => $idEstadoEnRuta]);
+                $asignacion->vehiculo->update(['id_estado_vehiculo' => $idEstadoVehiculoEnRuta]);
 
                 // Actualizar estado global del envío
-                $this->actualizarEstadoGlobalEnvioInterno($asignacion->id_envio);
+                EstadoHelper::actualizarEstadoGlobalEnvio($asignacion->id_envio);
 
                 // Generar QR automáticamente (si no existe)
                 $qrToken = QrToken::where('id_asignacion', $id_asignacion)->first();
@@ -705,12 +866,12 @@ class EnvioController extends Controller
                     // Generar imagen QR real usando API
                     $qrBase64 = $this->generarQRReal($tokenUrl);
 
+                    $idEstadoQrActivo = EstadoHelper::obtenerEstadoQrTokenPorNombre('Activo');
                     $qrToken = QrToken::create([
                         'id_asignacion' => $id_asignacion,
-                        'id_usuario_cliente' => $asignacion->envio->id_usuario,
+                        'id_estado_qrtoken' => $idEstadoQrActivo,
                         'token' => $nuevoToken,
                         'imagenqr' => $qrBase64,
-                        'usado' => false,
                         'fecha_creacion' => now(),
                         'fecha_expiracion' => now()->addDay(),
                     ]);
@@ -748,7 +909,7 @@ class EnvioController extends Controller
             $usuario = $request->attributes->get('usuario');
             $id_usuario = $usuario['id'];
 
-            // Obtener ID del transportista autenticado
+            // Obtener transportista vinculado al usuario autenticado
             $transportista = Transportista::where('id_usuario', $id_usuario)->first();
             if (!$transportista) {
                 return response()->json(['error' => 'No eres un transportista válido'], 404);
@@ -756,21 +917,37 @@ class EnvioController extends Controller
 
             // Obtener asignaciones de este transportista
             $asignaciones = AsignacionMultiple::with([
-                'envio.usuario:id,nombre,apellido',
+                'envio.usuario.persona:id,nombre,apellido',
+                'envio.usuario.rol:id,codigo,nombre',
                 'envio.direccion:id,nombreorigen,nombredestino,origen_lng,origen_lat,destino_lng,destino_lat,rutageojson',
-                'vehiculo:id,placa,tipo',
+                'envio.historialEstados.estadoEnvio:id,nombre',
+                'vehiculo.tipoVehiculo:id,nombre',
+                'vehiculo:id,placa',
+                'estadoAsignacion:id,nombre',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas'
+                'cargas.catalogoCarga:id,tipo,variedad,empaque'
             ])->where('id_transportista', $transportista->id)->get();
 
             // Transformar la respuesta
             $enviosCompletos = $asignaciones->map(function ($asignacion) {
                 $envio = $asignacion->envio;
                 
+                $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+                $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                    return [
+                        'id' => $carga->id,
+                        'tipo' => $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'cantidad' => $carga->cantidad,
+                        'peso' => $carga->peso,
+                    ];
+                });
+
                 return [
                     'id_asignacion' => $asignacion->id,
-                    'estado' => $asignacion->estado,
+                    'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_inicio' => $asignacion->fecha_inicio,
                     'fecha_fin' => $asignacion->fecha_fin,
                     'fecha_asignacion' => $asignacion->fecha_asignacion,
@@ -778,16 +955,16 @@ class EnvioController extends Controller
                     'id_vehiculo' => $asignacion->id_vehiculo,
                     'id_recogida_entrega' => $asignacion->id_recogida_entrega,
                     'id_tipo_transporte' => $asignacion->id_tipo_transporte,
-                    'estado_envio' => $envio->estado,
+                    'estado_envio' => $estadoEnvio ?? 'Pendiente',
                     'fecha_creacion' => $envio->fecha_creacion,
                     'id_usuario' => $envio->id_usuario,
                     'id_ubicacion_mongo' => $envio->id_direccion, // Adaptado para PostgreSQL
                     'placa' => $asignacion->vehiculo?->placa,
-                    'tipo_vehiculo' => $asignacion->vehiculo?->tipo,
+                    'tipo_vehiculo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                     'tipo_transporte' => $asignacion->tipoTransporte?->nombre,
                     'descripcion_transporte' => $asignacion->tipoTransporte?->descripcion,
-                    'nombre_cliente' => $envio->usuario?->nombre,
-                    'apellido_cliente' => $envio->usuario?->apellido,
+                    'nombre_cliente' => $envio->usuario?->persona?->nombre,
+                    'apellido_cliente' => $envio->usuario?->persona?->apellido,
                     'nombre_origen' => $envio->direccion?->nombreorigen,
                     'nombre_destino' => $envio->direccion?->nombredestino,
                     'coordenadas_origen' => [
@@ -799,7 +976,7 @@ class EnvioController extends Controller
                         'lat' => $envio->direccion?->destino_lat,
                     ],
                     'rutaGeoJSON' => $envio->direccion?->rutageojson,
-                    'cargas' => $asignacion->cargas,
+                    'cargas' => $cargasTransformadas,
                     'recogidaEntrega' => $asignacion->recogidaEntrega,
                 ];
             });
@@ -822,14 +999,13 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             return DB::transaction(function () use ($id_asignacion, $id_usuario) {
-                // Obtener ID del transportista autenticado
                 $transportista = Transportista::where('id_usuario', $id_usuario)->first();
                 if (!$transportista) {
                     return response()->json(['error' => 'No tienes permisos para esta acción'], 403);
                 }
 
                 // Obtener asignación
-                $asignacion = AsignacionMultiple::find($id_asignacion);
+                $asignacion = AsignacionMultiple::with('estadoAsignacion')->find($id_asignacion);
                 if (!$asignacion) {
                     return response()->json(['error' => 'Asignación no encontrada'], 404);
                 }
@@ -839,12 +1015,13 @@ class EnvioController extends Controller
                     return response()->json(['error' => 'No tienes permiso para finalizar esta asignación'], 403);
                 }
 
-                if ($asignacion->estado !== 'En curso') {
+                $estadoActual = $asignacion->estadoAsignacion?->nombre ?? 'Pendiente';
+                if ($estadoActual !== 'En curso') {
                     return response()->json(['error' => 'Esta asignación no está en curso'], 400);
                 }
 
                 // Validar que exista checklist de incidentes
-                $checklist = ChecklistIncidenteTransporte::where('id_asignacion', $id_asignacion)->first();
+                $checklist = IncidentesTransporte::where('id_asignacion', $id_asignacion)->first();
                 if (!$checklist) {
                     return response()->json(['error' => 'Debes completar el checklist de incidentes antes de finalizar el viaje.'], 400);
                 }
@@ -865,21 +1042,22 @@ class EnvioController extends Controller
                 $vehiculo = $asignacion->vehiculo;
 
                 // Actualizar asignación como finalizada
+                $idEstadoEntregado = EstadoHelper::obtenerEstadoAsignacionPorNombre('Entregado');
                 $asignacion->update([
-                    'estado' => 'Entregado',
+                    'id_estado_asignacion' => $idEstadoEntregado,
                     'fecha_fin' => now(),
-                    'id_transportista' => null,  // Limpiar asignación
-                    'id_vehiculo' => null,        // Limpiar asignación
                 ]);
 
                 // Liberar transportista y vehículo
-                $transportista->update(['estado' => 'Disponible']);
+                $idEstadoDisponible = EstadoHelper::obtenerEstadoTransportistaPorNombre('Disponible');
+                $idEstadoVehiculoDisponible = EstadoHelper::obtenerEstadoVehiculoPorNombre('Disponible');
+                $transportista->update(['id_estado_transportista' => $idEstadoDisponible]);
                 if ($vehiculo) {
-                    $vehiculo->update(['estado' => 'Disponible']);
+                    $vehiculo->update(['id_estado_vehiculo' => $idEstadoVehiculoDisponible]);
                 }
 
                 // Actualizar estado global del envío
-                $this->actualizarEstadoGlobalEnvioInterno($asignacion->id_envio);
+                EstadoHelper::actualizarEstadoGlobalEnvio($asignacion->id_envio);
 
                 return response()->json(['mensaje' => 'Asignación finalizada correctamente']);
             });
@@ -900,58 +1078,58 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             $request->validate([
-                'temperatura_controlada' => 'required|boolean',
-                'embalaje_adecuado' => 'required|boolean',
-                'carga_segura' => 'required|boolean',
-                'vehiculo_limpio' => 'required|boolean',
-                'documentos_presentes' => 'required|boolean',
-                'ruta_conocida' => 'required|boolean',
-                'combustible_completo' => 'required|boolean',
-                'gps_operativo' => 'required|boolean',
-                'comunicacion_funcional' => 'required|boolean',
-                'estado_general_aceptable' => 'required|boolean',
+                'condiciones' => 'required|array|min:1',
+                'condiciones.*.id_condicion' => 'required|integer|exists:condiciones_transporte,id',
+                'condiciones.*.valor' => 'required|boolean',
+                'condiciones.*.comentario' => 'nullable|string|max:255',
                 'observaciones' => 'nullable|string|max:255',
             ]);
 
             return DB::transaction(function () use ($id_asignacion, $id_usuario, $request) {
-                // Verificar si el transportista autenticado corresponde a la asignación
-                $asignacion = AsignacionMultiple::with('transportista:id,id_usuario')
+                $transportista = Transportista::where('id_usuario', $id_usuario)->first();
+                if (!$transportista) {
+                    return response()->json(['error' => 'No tienes permiso para esta asignación'], 403);
+                }
+
+                $asignacion = AsignacionMultiple::with(['transportista', 'estadoAsignacion'])
                     ->find($id_asignacion);
 
                 if (!$asignacion) {
                     return response()->json(['error' => 'Asignación no encontrada'], 404);
                 }
 
-                if ($asignacion->transportista->id_usuario !== $id_usuario) {
+                // Validar que el transportista corresponda (ajustar según tu lógica)
+                if ($asignacion->id_transportista !== $transportista->id) {
                     return response()->json(['error' => 'No tienes permiso para esta asignación'], 403);
                 }
 
-                if ($asignacion->estado !== 'Pendiente') {
+                $estadoActual = $asignacion->estadoAsignacion?->nombre ?? 'Pendiente';
+                if ($estadoActual !== 'Pendiente') {
                     return response()->json(['error' => 'El checklist solo se puede registrar si la asignación está pendiente'], 400);
                 }
 
                 // Verificar si ya existe un checklist
-                $yaExiste = ChecklistCondicionTransporte::where('id_asignacion', $id_asignacion)->first();
+                $yaExiste = ChecklistCondicion::where('id_asignacion', $id_asignacion)->first();
                 if ($yaExiste) {
                     return response()->json(['error' => 'Este checklist ya fue registrado'], 400);
                 }
 
-                // Insertar checklist
-                ChecklistCondicionTransporte::create([
+                // Crear checklist principal
+                $checklist = ChecklistCondicion::create([
                     'id_asignacion' => $id_asignacion,
-                    'temperatura_controlada' => $request->temperatura_controlada,
-                    'embalaje_adecuado' => $request->embalaje_adecuado,
-                    'carga_segura' => $request->carga_segura,
-                    'vehiculo_limpio' => $request->vehiculo_limpio,
-                    'documentos_presentes' => $request->documentos_presentes,
-                    'ruta_conocida' => $request->ruta_conocida,
-                    'combustible_completo' => $request->combustible_completo,
-                    'gps_operativo' => $request->gps_operativo,
-                    'comunicacion_funcional' => $request->comunicacion_funcional,
-                    'estado_general_aceptable' => $request->estado_general_aceptable,
                     'observaciones' => $request->observaciones,
                     'fecha' => now(),
                 ]);
+
+                // Crear detalles del checklist
+                foreach ($request->condiciones as $condicion) {
+                    ChecklistCondicionDetalle::create([
+                        'id_checklist' => $checklist->id,
+                        'id_condicion' => $condicion['id_condicion'],
+                        'valor' => $condicion['valor'],
+                        'comentario' => $condicion['comentario'] ?? null,
+                    ]);
+                }
 
                 return response()->json(['mensaje' => 'Checklist de condiciones registrado correctamente'], 201);
             });
@@ -974,59 +1152,44 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             $request->validate([
-                'retraso' => 'required|boolean',
-                'problema_mecanico' => 'required|boolean',
-                'accidente' => 'required|boolean',
-                'perdida_carga' => 'required|boolean',
-                'condiciones_climaticas_adversas' => 'required|boolean',
-                'ruta_alternativa_usada' => 'required|boolean',
-                'contacto_cliente_dificultoso' => 'required|boolean',
-                'parada_imprevista' => 'required|boolean',
-                'problemas_documentacion' => 'required|boolean',
-                'otros_incidentes' => 'required|boolean',
-                'descripcion_incidente' => 'nullable|string|max:255',
+                'incidentes' => 'required|array|min:1',
+                'incidentes.*.id_tipo_incidente' => 'required|integer|exists:tipos_incidente_transporte,id',
+                'incidentes.*.descripcion_incidente' => 'nullable|string|max:255',
             ]);
 
             return DB::transaction(function () use ($id_asignacion, $id_usuario, $request) {
-                // Validar que la asignación exista y pertenezca al transportista autenticado
-                $asignacion = AsignacionMultiple::with('transportista:id,id_usuario')
+                $transportista = Transportista::where('id_usuario', $id_usuario)->first();
+                if (!$transportista) {
+                    return response()->json(['error' => 'No tienes permiso para esta asignación'], 403);
+                }
+
+                $asignacion = AsignacionMultiple::with(['transportista', 'estadoAsignacion'])
                     ->find($id_asignacion);
 
                 if (!$asignacion) {
                     return response()->json(['error' => 'Asignación no encontrada'], 404);
                 }
 
-                if ($asignacion->transportista->id_usuario !== $id_usuario) {
+                // Validar que el transportista corresponda (ajustar según tu lógica)
+                if ($asignacion->id_transportista !== $transportista->id) {
                     return response()->json(['error' => 'No tienes permiso para esta asignación'], 403);
                 }
 
                 // Permitir registrar checklist cuando la asignación esté EN CURSO
-                if ($asignacion->estado !== 'En curso') {
+                $estadoActual = $asignacion->estadoAsignacion?->nombre ?? 'Pendiente';
+                if ($estadoActual !== 'En curso') {
                     return response()->json(['error' => 'Solo puedes registrar el checklist si el viaje está en curso'], 400);
                 }
 
-                // Validar si ya existe un checklist de incidentes para esta asignación
-                $yaExiste = ChecklistIncidenteTransporte::where('id_asignacion', $id_asignacion)->first();
-                if ($yaExiste) {
-                    return response()->json(['error' => 'El checklist ya fue registrado'], 400);
+                // Insertar incidentes (puede haber múltiples)
+                foreach ($request->incidentes as $incidente) {
+                    IncidentesTransporte::create([
+                        'id_asignacion' => $id_asignacion,
+                        'id_tipo_incidente' => $incidente['id_tipo_incidente'],
+                        'descripcion_incidente' => $incidente['descripcion_incidente'] ?? null,
+                        'fecha' => now(),
+                    ]);
                 }
-
-                // Insertar el nuevo checklist de incidentes
-                ChecklistIncidenteTransporte::create([
-                    'id_asignacion' => $id_asignacion,
-                    'retraso' => $request->retraso,
-                    'problema_mecanico' => $request->problema_mecanico,
-                    'accidente' => $request->accidente,
-                    'perdida_carga' => $request->perdida_carga,
-                    'condiciones_climaticas_adversas' => $request->condiciones_climaticas_adversas,
-                    'ruta_alternativa_usada' => $request->ruta_alternativa_usada,
-                    'contacto_cliente_dificultoso' => $request->contacto_cliente_dificultoso,
-                    'parada_imprevista' => $request->parada_imprevista,
-                    'problemas_documentacion' => $request->problemas_documentacion,
-                    'otros_incidentes' => $request->otros_incidentes,
-                    'descripcion_incidente' => $request->descripcion_incidente,
-                    'fecha' => now(),
-                ]);
 
                 return response()->json(['mensaje' => 'Checklist de incidentes registrado correctamente'], 201);
             });
@@ -1065,14 +1228,14 @@ class EnvioController extends Controller
 
             return DB::transaction(function () use ($id_envio, $request) {
                 // Verificar disponibilidad
-                $transportista = Transportista::find($request->id_transportista);
-                $vehiculo = Vehiculo::find($request->id_vehiculo);
+                $transportista = Transportista::with('estadoTransportista')->find($request->id_transportista);
+                $vehiculo = Vehiculo::with('estadoVehiculo')->find($request->id_vehiculo);
 
-                if (!$transportista || $transportista->estado !== 'Disponible') {
+                if (!$transportista || $transportista->estadoTransportista?->nombre !== 'Disponible') {
                     return response()->json(['error' => 'Transportista no disponible'], 400);
                 }
 
-                if (!$vehiculo || $vehiculo->estado !== 'Disponible') {
+                if (!$vehiculo || $vehiculo->estadoVehiculo?->nombre !== 'Disponible') {
                     return response()->json(['error' => 'Vehículo no disponible'], 400);
                 }
 
@@ -1083,19 +1246,28 @@ class EnvioController extends Controller
                 }
 
                 // Validar que el envío no esté completado
-                if (in_array($envio->estado, ['Completado', 'Finalizado', 'Entregado'])) {
+                $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+                if (in_array($estadoEnvio, ['Completado', 'Finalizado', 'Entregado'])) {
                     return response()->json([
-                        'error' => 'No se puede asignar a un envío que ya está ' . strtolower($envio->estado),
-                        'estado_envio' => $envio->estado
+                        'error' => 'No se puede asignar a un envío que ya está ' . strtolower($estadoEnvio),
+                        'estado_envio' => $estadoEnvio
                     ], 400);
                 }
 
+                // Buscar o crear catalogo de carga
+                $catalogo = CatalogoCarga::firstOrCreate(
+                    [
+                        'tipo' => $request->carga['tipo'],
+                        'variedad' => $request->carga['variedad'],
+                        'empaque' => $request->carga['empaquetado'],
+                    ],
+                    ['descripcion' => null]
+                );
+
                 // Insertar carga
                 $carga = Carga::create([
-                    'tipo' => $request->carga['tipo'],
-                    'variedad' => $request->carga['variedad'],
+                    'id_catalogo_carga' => $catalogo->id,
                     'cantidad' => $request->carga['cantidad'],
-                    'empaquetado' => $request->carga['empaquetado'],
                     'peso' => $request->carga['peso'],
                 ]);
 
@@ -1109,11 +1281,12 @@ class EnvioController extends Controller
                 ]);
 
                 // Insertar asignación múltiple
+                $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
                 $asignacion = AsignacionMultiple::create([
                     'id_envio' => $id_envio,
                     'id_transportista' => $request->id_transportista,
                     'id_vehiculo' => $request->id_vehiculo,
-                    'estado' => 'Pendiente',
+                    'id_estado_asignacion' => $idEstadoPendiente,
                     'id_tipo_transporte' => $request->id_tipo_transporte,
                     'id_recogida_entrega' => $recogida->id,
                 ]);
@@ -1125,8 +1298,10 @@ class EnvioController extends Controller
                 ]);
 
                 // Actualizar estados
-                $transportista->update(['estado' => 'No Disponible']);
-                $vehiculo->update(['estado' => 'No Disponible']);
+                $idEstadoNoDisponible = EstadoHelper::obtenerEstadoTransportistaPorNombre('No Disponible');
+                $idEstadoVehiculoNoDisponible = EstadoHelper::obtenerEstadoVehiculoPorNombre('No Disponible');
+                $transportista->update(['id_estado_transportista' => $idEstadoNoDisponible]);
+                $vehiculo->update(['id_estado_vehiculo' => $idEstadoVehiculoNoDisponible]);
 
                 return response()->json(['mensaje' => 'Asignación registrada correctamente con carga y detalles completos']);
             });
@@ -1150,17 +1325,21 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             $envio = Envio::with([
-                'usuario:id,nombre,apellido',
-                'asignaciones.transportista.usuario:id,nombre,apellido',
-                'asignaciones.vehiculo:id,placa,tipo',
+                'usuario.persona:id,nombre,apellido',
+                'usuario.rol:id,codigo,nombre',
+                'asignaciones.transportista.usuario.persona:id,nombre,apellido,ci,telefono',
+                'asignaciones.vehiculo.tipoVehiculo:id,nombre',
+                'asignaciones.vehiculo:id,placa',
+                'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas',
-                'asignaciones.checklistCondiciones',
-                'asignaciones.checklistIncidentes',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.checklistCondicion.detalles.condicion:id,titulo',
+                'asignaciones.incidentes.tipoIncidente:id,titulo',
                 'asignaciones.firmaEnvio',
                 'asignaciones.firmaTransportista',
-                'direccion:id,nombreorigen,nombredestino'
+                'direccion:id,nombreorigen,nombredestino',
+                'historialEstados.estadoEnvio:id,nombre'
             ])->find($id_envio);
 
             if (!$envio) {
@@ -1168,32 +1347,44 @@ class EnvioController extends Controller
             }
 
             // Validar si el envío está completamente ENTREGADO
-            if ($envio->estado !== 'Entregado') {
+            $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
+            if ($estadoEnvio !== 'Entregado') {
                 return response()->json(['error' => 'El documento solo se puede generar cuando el envío esté completamente entregado.'], 400);
             }
 
             // Validar si el cliente tiene permiso (si no es admin)
-            if ($rol !== 'admin' && $envio->id_usuario !== $id_usuario) {
+            if (!UsuarioHelper::tieneRol($usuario, 'admin') && $envio->id_usuario !== $id_usuario) {
                 return response()->json(['error' => 'No tienes acceso a este envío'], 403);
             }
 
             // Transformar asignaciones a particiones
-            $particiones = $envio->asignaciones->map(function ($asignacion) use ($rol) {
+            $particiones = $envio->asignaciones->map(function ($asignacion) use ($rol, $usuario) {
+                $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                    return [
+                        'id' => $carga->id,
+                        'tipo' => $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'cantidad' => $carga->cantidad,
+                        'peso' => $carga->peso,
+                    ];
+                });
+
                 $particion = [
                     'id_asignacion' => $asignacion->id,
-                    'estado' => $asignacion->estado,
+                    'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_asignacion' => $asignacion->fecha_asignacion,
                     'fecha_inicio' => $asignacion->fecha_inicio,
                     'fecha_fin' => $asignacion->fecha_fin,
                     'transportista' => [
-                        'nombre' => $asignacion->transportista?->usuario?->nombre,
-                        'apellido' => $asignacion->transportista?->usuario?->apellido,
-                        'telefono' => $asignacion->transportista?->telefono,
-                        'ci' => $asignacion->transportista?->ci,
+                        'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                        'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                        'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
+                        'ci' => $asignacion->transportista?->usuario?->persona?->ci,
                     ],
                     'vehiculo' => [
                         'placa' => $asignacion->vehiculo?->placa,
-                        'tipo' => $asignacion->vehiculo?->tipo,
+                        'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                     ],
                     'tipo_transporte' => [
                         'nombre' => $asignacion->tipoTransporte?->nombre,
@@ -1206,15 +1397,15 @@ class EnvioController extends Controller
                         'instrucciones_recogida' => $asignacion->recogidaEntrega?->instrucciones_recogida,
                         'instrucciones_entrega' => $asignacion->recogidaEntrega?->instrucciones_entrega,
                     ],
-                    'cargas' => $asignacion->cargas,
+                    'cargas' => $cargasTransformadas,
                     'firmaTransportista' => $asignacion->firmaTransportista?->imagenfirma,
                     'firma' => $asignacion->firmaEnvio?->imagenfirma,
                 ];
 
                 // Incluir checklists solo si es admin
-                if ($rol === 'admin') {
-                    $particion['checklistCondiciones'] = $asignacion->checklistCondiciones;
-                    $particion['checklistIncidentes'] = $asignacion->checklistIncidentes;
+                if (UsuarioHelper::tieneRol($usuario, 'admin')) {
+                    $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
+                    $particion['checklistIncidentes'] = $asignacion->incidentes ?? [];
                 }
 
                 return $particion;
@@ -1222,8 +1413,8 @@ class EnvioController extends Controller
 
             return response()->json([
                 'id_envio' => $envio->id,
-                'nombre_cliente' => $envio->usuario->nombre . ' ' . $envio->usuario->apellido,
-                'estado' => $envio->estado,
+                'nombre_cliente' => ($envio->usuario?->persona?->nombre ?? '') . ' ' . ($envio->usuario?->persona?->apellido ?? ''),
+                'estado' => $estadoEnvio ?? 'Pendiente',
                 'fecha_creacion' => $envio->fecha_creacion,
                 'fecha_inicio' => $envio->fecha_inicio,
                 'fecha_entrega' => $envio->fecha_entrega,
@@ -1249,15 +1440,19 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             $asignacion = AsignacionMultiple::with([
-                'envio.usuario:id,nombre,apellido',
+                'envio.usuario.persona:id,nombre,apellido',
+                'envio.usuario.rol:id,codigo,nombre',
                 'envio.direccion:id,nombreorigen,nombredestino',
-                'vehiculo:id,placa,tipo',
-                'transportista.usuario:id,nombre,apellido',
+                'envio.historialEstados.estadoEnvio:id,nombre',
+                'vehiculo.tipoVehiculo:id,nombre',
+                'vehiculo:id,placa',
+                'estadoAsignacion:id,nombre',
+                'transportista.usuario.persona:id,nombre,apellido,ci,telefono',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas',
-                'checklistCondiciones',
-                'checklistIncidentes',
+                'cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'checklistCondicion.detalles.condicion:id,titulo',
+                'incidentes.tipoIncidente:id,titulo',
                 'firmaEnvio',
                 'firmaTransportista'
             ])->find($id_asignacion);
@@ -1267,25 +1462,38 @@ class EnvioController extends Controller
             }
 
             // Validar permisos
-            if ($rol !== 'admin' && $asignacion->envio->id_usuario !== $id_usuario) {
+            if (!UsuarioHelper::tieneRol($usuario, 'admin') && $asignacion->envio->id_usuario !== $id_usuario) {
                 return response()->json(['error' => 'No tienes acceso a esta asignación'], 403);
             }
 
+            $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
+                return [
+                    'id' => $carga->id,
+                    'tipo' => $carga->catalogoCarga?->tipo,
+                    'variedad' => $carga->catalogoCarga?->variedad,
+                    'empaquetado' => $carga->catalogoCarga?->empaque,
+                    'cantidad' => $carga->cantidad,
+                    'peso' => $carga->peso,
+                ];
+            });
+
+            $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($asignacion->envio->id);
+
             $particion = [
                 'id_asignacion' => $asignacion->id,
-                'estado' => $asignacion->estado,
+                'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                 'fecha_asignacion' => $asignacion->fecha_asignacion,
                 'fecha_inicio' => $asignacion->fecha_inicio,
                 'fecha_fin' => $asignacion->fecha_fin,
                 'transportista' => [
-                    'nombre' => $asignacion->transportista?->usuario?->nombre,
-                    'apellido' => $asignacion->transportista?->usuario?->apellido,
-                    'telefono' => $asignacion->transportista?->telefono,
-                    'ci' => $asignacion->transportista?->ci,
+                    'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                    'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                    'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
+                    'ci' => $asignacion->transportista?->usuario?->persona?->ci,
                 ],
                 'vehiculo' => [
                     'placa' => $asignacion->vehiculo?->placa,
-                    'tipo' => $asignacion->vehiculo?->tipo,
+                    'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                 ],
                 'tipo_transporte' => [
                     'nombre' => $asignacion->tipoTransporte?->nombre,
@@ -1298,21 +1506,21 @@ class EnvioController extends Controller
                     'instrucciones_recogida' => $asignacion->recogidaEntrega?->instrucciones_recogida,
                     'instrucciones_entrega' => $asignacion->recogidaEntrega?->instrucciones_entrega,
                 ],
-                'cargas' => $asignacion->cargas,
+                'cargas' => $cargasTransformadas,
                 'firma' => $asignacion->firmaEnvio?->imagenfirma,
                 'firma_transportista' => $asignacion->firmaTransportista?->imagenfirma,
             ];
 
             // Incluir checklists solo si es admin
-            if ($rol === 'admin') {
-                $particion['checklistCondiciones'] = $asignacion->checklistCondiciones;
-                $particion['checklistIncidentes'] = $asignacion->checklistIncidentes;
+            if (UsuarioHelper::tieneRol($usuario, 'admin')) {
+                $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
+                $particion['checklistIncidentes'] = $asignacion->incidentes ?? [];
             }
 
             return response()->json([
                 'id_envio' => $asignacion->id_envio,
-                'nombre_cliente' => $asignacion->envio->usuario->nombre . ' ' . $asignacion->envio->usuario->apellido,
-                'estado_envio' => $asignacion->envio->estado,
+                'nombre_cliente' => ($asignacion->envio->usuario?->persona?->nombre ?? '') . ' ' . ($asignacion->envio->usuario?->persona?->apellido ?? ''),
+                'estado_envio' => $estadoEnvio ?? 'Pendiente',
                 'fecha_creacion' => $asignacion->envio->fecha_creacion,
                 'fecha_inicio' => $asignacion->envio->fecha_inicio,
                 'fecha_entrega' => $asignacion->envio->fecha_entrega,
@@ -1338,34 +1546,48 @@ class EnvioController extends Controller
             $rol = $usuario['rol'];
 
             // Solo clientes pueden acceder a este endpoint
-            if ($rol !== 'cliente') {
+            if (!UsuarioHelper::tieneRol($usuario, 'cliente')) {
                 return response()->json(['error' => 'Solo los clientes pueden ver sus particiones en curso'], 403);
             }
 
+            $idEstadoEnCurso = EstadoHelper::obtenerEstadoAsignacionPorNombre('En curso');
             $particiones = AsignacionMultiple::with([
                 'envio.direccion:id,nombreorigen,nombredestino',
-                'vehiculo:id,placa,tipo',
+                'vehiculo.tipoVehiculo:id,nombre',
+                'vehiculo:id,placa',
+                'estadoAsignacion:id,nombre',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas'
+                'cargas.catalogoCarga:id,tipo,variedad,empaque'
             ])
             ->whereHas('envio', function ($query) use ($userId) {
                 $query->where('id_usuario', $userId);
             })
-            ->where('estado', 'En curso')
+            ->where('id_estado_asignacion', $idEstadoEnCurso)
             ->get();
 
             $particiones = $particiones->map(function ($particion) {
+                $cargasTransformadas = $particion->cargas->map(function ($carga) {
+                    return [
+                        'id' => $carga->id,
+                        'tipo' => $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'cantidad' => $carga->cantidad,
+                        'peso' => $carga->peso,
+                    ];
+                });
+
                 return [
                     'id_asignacion' => $particion->id,
-                    'estado' => $particion->estado,
+                    'estado' => $particion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_asignacion' => $particion->fecha_asignacion,
                     'fecha_inicio' => $particion->fecha_inicio,
                     'nombre_origen' => $particion->envio->direccion?->nombreorigen ?? "—",
                     'nombre_destino' => $particion->envio->direccion?->nombredestino ?? "—",
                     'vehiculo' => [
                         'placa' => $particion->vehiculo?->placa,
-                        'tipo' => $particion->vehiculo?->tipo,
+                        'tipo' => $particion->vehiculo?->tipoVehiculo?->nombre,
                     ],
                     'tipoTransporte' => [
                         'nombre' => $particion->tipoTransporte?->nombre,
@@ -1378,7 +1600,7 @@ class EnvioController extends Controller
                         'instrucciones_recogida' => $particion->recogidaEntrega?->instrucciones_recogida,
                         'instrucciones_entrega' => $particion->recogidaEntrega?->instrucciones_entrega,
                     ],
-                    'cargas' => $particion->cargas,
+                    'cargas' => $cargasTransformadas,
                 ];
             });
 

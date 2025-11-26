@@ -14,16 +14,14 @@ class QrToken extends Model
 
     protected $fillable = [
         'id_asignacion',
-        'id_usuario_cliente',
+        'id_estado_qrtoken',
         'token',
         'imagenqr',
-        'usado',
         'fecha_creacion',
         'fecha_expiracion',
     ];
 
     protected $casts = [
-        'usado' => 'boolean',
         'fecha_creacion' => 'datetime',
         'fecha_expiracion' => 'datetime',
     ];
@@ -33,8 +31,8 @@ class QrToken extends Model
         return $this->belongsTo(AsignacionMultiple::class, 'id_asignacion', 'id');
     }
 
-    public function usuarioCliente()
+    public function estadoQrToken()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario_cliente', 'id');
+        return $this->belongsTo(EstadosQrToken::class, 'id_estado_qrtoken', 'id');
     }
 }

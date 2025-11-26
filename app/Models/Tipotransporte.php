@@ -16,6 +16,11 @@ class Tipotransporte extends Model
         'nombre',
         'descripcion',
     ];
+
+    public function vehiculos()
+    {
+        return $this->hasMany(Vehiculo::class, 'id_tipo_transporte', 'id');
+    }
 }
 
 

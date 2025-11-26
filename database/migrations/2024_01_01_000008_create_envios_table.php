@@ -15,16 +15,16 @@ return new class extends Migration
         Schema::create('envios', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_usuario')->constrained('usuarios');
-            $table->string('estado', 50);
             $table->timestampTz('fecha_creacion')->default(DB::raw('now()'));
             $table->timestampTz('fecha_inicio')->nullable();
             $table->timestampTz('fecha_entrega')->nullable();
             $table->foreignId('id_direccion')->constrained('direccion');
-            
-            $table->index('id_direccion');
         });
         
-        DB::statement("ALTER TABLE envios ADD CONSTRAINT chk_envios_estado CHECK (estado IN ('Parcialmente entregado','Entregado','En curso','Asignado','Pendiente'))");
+        Schema::table('envios', function (Blueprint $table) {
+            $table->index('id_direccion', 'ix_envios_id_direccion');
+            $table->index('id_usuario', 'ix_envios_id_usuario');
+        });
     }
 
     /**

@@ -4,9 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
+use App\Models\Persona;
+use App\Models\RolesUsuario;
+use App\Models\Transportista;
+use App\Models\Admin;
+use App\Models\Cliente;
+use App\Http\Controllers\Api\Helpers\UsuarioHelper;
+use App\Http\Controllers\Api\Helpers\EstadoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class UsuarioController extends Controller
@@ -17,7 +25,20 @@ class UsuarioController extends Controller
     public function obtenerTodos(): JsonResponse
     {
         try {
-            $usuarios = Usuario::all();
+            $usuarios = Usuario::with(['persona', 'rol'])->get();
+            $usuarios = $usuarios->map(function ($usuario) {
+                return [
+                    'id' => $usuario->id,
+                    'correo' => $usuario->correo,
+                    'fecha_registro' => $usuario->fecha_registro,
+                    'nombre' => $usuario->persona?->nombre,
+                    'apellido' => $usuario->persona?->apellido,
+                    'ci' => $usuario->persona?->ci,
+                    'telefono' => $usuario->persona?->telefono,
+                    'rol' => $usuario->rol?->codigo,
+                    'rol_nombre' => $usuario->rol?->nombre,
+                ];
+            });
             return response()->json($usuarios);
         } catch (\Exception $e) {
             \Log::error('Error al obtener usuarios: ' . $e->getMessage());
@@ -31,13 +52,23 @@ class UsuarioController extends Controller
     public function obtenerPorId(int $id): JsonResponse
     {
         try {
-            $usuario = Usuario::find($id);
+            $usuario = Usuario::with(['persona', 'rol'])->find($id);
 
             if (!$usuario) {
                 return response()->json(['error' => 'Usuario no encontrado'], 404);
             }
 
-            return response()->json($usuario);
+            return response()->json([
+                'id' => $usuario->id,
+                'correo' => $usuario->correo,
+                'fecha_registro' => $usuario->fecha_registro,
+                'nombre' => $usuario->persona?->nombre,
+                'apellido' => $usuario->persona?->apellido,
+                'ci' => $usuario->persona?->ci,
+                'telefono' => $usuario->persona?->telefono,
+                'rol' => $usuario->rol?->codigo,
+                'rol_nombre' => $usuario->rol?->nombre,
+            ]);
         } catch (\Exception $e) {
             \Log::error('Error al obtener usuario: ' . $e->getMessage());
             return response()->json(['error' => 'Error al obtener usuario'], 500);
@@ -55,23 +86,37 @@ class UsuarioController extends Controller
                 'nombre' => 'required|string|max:100',
                 'apellido' => 'required|string|max:100',
                 'correo' => 'required|email|max:100|unique:usuarios,correo,' . $id,
+                'ci' => 'nullable|string|max:20',
+                'telefono' => 'nullable|string|max:20',
                 'rol' => 'required|string|in:transportista,cliente,admin'
             ]);
 
-            $usuario = Usuario::find($id);
+            return DB::transaction(function () use ($id, $request) {
+                $usuario = Usuario::with('persona')->find($id);
 
-            if (!$usuario) {
-                return response()->json(['error' => 'Usuario no encontrado'], 404);
-            }
+                if (!$usuario) {
+                    return response()->json(['error' => 'Usuario no encontrado'], 404);
+                }
 
-            $usuario->update([
-                'nombre' => $request->nombre,
-                'apellido' => $request->apellido,
-                'correo' => $request->correo,
-                'rol' => $request->rol
-            ]);
+                // Actualizar persona
+                if ($usuario->persona) {
+                    $usuario->persona->update([
+                        'nombre' => $request->nombre,
+                        'apellido' => $request->apellido,
+                        'ci' => $request->ci ?? $usuario->persona->ci,
+                        'telefono' => $request->telefono ?? $usuario->persona->telefono,
+                    ]);
+                }
 
-            return response()->json(['mensaje' => 'Usuario actualizado correctamente']);
+                // Actualizar usuario
+                $idRol = UsuarioHelper::obtenerRolPorCodigo($request->rol);
+                $usuario->update([
+                    'correo' => $request->correo,
+                    'id_rol' => $idRol,
+                ]);
+
+                return response()->json(['mensaje' => 'Usuario actualizado correctamente']);
+            });
         } catch (ValidationException $e) {
             return response()->json(['error' => 'Datos de validación incorrectos', 'detalles' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -107,9 +152,21 @@ class UsuarioController extends Controller
     public function obtenerClientes(): JsonResponse
     {
         try {
-            $clientes = Usuario::select('id', 'nombre', 'apellido', 'correo')
-                ->where('rol', 'cliente')
+            $idRolCliente = UsuarioHelper::obtenerRolPorCodigo('cliente');
+            $clientes = Usuario::with(['persona', 'rol'])
+                ->where('id_rol', $idRolCliente)
                 ->get();
+
+            $clientes = $clientes->map(function ($usuario) {
+                return [
+                    'id' => $usuario->id,
+                    'nombre' => $usuario->persona?->nombre,
+                    'apellido' => $usuario->persona?->apellido,
+                    'correo' => $usuario->correo,
+                    'telefono' => $usuario->persona?->telefono,
+                    'ci' => $usuario->persona?->ci,
+                ];
+            });
 
             return response()->json($clientes);
         } catch (\Exception $e) {
@@ -130,21 +187,66 @@ class UsuarioController extends Controller
                 'apellido' => 'required|string|max:100',
                 'correo' => 'required|email|max:100|unique:usuarios,correo',
                 'contrasena' => 'required|string|min:6',
+                'ci' => 'required|string|max:20|unique:persona,ci',
+                'telefono' => 'nullable|string|max:20',
                 'rol' => 'required|string|in:transportista,cliente,admin'
             ]);
 
-            $usuario = Usuario::create([
-                'nombre' => $request->nombre,
-                'apellido' => $request->apellido,
-                'correo' => $request->correo,
-                'contrasena' => Hash::make($request->contrasena),
-                'rol' => $request->rol
-            ]);
+            return DB::transaction(function () use ($request) {
+                // Crear persona primero
+                $persona = Persona::create([
+                    'nombre' => $request->nombre,
+                    'apellido' => $request->apellido,
+                    'ci' => $request->ci,
+                    'telefono' => $request->telefono ?? null,
+                ]);
 
-            return response()->json([
-                'mensaje' => 'Usuario creado correctamente',
-                'usuario' => $usuario
-            ], 201);
+                // Obtener rol
+                $idRol = UsuarioHelper::obtenerRolPorCodigo($request->rol);
+
+                // Crear usuario
+                $usuario = Usuario::create([
+                    'correo' => $request->correo,
+                    'contrasena' => Hash::make($request->contrasena),
+                    'id_rol' => $idRol,
+                    'id_persona' => $persona->id,
+                ]);
+
+                // Si es transportista, crear registro en transportistas
+                if ($request->rol === 'transportista') {
+                    $idEstadoDisponible = EstadoHelper::obtenerEstadoTransportistaPorNombre('Disponible');
+                    Transportista::create([
+                        'id_usuario' => $usuario->id,
+                        'id_estado_transportista' => $idEstadoDisponible,
+                    ]);
+                }
+                
+                // Si es cliente, crear registro en cliente
+                if ($request->rol === 'cliente') {
+                    Cliente::create([
+                        'id_usuario' => $usuario->id,
+                    ]);
+                }
+                
+                // Si es admin, crear registro en admin
+                if ($request->rol === 'admin') {
+                    Admin::create([
+                        'id_usuario' => $usuario->id,
+                        'nivel_acceso' => 1, // Nivel de acceso por defecto
+                    ]);
+                }
+
+                return response()->json([
+                    'mensaje' => 'Usuario creado correctamente',
+                    'usuario' => [
+                        'id' => $usuario->id,
+                        'correo' => $usuario->correo,
+                        'nombre' => $persona->nombre,
+                        'apellido' => $persona->apellido,
+                        'rol' => $request->rol,
+                    ]
+                ], 201);
+            });
         } catch (ValidationException $e) {
             return response()->json(['error' => 'Datos de validación incorrectos', 'detalles' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -164,9 +266,21 @@ class UsuarioController extends Controller
                 return response()->json(['error' => 'Rol no válido'], 400);
             }
 
-            $usuarios = Usuario::select('id', 'nombre', 'apellido', 'correo', 'rol', 'fecha_registro')
-                ->where('rol', $rol)
+            $idRol = UsuarioHelper::obtenerRolPorCodigo($rol);
+            $usuarios = Usuario::with(['persona', 'rol'])
+                ->where('id_rol', $idRol)
                 ->get();
+
+            $usuarios = $usuarios->map(function ($usuario) {
+                return [
+                    'id' => $usuario->id,
+                    'nombre' => $usuario->persona?->nombre,
+                    'apellido' => $usuario->persona?->apellido,
+                    'correo' => $usuario->correo,
+                    'rol' => $usuario->rol?->codigo,
+                    'fecha_registro' => $usuario->fecha_registro,
+                ];
+            });
 
             return response()->json($usuarios);
         } catch (\Exception $e) {
@@ -185,46 +299,67 @@ class UsuarioController extends Controller
                 'rol' => 'required|string|in:cliente,transportista,admin',
             ]);
 
-            $usuario = Usuario::find($id);
-            if (!$usuario) {
-                return response()->json(['error' => 'Usuario no encontrado'], 404);
-            }
-
-            $rolAnterior = $usuario->rol;
-            $usuario->update(['rol' => $request->rol]);
-
-            // Si cambia a transportista, crear registro en transportistas si no existe
-            if ($request->rol === 'transportista' && $rolAnterior !== 'transportista') {
-                $transportista = Transportista::where('id_usuario', $id)->first();
-                if (!$transportista) {
-                    Transportista::create([
-                        'id_usuario' => $id,
-                        'ci' => '00000000', // CI temporal
-                        'telefono' => '000-0000', // Teléfono temporal
-                        'estado' => 'Disponible',
-                    ]);
+            return DB::transaction(function () use ($id, $request) {
+                $usuario = Usuario::with(['persona', 'rol'])->find($id);
+                if (!$usuario) {
+                    return response()->json(['error' => 'Usuario no encontrado'], 404);
                 }
-            }
 
-            // Si cambia de transportista a otro rol, actualizar estado
-            if ($rolAnterior === 'transportista' && $request->rol !== 'transportista') {
-                $transportista = Transportista::where('id_usuario', $id)->first();
-                if ($transportista) {
-                    $transportista->update(['estado' => 'No Disponible']);
+                $rolAnterior = $usuario->rol?->codigo;
+                $idRolNuevo = UsuarioHelper::obtenerRolPorCodigo($request->rol);
+                $usuario->update(['id_rol' => $idRolNuevo]);
+
+                // Si cambia a transportista, crear registro en transportistas si no existe
+                if ($request->rol === 'transportista' && $rolAnterior !== 'transportista') {
+                    $transportista = Transportista::where('id_usuario', $usuario->id)->first();
+                    if (!$transportista) {
+                        $idEstadoDisponible = \App\Http\Controllers\Api\Helpers\EstadoHelper::obtenerEstadoTransportistaPorNombre('Disponible');
+                        Transportista::create([
+                            'id_usuario' => $usuario->id,
+                            'id_estado_transportista' => $idEstadoDisponible,
+                        ]);
+                    }
                 }
-            }
+                
+                // Si cambia de transportista a otro rol, eliminar registro de transportista
+                if ($rolAnterior === 'transportista' && $request->rol !== 'transportista') {
+                    $transportista = Transportista::where('id_usuario', $usuario->id)->first();
+                    if ($transportista) {
+                        $transportista->delete();
+                    }
+                }
+                
+                // Si cambia a admin, crear registro en admin si no existe
+                if ($request->rol === 'admin' && $rolAnterior !== 'admin') {
+                    $admin = Admin::where('id_usuario', $usuario->id)->first();
+                    if (!$admin) {
+                        Admin::create([
+                            'id_usuario' => $usuario->id,
+                            'nivel_acceso' => 1, // Nivel de acceso por defecto
+                        ]);
+                    }
+                }
+                
+                // Si cambia de admin a otro rol, eliminar registro de admin
+                if ($rolAnterior === 'admin' && $request->rol !== 'admin') {
+                    $admin = Admin::where('id_usuario', $usuario->id)->first();
+                    if ($admin) {
+                        $admin->delete();
+                    }
+                }
 
-            return response()->json([
-                'mensaje' => 'Rol actualizado correctamente',
-                'usuario' => [
-                    'id' => $usuario->id,
-                    'nombre' => $usuario->nombre,
-                    'apellido' => $usuario->apellido,
-                    'correo' => $usuario->correo,
-                    'rol' => $usuario->rol,
-                    'rol_anterior' => $rolAnterior
-                ]
-            ]);
+                return response()->json([
+                    'mensaje' => 'Rol actualizado correctamente',
+                    'usuario' => [
+                        'id' => $usuario->id,
+                        'nombre' => $usuario->persona?->nombre,
+                        'apellido' => $usuario->persona?->apellido,
+                        'correo' => $usuario->correo,
+                        'rol' => $request->rol,
+                        'rol_anterior' => $rolAnterior
+                    ]
+                ]);
+            });
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['error' => 'Datos de validación incorrectos', 'detalles' => $e->errors()], 422);

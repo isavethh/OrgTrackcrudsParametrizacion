@@ -74,7 +74,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const contrasena = formData.get('contrasena');
 
         try {
-            const response = await fetch(`${window.location.origin}/api/auth/login`, {
+            // If frontend running on localhost, assume API on :8000
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            const apiBase = isLocalhost ? `${window.location.protocol}//${window.location.hostname}:8000` : window.location.origin;
+            console.log('Using apiBase for login:', apiBase);
+
+            const response = await fetch(`${apiBase}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo, contrasena })
@@ -94,7 +99,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 try { localStorage.setItem('usuario', JSON.stringify(data.usuario || {})); } catch {}
             }
 
-            window.location.href = '/dashboard';
+            const rol = (data.usuario?.rol || '').toLowerCase();
+            const isAdmin = rol === 'admin';
+            window.location.href = isAdmin ? '/admin/dashboard' : '/dashboard';
         } catch (err) {
             errorBox.textContent = 'Error de red. Intenta nuevamente.';
             errorBox.classList.remove('d-none');

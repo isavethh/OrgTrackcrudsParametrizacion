@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('direccion', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_usuario')->constrained('usuarios');
             $table->string('nombreorigen', 200)->nullable();
             $table->double('origen_lng')->nullable();
             $table->double('origen_lat')->nullable();

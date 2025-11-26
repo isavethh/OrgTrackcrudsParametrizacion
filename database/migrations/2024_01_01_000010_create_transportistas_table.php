@@ -14,14 +14,11 @@ return new class extends Migration
     {
         Schema::create('transportistas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_usuario')->nullable()->unique()->constrained('usuarios');
             $table->string('ci', 20)->unique();
             $table->string('telefono', 20)->nullable();
-            $table->string('estado', 20);
+            $table->foreignId('id_estado_transportista')->constrained('estados_transportista');
             $table->timestampTz('fecha_registro')->default(DB::raw('now()'));
         });
-        
-        DB::statement("ALTER TABLE transportistas ADD CONSTRAINT chk_transportistas_estado CHECK (estado IN ('Inactivo','No Disponible','En ruta','Disponible'))");
     }
 
     /**

@@ -1,3 +1,5 @@
+# Estos ENDPOINTS estan mal o sea funcionan pero con otra bd no tocar
+
 # 📚 API ENDPOINTS DOCUMENTATION - OrgTrack Laravel
 
 ## 🔐 Autenticación

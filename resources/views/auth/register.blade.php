@@ -54,10 +54,37 @@
                     </div>
                 </div>
                 <div class="input-group mb-3">
+                    <input type="text" name="ci" class="form-control" placeholder="Cédula (CI)" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-id-card"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
                     <input type="password" name="contrasena" class="form-control" placeholder="Contraseña" required>
                     <div class="input-group-append">
                         <div class="input-group-text">
                             <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="text" name="telefono" class="form-control" placeholder="Teléfono (opcional)">
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-phone"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <select name="rol" class="form-control">
+                        <option value="cliente" selected>Cliente</option>
+                        <option value="transportista">Transportista</option>
+                    </select>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-user-tag"></span>
                         </div>
                     </div>
                 </div>
@@ -93,6 +120,7 @@
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Register page script loaded');
     const form = document.getElementById('register-form');
     const errorBox = document.getElementById('register-error');
     const successBox = document.getElementById('register-success');
@@ -108,20 +136,44 @@ document.addEventListener('DOMContentLoaded', function () {
         const nombre = formData.get('nombre');
         const apellido = formData.get('apellido');
         const correo = formData.get('correo');
+        const ci = formData.get('ci');
         const contrasena = formData.get('contrasena');
+        const telefono = formData.get('telefono') || null;
+        const rol = formData.get('rol') || 'cliente';
 
         try {
-            const response = await fetch(`${window.location.origin}/api/auth/register`, {
+            const payload = { nombre, apellido, ci, correo, contrasena, telefono, rol };
+            console.log('Register payload:', payload);
+
+            // Build API base: if running on localhost, assume backend at :8000
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            const apiBase = isLocalhost ? `${window.location.protocol}//${window.location.hostname}:8000` : window.location.origin;
+            console.log('Using apiBase:', apiBase);
+
+            const response = await fetch(`${apiBase}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, apellido, correo, contrasena })
+                body: JSON.stringify(payload)
             });
 
-            const data = await response.json().catch(() => ({}));
+            console.log('Fetch returned status', response.status);
+
+            // Try to read text first to handle non-json responses
+            const text = await response.text().catch(() => '');
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch (parseErr) { data = { _raw: text }; }
+            console.log('Response body parsed:', data);
 
             if (!response.ok) {
-                const message = data.error || 'No se pudo registrar.';
-                errorBox.textContent = message;
+                // Manejar errores de validación y conflictos
+                if (response.status === 422 && data.errors) {
+                    const messages = Object.values(data.errors).flat().join(' ');
+                    errorBox.textContent = messages || 'Datos inválidos.';
+                } else if (response.status === 409) {
+                    errorBox.textContent = data.mensaje || data.error || 'Conflicto: recurso ya existe.';
+                } else {
+                    errorBox.textContent = data.error || data.mensaje || data._raw || 'No se pudo registrar.';
+                }
                 errorBox.classList.remove('d-none');
                 return;
             }
@@ -131,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             setTimeout(() => { window.location.href = '/login'; }, 1000);
         } catch (err) {
+            console.error('Fetch error:', err);
             errorBox.textContent = 'Error de red. Intenta nuevamente.';
             errorBox.classList.remove('d-none');
         }

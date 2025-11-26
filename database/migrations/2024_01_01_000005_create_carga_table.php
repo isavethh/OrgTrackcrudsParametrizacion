@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('carga', function (Blueprint $table) {
             $table->id();
-            $table->string('tipo', 50);
-            $table->string('variedad', 50);
+            $table->foreignId('id_catalogo_carga')->constrained('catalogo_carga');
             $table->integer('cantidad');
-            $table->string('empaquetado', 50);
             $table->decimal('peso', 10, 2);
         });
     }

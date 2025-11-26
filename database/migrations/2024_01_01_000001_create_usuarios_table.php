@@ -14,15 +14,12 @@ return new class extends Migration
     {
         Schema::create('usuarios', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 100)->nullable();
-            $table->string('apellido', 100)->nullable();
             $table->string('correo', 100)->unique();
-            $table->string('contrasena', 100)->nullable();
-            $table->string('rol', 20)->nullable();
-            $table->timestampTz('fecha_registro')->default(DB::raw('now()'));
+            $table->string('contrasena', 100);
+            $table->foreignId('id_rol')->constrained('roles_usuario');
+            $table->timestampTz('fecha_registro')->default(DB::raw('now()'))->nullable(false);
+            $table->foreignId('id_persona')->constrained('persona');
         });
-        
-        DB::statement("ALTER TABLE usuarios ADD CONSTRAINT chk_usuarios_rol CHECK (rol IN ('transportista','cliente','admin'))");
     }
 
     /**

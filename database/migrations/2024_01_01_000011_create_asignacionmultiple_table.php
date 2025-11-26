@@ -19,13 +19,11 @@ return new class extends Migration
             $table->foreignId('id_vehiculo')->nullable()->constrained('vehiculos');
             $table->foreignId('id_recogida_entrega')->constrained('recogidaentrega');
             $table->foreignId('id_tipo_transporte')->constrained('tipotransporte');
-            $table->string('estado', 50)->default('Pendiente');
+            $table->foreignId('id_estado_asignacion')->constrained('estados_asignacion_multiple');
             $table->timestampTz('fecha_asignacion')->default(DB::raw('now()'));
             $table->timestampTz('fecha_inicio')->nullable();
             $table->timestampTz('fecha_fin')->nullable();
         });
-        
-        DB::statement("ALTER TABLE asignacionmultiple ADD CONSTRAINT chk_asignacion_multiple_estado CHECK (estado IN ('Entregado','En curso','Pendiente'))");
     }
 
     /**

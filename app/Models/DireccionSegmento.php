@@ -16,6 +16,11 @@ class DireccionSegmento extends Model
         'direccion_id',
         'segmentogeojson',
     ];
+
+    public function direccion()
+    {
+        return $this->belongsTo(Direccion::class, 'direccion_id', 'id');
+    }
 }
 
 

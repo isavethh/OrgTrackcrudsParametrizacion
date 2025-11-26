@@ -15,7 +15,7 @@ class AsignacionMultiple extends Model
         'id_vehiculo',
         'id_recogida_entrega',
         'id_tipo_transporte',
-        'estado',
+        'id_estado_asignacion',
         'fecha_asignacion',
         'fecha_inicio',
         'fecha_fin',
@@ -62,14 +62,19 @@ class AsignacionMultiple extends Model
         );
     }
 
-    public function checklistCondiciones()
+    public function estadoAsignacion()
     {
-        return $this->hasOne(ChecklistCondicionTransporte::class, 'id_asignacion', 'id');
+        return $this->belongsTo(EstadosAsignacionMultiple::class, 'id_estado_asignacion', 'id');
     }
 
-    public function checklistIncidentes()
+    public function checklistCondicion()
     {
-        return $this->hasOne(ChecklistIncidenteTransporte::class, 'id_asignacion', 'id');
+        return $this->hasOne(ChecklistCondicion::class, 'id_asignacion', 'id');
+    }
+
+    public function incidentes()
+    {
+        return $this->hasMany(IncidentesTransporte::class, 'id_asignacion', 'id');
     }
 
     public function firmaEnvio()

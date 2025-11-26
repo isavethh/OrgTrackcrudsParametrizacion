@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\QrToken;
 use App\Models\AsignacionMultiple;
+use App\Http\Controllers\Api\Helpers\EstadoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -54,12 +55,12 @@ class QrController extends Controller
             $qrBase64 = $this->generarQRReal($tokenUrl);
 
             // Crear QR token
+            $idEstadoQrActivo = EstadoHelper::obtenerEstadoQrTokenPorNombre('Activo');
             $qrToken = QrToken::create([
                 'id_asignacion' => $id_asignacion,
-                'id_usuario_cliente' => $asignacion->envio->id_usuario,
+                'id_estado_qrtoken' => $idEstadoQrActivo,
                 'token' => $nuevoToken,
                 'imagenqr' => $qrBase64,
-                'usado' => false,
                 'fecha_creacion' => now(),
                 'fecha_expiracion' => now()->addDay(),
             ]);
@@ -95,7 +96,7 @@ class QrController extends Controller
                 'id_asignacion' => $qrToken->id_asignacion,
                 'token' => $qrToken->token,
                 'imagenQR' => $qrToken->imagenqr,
-                'usado' => $qrToken->usado,
+                'estado' => $qrToken->estadoQrToken?->nombre,
                 'fecha_creacion' => $qrToken->fecha_creacion,
                 'fecha_expiracion' => $qrToken->fecha_expiracion,
             ]);
@@ -152,7 +153,7 @@ class QrController extends Controller
                 'id_asignacion' => $qrToken->id_asignacion,
                 'token' => $qrToken->token,
                 'imagenQR' => $qrToken->imagenqr,
-                'usado' => $qrToken->usado,
+                'estado' => $qrToken->estadoQrToken?->nombre,
                 'fecha_creacion' => $qrToken->fecha_creacion,
                 'fecha_expiracion' => $qrToken->fecha_expiracion,
                 'frontend_url' => $qrUrl,
@@ -186,19 +187,22 @@ class QrController extends Controller
             }
 
             // Verificar si ya fue usado
-            if ($qrToken->usado) {
+            if ($qrToken->estadoQrToken?->nombre === 'Usado') {
                 return response()->json(['error' => 'Token QR ya fue utilizado'], 400);
             }
 
             // Marcar como usado
-            $qrToken->update(['usado' => true]);
+            $idEstadoUsado = EstadoHelper::obtenerEstadoQrTokenPorNombre('Usado');
+            $qrToken->update(['id_estado_qrtoken' => $idEstadoUsado]);
 
             // Obtener información de la asignación
             $asignacion = AsignacionMultiple::with([
-                'envio.usuario:id,nombre,apellido',
+                'envio.usuario.persona:id,nombre,apellido',
                 'envio.direccion:id,nombreorigen,nombredestino',
-                'vehiculo:id,placa,tipo',
-                'transportista.usuario:id,nombre,apellido'
+                'vehiculo.tipoVehiculo:id,nombre',
+                'vehiculo:id,placa',
+                'estadoAsignacion:id,nombre',
+                'transportista:id,ci,telefono'
             ])->find($qrToken->id_asignacion);
 
             return response()->json([
@@ -206,20 +210,20 @@ class QrController extends Controller
                 'valido' => true,
                 'asignacion' => [
                     'id_asignacion' => $asignacion->id,
-                    'estado' => $asignacion->estado,
+                    'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'cliente' => [
-                        'nombre' => $asignacion->envio->usuario->nombre,
-                        'apellido' => $asignacion->envio->usuario->apellido,
+                        'nombre' => $asignacion->envio->usuario?->persona?->nombre,
+                        'apellido' => $asignacion->envio->usuario?->persona?->apellido,
                     ],
                     'origen' => $asignacion->envio->direccion?->nombreorigen,
                     'destino' => $asignacion->envio->direccion?->nombredestino,
                     'vehiculo' => [
                         'placa' => $asignacion->vehiculo?->placa,
-                        'tipo' => $asignacion->vehiculo?->tipo,
+                        'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                     ],
                     'transportista' => [
-                        'nombre' => $asignacion->transportista?->usuario?->nombre,
-                        'apellido' => $asignacion->transportista?->usuario?->apellido,
+                        'ci' => $asignacion->transportista?->ci,
+                        'telefono' => $asignacion->transportista?->telefono,
                     ],
                 ],
             ]);
@@ -241,32 +245,41 @@ class QrController extends Controller
             $usuario = $request->attributes->get('usuario');
             $userId = $usuario['id'];
 
+            // Obtener envíos del usuario y luego los QR tokens de esas asignaciones
+            $envios = \App\Models\Envio::where('id_usuario', $userId)->pluck('id');
+            $asignaciones = AsignacionMultiple::whereIn('id_envio', $envios)->pluck('id');
+            
             $qrTokens = QrToken::with([
-                'asignacion.envio:id,estado',
-                'asignacion.vehiculo:id,placa,tipo',
-                'asignacion.transportista.usuario:id,nombre,apellido'
+                'asignacion.envio.historialEstados.estadoEnvio:id,nombre',
+                'asignacion.vehiculo.tipoVehiculo:id,nombre',
+                'asignacion.vehiculo:id,placa',
+                'asignacion.estadoAsignacion:id,nombre',
+                'asignacion.transportista:id,ci,telefono',
+                'estadoQrToken:id,nombre'
             ])
-            ->where('id_usuario_cliente', $userId)
+            ->whereIn('id_asignacion', $asignaciones)
             ->orderBy('fecha_creacion', 'desc')
             ->get();
 
             $tokens = $qrTokens->map(function ($qrToken) {
+                $estadoEnvio = \App\Http\Controllers\Api\Helpers\EstadoHelper::obtenerEstadoActualEnvio($qrToken->asignacion?->envio?->id ?? 0);
                 return [
                     'id_asignacion' => $qrToken->id_asignacion,
                     'token' => $qrToken->token,
                     'imagenQR' => $qrToken->imagenqr,
-                    'usado' => $qrToken->usado,
+                    'estado' => $qrToken->estadoQrToken?->nombre,
                     'fecha_creacion' => $qrToken->fecha_creacion,
                     'fecha_expiracion' => $qrToken->fecha_expiracion,
                     'asignacion' => [
-                        'estado' => $qrToken->asignacion?->estado,
+                        'estado' => $qrToken->asignacion?->estadoAsignacion?->nombre ?? 'Pendiente',
+                        'estado_envio' => $estadoEnvio ?? 'Pendiente',
                         'vehiculo' => [
                             'placa' => $qrToken->asignacion?->vehiculo?->placa,
-                            'tipo' => $qrToken->asignacion?->vehiculo?->tipo,
+                            'tipo' => $qrToken->asignacion?->vehiculo?->tipoVehiculo?->nombre,
                         ],
                         'transportista' => [
-                            'nombre' => $qrToken->asignacion?->transportista?->usuario?->nombre,
-                            'apellido' => $qrToken->asignacion?->transportista?->usuario?->apellido,
+                            'ci' => $qrToken->asignacion?->transportista?->ci,
+                            'telefono' => $qrToken->asignacion?->transportista?->telefono,
                         ],
                     ],
                 ];

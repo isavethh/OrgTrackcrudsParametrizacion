@@ -15,8 +15,12 @@ return new class extends Migration
         Schema::create('historialestados', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_envio')->constrained('envios');
-            $table->string('estado', 50);
+            $table->foreignId('id_estado_envio')->constrained('estados_envio');
             $table->timestampTz('fecha')->default(DB::raw('now()'));
+        });
+        
+        Schema::table('historialestados', function (Blueprint $table) {
+            $table->index(['id_envio', 'fecha'], 'ix_historial_envio');
         });
     }
 

@@ -15,19 +15,20 @@ return new class extends Migration
         Schema::create('qrtoken', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_asignacion')->unique()->constrained('asignacionmultiple')->onDelete('cascade');
-            $table->foreignId('id_usuario_cliente')->constrained('usuarios')->onDelete('cascade');
-            $table->text('token')->unique();
+            $table->foreignId('id_estado_qrtoken')->constrained('estados_qrtoken');
+            $table->string('token', 500)->unique();
             $table->text('imagenqr');
-            $table->boolean('usado')->default(false);
             $table->timestampTz('fecha_creacion')->default(DB::raw('now()'));
             $table->timestampTz('fecha_expiracion');
-            
-            $table->index('usado');
-            $table->index('fecha_expiracion');
+        });
+        
+        Schema::table('qrtoken', function (Blueprint $table) {
+            $table->index('fecha_expiracion', 'ix_qrtoken_exp');
+            $table->index('id_estado_qrtoken', 'ix_qrtoken_estado');
         });
         
         // Agregar el check constraint para fecha_expiracion > fecha_creacion
-        DB::statement('ALTER TABLE qrtoken ADD CONSTRAINT chk_qrtoken_fecha CHECK (fecha_expiracion > fecha_creacion)');
+        DB::statement('ALTER TABLE qrtoken ADD CONSTRAINT ck_qrtoken_fecha CHECK (fecha_expiracion > fecha_creacion)');
     }
 
     /**

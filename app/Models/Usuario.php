@@ -13,16 +13,50 @@ class Usuario extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'nombre',
-        'apellido',
         'correo',
         'contrasena',
-        'rol',
+        'id_rol',
+        'fecha_registro',
+        'id_persona',
     ];
 
     protected $hidden = [
         'contrasena',
     ];
+
+    protected $casts = [
+        'fecha_registro' => 'datetime',
+    ];
+
+    public function rol()
+    {
+        return $this->belongsTo(RolesUsuario::class, 'id_rol', 'id');
+    }
+
+    public function persona()
+    {
+        return $this->belongsTo(Persona::class, 'id_persona', 'id');
+    }
+
+    public function cliente()
+    {
+        return $this->hasOne(Cliente::class, 'id_usuario', 'id');
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(Admin::class, 'id_usuario', 'id');
+    }
+
+    public function transportista()
+    {
+        return $this->hasOne(Transportista::class, 'id_usuario', 'id');
+    }
+
+    public function envios()
+    {
+        return $this->hasMany(Envio::class, 'id_usuario', 'id');
+    }
 }
 
 

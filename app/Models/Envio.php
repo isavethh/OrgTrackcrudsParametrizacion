@@ -14,7 +14,6 @@ class Envio extends Model
 
     protected $fillable = [
         'id_usuario',
-        'estado',
         'fecha_creacion',
         'fecha_inicio',
         'fecha_entrega',
@@ -40,6 +39,22 @@ class Envio extends Model
     public function asignaciones()
     {
         return $this->hasMany(AsignacionMultiple::class, 'id_envio', 'id');
+    }
+
+    public function historialEstados()
+    {
+        return $this->hasMany(HistorialEstados::class, 'id_envio', 'id');
+    }
+
+    /**
+     * Obtener el estado actual del envío
+     */
+    public function estadoActual()
+    {
+        return $this->historialEstados()
+            ->orderBy('fecha', 'desc')
+            ->first()
+            ?->estadoEnvio;
     }
 }
 
