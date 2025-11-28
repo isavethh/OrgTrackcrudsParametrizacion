@@ -16,6 +16,7 @@ class Carga extends Model
         'id_catalogo_carga',
         'cantidad',
         'peso',
+        'id_unidad_medida',
     ];
 
     protected $casts = [
@@ -26,6 +27,11 @@ class Carga extends Model
     public function catalogoCarga()
     {
         return $this->belongsTo(CatalogoCarga::class, 'id_catalogo_carga', 'id');
+    }
+
+    public function unidadMedida()
+    {
+        return $this->belongsTo(UnidadMedida::class, 'id_unidad_medida');
     }
 
     public function asignaciones()

@@ -57,6 +57,16 @@ class Usuario extends Model
     {
         return $this->hasMany(Envio::class, 'id_usuario', 'id');
     }
+
+    public function notificaciones()
+    {
+        return $this->hasMany(Notificacion::class, 'id_usuario');
+    }
+
+    public function calificaciones()
+    {
+        return $this->hasMany(Calificacion::class, 'id_usuario');
+    }
 }
 
 

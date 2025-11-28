@@ -48,6 +48,22 @@ class Transportista extends Model
     }
 
     /**
+     * Relación con las calificaciones recibidas
+     */
+    public function calificaciones()
+    {
+        return $this->hasMany(Calificacion::class, 'id_transportista');
+    }
+
+    /**
+     * Calcular promedio de calificaciones
+     */
+    public function promedioCalificacion()
+    {
+        return $this->calificaciones()->avg('puntuacion');
+    }
+
+    /**
      * Scope para obtener transportistas disponibles
      */
     public function scopeDisponibles($query)

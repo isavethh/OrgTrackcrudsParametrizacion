@@ -72,6 +72,11 @@ class AsignacionMultiple extends Model
         return $this->hasOne(ChecklistCondicion::class, 'id_asignacion', 'id');
     }
 
+    public function checklistIncidente()
+    {
+        return $this->hasOne(ChecklistIncidente::class, 'id_asignacion');
+    }
+
     public function incidentes()
     {
         return $this->hasMany(IncidentesTransporte::class, 'id_asignacion', 'id');

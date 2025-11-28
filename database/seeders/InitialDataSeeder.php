@@ -32,6 +32,12 @@ class InitialDataSeeder extends Seeder
         // 6. Estados de QR Token
         $this->seedEstadosQrToken();
 
+        // 7. Unidades de medida
+        $this->seedUnidadesMedida();
+
+        // 8. Motivos de cancelación
+        $this->seedMotivosCancelacion();
+
         $this->command->info('✓ Datos iniciales creados correctamente');
     }
 
@@ -57,7 +63,9 @@ class InitialDataSeeder extends Seeder
     {
         $estados = [
             ['nombre' => 'Disponible'],
+            ['nombre' => 'No Disponible'],
             ['nombre' => 'En uso'],
+            ['nombre' => 'En ruta'],
             ['nombre' => 'En mantenimiento'],
             ['nombre' => 'Fuera de servicio'],
         ];
@@ -73,7 +81,9 @@ class InitialDataSeeder extends Seeder
     {
         $estados = [
             ['nombre' => 'Disponible'],
+            ['nombre' => 'No Disponible'],
             ['nombre' => 'En viaje'],
+            ['nombre' => 'En ruta'],
             ['nombre' => 'Ocupado'],
             ['nombre' => 'Inactivo'],
         ];
@@ -89,9 +99,10 @@ class InitialDataSeeder extends Seeder
     {
         $estados = [
             ['nombre' => 'Pendiente'],
-            ['nombre' => 'En preparación'],
-            ['nombre' => 'En tránsito'],
+            ['nombre' => 'Asignado'],
+            ['nombre' => 'En curso'],
             ['nombre' => 'Entregado'],
+            ['nombre' => 'Parcialmente entregado'],
             ['nombre' => 'Cancelado'],
         ];
 
@@ -109,6 +120,7 @@ class InitialDataSeeder extends Seeder
             ['nombre' => 'Asignada'],
             ['nombre' => 'En curso'],
             ['nombre' => 'Completada'],
+            ['nombre' => 'Entregado'],
             ['nombre' => 'Cancelada'],
         ];
 
@@ -132,5 +144,50 @@ class InitialDataSeeder extends Seeder
         }
 
         $this->command->info('  ✓ Estados de QR Token');
+    }
+
+    private function seedUnidadesMedida()
+    {
+        $unidades = [
+            ['codigo' => 'KG', 'nombre' => 'Kilogramo', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso'],
+            ['codigo' => 'TON', 'nombre' => 'Tonelada', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso equivalente a 1000 kg'],
+            ['codigo' => 'GR', 'nombre' => 'Gramo', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso'],
+            ['codigo' => 'UND', 'nombre' => 'Unidad', 'tipo' => 'cantidad', 'descripcion' => 'Unidad individual'],
+            ['codigo' => 'CAJA', 'nombre' => 'Caja', 'tipo' => 'cantidad', 'descripcion' => 'Caja de empaque'],
+            ['codigo' => 'SACO', 'nombre' => 'Saco', 'tipo' => 'cantidad', 'descripcion' => 'Saco de empaque'],
+            ['codigo' => 'LT', 'nombre' => 'Litro', 'tipo' => 'volumen', 'descripcion' => 'Unidad de volumen'],
+            ['codigo' => 'ML', 'nombre' => 'Mililitro', 'tipo' => 'volumen', 'descripcion' => 'Unidad de volumen'],
+        ];
+
+        foreach ($unidades as $unidad) {
+            DB::table('unidades_medida')->updateOrInsert(
+                ['codigo' => $unidad['codigo']],
+                $unidad
+            );
+        }
+
+        $this->command->info('  ✓ Unidades de medida');
+    }
+
+    private function seedMotivosCancelacion()
+    {
+        $motivos = [
+            ['codigo' => 'PROD_DAÑADO', 'titulo' => 'Producto dañado', 'descripcion' => 'El producto se encuentra en mal estado', 'activo' => true],
+            ['codigo' => 'CLIENTE_RECHAZA', 'titulo' => 'Cliente rechaza el envío', 'descripcion' => 'El cliente no acepta el pedido', 'activo' => true],
+            ['codigo' => 'SIN_TRANSPORTE', 'titulo' => 'Sin transporte disponible', 'descripcion' => 'No hay vehículos disponibles', 'activo' => true],
+            ['codigo' => 'CLIMA_ADVERSO', 'titulo' => 'Condiciones climáticas adversas', 'descripcion' => 'Mal tiempo impide el transporte', 'activo' => true],
+            ['codigo' => 'ERROR_DIRECCION', 'titulo' => 'Error en dirección', 'descripcion' => 'La dirección es incorrecta o inaccesible', 'activo' => true],
+            ['codigo' => 'FALTA_PAGO', 'titulo' => 'Falta de pago', 'descripcion' => 'No se ha completado el pago', 'activo' => true],
+            ['codigo' => 'OTRO', 'titulo' => 'Otro motivo', 'descripcion' => 'Motivo no especificado', 'activo' => true],
+        ];
+
+        foreach ($motivos as $motivo) {
+            DB::table('motivos_cancelacion')->updateOrInsert(
+                ['codigo' => $motivo['codigo']],
+                $motivo
+            );
+        }
+
+        $this->command->info('  ✓ Motivos de cancelación');
     }
 }

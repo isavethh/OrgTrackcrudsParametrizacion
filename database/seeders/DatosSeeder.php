@@ -45,6 +45,12 @@ class DatosSeeder extends Seeder
         // 9. Envíos con direcciones
         $this->seedEnvios($clientesIds, $transportistasIds, $vehiculosIds);
 
+        // 10. Notificaciones
+        $this->seedNotificaciones($clientesIds);
+
+        // 11. Calificaciones
+        $this->seedCalificaciones($clientesIds, $transportistasIds);
+
         $this->command->info('');
         $this->command->info('✅ Datos de prueba creados exitosamente!');
     }
@@ -308,7 +314,7 @@ class DatosSeeder extends Seeder
         }
 
         $estadoPendiente = DB::table('estados_envio')->where('nombre', 'Pendiente')->first();
-        $estadoEnTransito = DB::table('estados_envio')->where('nombre', 'En tránsito')->first();
+        $estadoEnCurso = DB::table('estados_envio')->where('nombre', 'En curso')->first();
         $estadoEntregado = DB::table('estados_envio')->where('nombre', 'Entregado')->first();
         
         $estadoAsigPendiente = DB::table('estados_asignacion_multiple')->where('nombre', 'Pendiente')->first();
@@ -325,18 +331,76 @@ class DatosSeeder extends Seeder
         $condiciones = DB::table('condiciones_transporte')->limit(5)->get();
 
         // Envío 1: Completado con documentos
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoPendiente, $estadoEnTransito, $estadoEntregado, $estadoAsigCompletada, $tipoRefrigerado, $catalogoFrutas, $condiciones) {
-            // 1. Dirección: Productor Santa Cruz → Planta La Paz (sin id_usuario, como lo hace el admin)
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoPendiente, $estadoEnCurso, $estadoEntregado, $estadoAsigCompletada, $tipoRefrigerado, $catalogoFrutas, $condiciones) {
+            // 1. Dirección: Productor Santa Cruz → Planta La Paz (Ruta realista por carretera)
+            // Ruta: Warnes → Santa Cruz → Cochabamba → Oruro → El Alto → La Paz
+            $rutaCompleta = [
+                [-63.1812, -17.7833],  // Warnes (inicio)
+                [-63.1500, -17.7500],  // Salida hacia carretera
+                [-63.1700, -17.7000],  // Carretera principal
+                [-63.5000, -17.5000],  // Hacia Montero
+                [-64.0000, -17.4000],  // Zona intermedia
+                [-64.7300, -17.4139],  // Yapacaní
+                [-65.2500, -17.3900],  // Llegando a Cochabamba
+                [-66.1568, -17.3936],  // Cochabamba (punto intermedio)
+                [-66.5000, -17.5000],  // Salida Cochabamba
+                [-67.0000, -17.8000],  // Carretera a Oruro
+                [-67.1092, -17.9636],  // Oruro (punto intermedio)
+                [-67.5000, -18.0000],  // Continuando
+                [-68.0000, -17.5000],  // Acercándose a El Alto
+                [-68.1500, -16.5500],  // El Alto
+                [-68.1300, -16.5200],  // Bajada a La Paz
+                [-68.1193, -16.5000]   // La Paz (destino)
+            ];
+            
             $idDireccion = DB::table('direccion')->insertGetId([
-                'id_usuario' => null, // Las direcciones no se vinculan a usuarios
+                'id_usuario' => $clientesIds[0],
                 'nombreorigen' => 'Finca El Paraíso, Warnes - Santa Cruz',
                 'origen_lng' => -63.1812,
                 'origen_lat' => -17.7833,
                 'nombredestino' => 'Planta Procesadora OrganiCo, Zona Sur - La Paz',
                 'destino_lng' => -68.1193,
                 'destino_lat' => -16.5000,
-                'rutageojson' => '{"type":"LineString","coordinates":[[-63.1812,-17.7833],[-68.1193,-16.5000]]}',
+                'rutageojson' => json_encode([
+                    'type' => 'LineString',
+                    'coordinates' => $rutaCompleta
+                ], JSON_UNESCAPED_SLASHES),
             ]);
+            
+            // Crear segmentos de la ruta (dividir en tramos principales)
+            $segmentos = [
+                // Segmento 1: Warnes → Cochabamba
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 0, 8),
+                        'properties' => ['tramo' => 'Warnes - Cochabamba', 'distancia_km' => 520]
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                // Segmento 2: Cochabamba → Oruro
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 7, 4),
+                        'properties' => ['tramo' => 'Cochabamba - Oruro', 'distancia_km' => 204]
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                // Segmento 3: Oruro → La Paz
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 10),
+                        'properties' => ['tramo' => 'Oruro - La Paz', 'distancia_km' => 230]
+                    ], JSON_UNESCAPED_SLASHES)
+                ]
+            ];
+            
+            foreach ($segmentos as $segmento) {
+                DB::table('direccionsegmento')->insert($segmento);
+            }
 
             // 2. Envío completado
             $idEnvio = DB::table('envios')->insertGetId([
@@ -347,10 +411,10 @@ class DatosSeeder extends Seeder
                 'id_direccion' => $idDireccion,
             ]);
 
-            // 3. Historial: Pendiente → En tránsito → Entregado
+            // 3. Historial: Pendiente → En curso → Entregado
             DB::table('historialestados')->insert([
                 ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'Pendiente')->first()->id, 'fecha' => now()->subDays(10)],
-                ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'En tránsito')->first()->id, 'fecha' => now()->subDays(9)],
+                ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'En curso')->first()->id, 'fecha' => now()->subDays(9)],
                 ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'Entregado')->first()->id, 'fecha' => now()->subDays(7)],
             ]);
 
@@ -364,10 +428,12 @@ class DatosSeeder extends Seeder
             ]);
 
             // 5. Carga
+            $idUnidadKG = DB::table('unidades_medida')->where('codigo', 'KG')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
                 'id_catalogo_carga' => $catalogoFrutas->id,
                 'cantidad' => 150,
                 'peso' => 1500.00,
+                'id_unidad_medida' => $idUnidadKG,
             ]);
 
             // 6. Asignación completada
@@ -433,20 +499,80 @@ class DatosSeeder extends Seeder
                 'fecha_creacion' => now()->subDays(10),
                 'fecha_expiracion' => now()->subDays(7)->addHours(2),
             ]);
+
+            // 11. Checklist de incidentes (sin incidentes reportados)
+            $tiposIncidente = DB::table('tipos_incidente_transporte')->limit(5)->get();
+            $idChecklistIncidente = DB::table('checklist_incidente')->insertGetId([
+                'id_asignacion' => $idAsignacion,
+                'fecha' => now()->subDays(9),
+                'observaciones' => 'Transporte sin incidentes',
+            ]);
+
+            foreach ($tiposIncidente as $tipoIncidente) {
+                DB::table('checklist_incidente_detalle')->insert([
+                    'id_checklist' => $idChecklistIncidente,
+                    'id_tipo_incidente' => $tipoIncidente->id,
+                    'ocurrio' => false,
+                    'descripcion' => null,
+                ]);
+            }
         });
 
-        // Envío 2: En tránsito
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoEnTransito, $estadoAsigEnCurso, $tipoEstandar, $catalogoGranos) {
+        // Envío 2: En curso
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoEnCurso, $estadoAsigEnCurso, $tipoEstandar, $catalogoGranos) {
+            // Ruta: Challapata (Oruro) → La Paz por carretera principal
+            $rutaCompleta = [
+                [-66.7667, -18.9167],  // Challapata (inicio)
+                [-66.8000, -18.8000],  // Salida de Challapata
+                [-66.9000, -18.5000],  // Carretera hacia Oruro
+                [-67.1092, -17.9636],  // Oruro (punto intermedio)
+                [-67.3000, -17.7000],  // Continuando hacia norte
+                [-67.7000, -17.3000],  // Zona intermedia
+                [-68.0000, -17.0000],  // Acercándose a El Alto
+                [-68.1500, -16.5500],  // El Alto
+                [-68.1300, -16.5200],  // Bajada a La Paz
+                [-68.1193, -16.5000]   // La Paz (destino)
+            ];
+            
             $idDireccion = DB::table('direccion')->insertGetId([
-                'id_usuario' => null, // Sin vincular a usuario específico
+                'id_usuario' => $clientesIds[1],
                 'nombreorigen' => 'Cooperativa Andina, Challapata - Oruro',
                 'origen_lng' => -66.7667,
                 'origen_lat' => -18.9167,
                 'nombredestino' => 'Planta Procesadora OrganiCo, Zona Sur - La Paz',
                 'destino_lng' => -68.1193,
                 'destino_lat' => -16.5000,
-                'rutageojson' => '{"type":"LineString","coordinates":[[-66.7667,-18.9167],[-68.1193,-16.5000]]}',
+                'rutageojson' => json_encode([
+                    'type' => 'LineString',
+                    'coordinates' => $rutaCompleta
+                ], JSON_UNESCAPED_SLASHES),
             ]);
+            
+            // Crear segmentos
+            $segmentos = [
+                // Segmento 1: Challapata → Oruro
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 0, 4),
+                        'properties' => ['tramo' => 'Challapata - Oruro', 'distancia_km' => 120]
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                // Segmento 2: Oruro → La Paz
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 3),
+                        'properties' => ['tramo' => 'Oruro - La Paz', 'distancia_km' => 230]
+                    ], JSON_UNESCAPED_SLASHES)
+                ]
+            ];
+            
+            foreach ($segmentos as $segmento) {
+                DB::table('direccionsegmento')->insert($segmento);
+            }
 
             $idEnvio = DB::table('envios')->insertGetId([
                 'id_usuario' => $clientesIds[1],
@@ -458,7 +584,7 @@ class DatosSeeder extends Seeder
 
             DB::table('historialestados')->insert([
                 ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'Pendiente')->first()->id, 'fecha' => now()->subDays(3)],
-                ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'En tránsito')->first()->id, 'fecha' => now()->subDays(2)],
+                ['id_envio' => $idEnvio, 'id_estado_envio' => DB::table('estados_envio')->where('nombre', 'En curso')->first()->id, 'fecha' => now()->subDays(2)],
             ]);
 
             $idRecogida = DB::table('recogidaentrega')->insertGetId([
@@ -469,10 +595,12 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Descargar en almacén de granos secos.',
             ]);
 
+            $idUnidadSACO = DB::table('unidades_medida')->where('codigo', 'SACO')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
                 'id_catalogo_carga' => $catalogoGranos->id,
                 'cantidad' => 80,
                 'peso' => 2000.00,
+                'id_unidad_medida' => $idUnidadSACO,
             ]);
 
             $idAsignacion = DB::table('asignacionmultiple')->insertGetId([
@@ -501,7 +629,7 @@ class DatosSeeder extends Seeder
                 'fechafirma' => now()->subDays(2),
             ]);
 
-            // QR Token (activo, aún en tránsito)
+            // QR Token (activo, aún en curso)
             $estadoQrActivo = DB::table('estados_qrtoken')->where('nombre', 'Activo')->first();
             $token = 'ENV2-' . bin2hex(random_bytes(16));
             $qrBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -518,16 +646,58 @@ class DatosSeeder extends Seeder
 
         // Envío 3: Pendiente
         DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $catalogoVerduras) {
+            // Ruta: Cochabamba → La Paz (ruta corta por carretera principal)
+            $rutaCompleta = [
+                [-66.2789, -17.3936],  // Cochabamba (inicio)
+                [-66.5000, -17.5000],  // Salida hacia Oruro
+                [-67.0000, -17.8000],  // Carretera principal
+                [-67.1092, -17.9636],  // Oruro (punto intermedio)
+                [-67.5000, -17.8000],  // Continuando
+                [-68.0000, -17.2000],  // Zona intermedia
+                [-68.1500, -16.5500],  // El Alto
+                [-68.1300, -16.5200],  // Bajada a La Paz
+                [-68.1193, -16.5000]   // La Paz (destino)
+            ];
+            
             $idDireccion = DB::table('direccion')->insertGetId([
-                'id_usuario' => null, // Sin vincular a usuario específico
+                'id_usuario' => $clientesIds[2],
                 'nombreorigen' => 'Cultivos Hidropónicos Verde Vida, Quillacollo - Cochabamba',
                 'origen_lng' => -66.2789,
                 'origen_lat' => -17.3936,
                 'nombredestino' => 'Planta Procesadora OrganiCo, Zona Sur - La Paz',
                 'destino_lng' => -68.1193,
                 'destino_lat' => -16.5000,
-                'rutageojson' => '{"type":"LineString","coordinates":[[-66.2789,-17.3936],[-68.1193,-16.5000]]}',
+                'rutageojson' => json_encode([
+                    'type' => 'LineString',
+                    'coordinates' => $rutaCompleta
+                ], JSON_UNESCAPED_SLASHES),
             ]);
+            
+            // Crear segmentos
+            $segmentos = [
+                // Segmento 1: Cochabamba → Oruro
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 0, 4),
+                        'properties' => ['tramo' => 'Cochabamba - Oruro', 'distancia_km' => 204]
+                    ], JSON_UNESCAPED_SLASHES)
+                ],
+                // Segmento 2: Oruro → La Paz
+                [
+                    'direccion_id' => $idDireccion,
+                    'segmentogeojson' => json_encode([
+                        'type' => 'LineString',
+                        'coordinates' => array_slice($rutaCompleta, 3),
+                        'properties' => ['tramo' => 'Oruro - La Paz', 'distancia_km' => 230]
+                    ], JSON_UNESCAPED_SLASHES)
+                ]
+            ];
+            
+            foreach ($segmentos as $segmento) {
+                DB::table('direccionsegmento')->insert($segmento);
+            }
 
             $idEnvio = DB::table('envios')->insertGetId([
                 'id_usuario' => $clientesIds[2],
@@ -551,10 +721,12 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Entrega urgente en cámara refrigerada.',
             ]);
 
+            $idUnidadKG = DB::table('unidades_medida')->where('codigo', 'KG')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
                 'id_catalogo_carga' => $catalogoVerduras->id,
                 'cantidad' => 200,
                 'peso' => 1000.00,
+                'id_unidad_medida' => $idUnidadKG,
             ]);
 
             $idAsignacion = DB::table('asignacionmultiple')->insertGetId([
@@ -590,8 +762,119 @@ class DatosSeeder extends Seeder
         });
 
         $this->command->info('  ✓ Envíos (3) con documentos completos:');
-        $this->command->info('    - Envío 1: ENTREGADO con checklist y firmas');
-        $this->command->info('    - Envío 2: EN TRÁNSITO con firma de transportista');
+        $this->command->info('    - Envío 1: ENTREGADO con checklist condiciones, checklist incidentes y firmas');
+        $this->command->info('    - Envío 2: EN CURSO con firma de transportista');
         $this->command->info('    - Envío 3: PENDIENTE programado');
+    }
+
+    private function seedNotificaciones($clientesIds)
+    {
+        if (empty($clientesIds)) {
+            $this->command->warn('  ⚠ No hay clientes para crear notificaciones');
+            return;
+        }
+
+        // Obtener envíos para vincular notificaciones
+        $envios = DB::table('envios')->whereIn('id_usuario', $clientesIds)->limit(3)->get();
+
+        $notificaciones = [
+            [
+                'id_usuario' => $clientesIds[0],
+                'tipo' => 'estado_envio',
+                'titulo' => 'Envío entregado',
+                'mensaje' => 'Tu envío de manzanas ha sido entregado exitosamente',
+                'leida' => true,
+                'id_envio' => $envios[0]->id ?? null,
+                'fecha' => now()->subDays(7),
+            ],
+            [
+                'id_usuario' => $clientesIds[0],
+                'tipo' => 'estado_envio',
+                'titulo' => 'Envío en curso',
+                'mensaje' => 'Tu envío está en camino hacia La Paz',
+                'leida' => true,
+                'id_envio' => $envios[0]->id ?? null,
+                'fecha' => now()->subDays(9),
+            ],
+            [
+                'id_usuario' => $clientesIds[1],
+                'tipo' => 'estado_envio',
+                'titulo' => 'Envío recogido',
+                'mensaje' => 'El transportista ha recogido tu envío de quinua',
+                'leida' => false,
+                'id_envio' => $envios[1]->id ?? null,
+                'fecha' => now()->subDays(2),
+            ],
+            [
+                'id_usuario' => $clientesIds[1],
+                'tipo' => 'asignacion',
+                'titulo' => 'Transportista asignado',
+                'mensaje' => 'Roberto Vargas ha sido asignado a tu envío',
+                'leida' => false,
+                'id_envio' => $envios[1]->id ?? null,
+                'fecha' => now()->subDays(3),
+            ],
+            [
+                'id_usuario' => $clientesIds[2],
+                'tipo' => 'estado_envio',
+                'titulo' => 'Envío creado',
+                'mensaje' => 'Tu envío de lechugas ha sido registrado exitosamente',
+                'leida' => false,
+                'id_envio' => $envios[2]->id ?? null,
+                'fecha' => now()->subHours(6),
+            ],
+        ];
+
+        foreach ($notificaciones as $notif) {
+            if ($notif['id_envio']) {
+                DB::table('notificaciones')->insert($notif);
+            }
+        }
+
+        $this->command->info('  ✓ Notificaciones (5) - 2 no leídas');
+    }
+
+    private function seedCalificaciones($clientesIds, $transportistasIds)
+    {
+        if (empty($clientesIds) || empty($transportistasIds)) {
+            $this->command->warn('  ⚠ No hay suficientes datos para crear calificaciones');
+            return;
+        }
+
+        // Solo calificar el envío completado (el primero)
+        $envioCompletado = DB::table('envios')
+            ->where('id_usuario', $clientesIds[0])
+            ->whereNotNull('fecha_entrega')
+            ->first();
+
+        if (!$envioCompletado) {
+            $this->command->warn('  ⚠ No hay envíos completados para calificar');
+            return;
+        }
+
+        $calificaciones = [
+            [
+                'id_envio' => $envioCompletado->id,
+                'id_usuario' => $clientesIds[0],
+                'id_transportista' => $transportistasIds[0],
+                'puntuacion' => 5,
+                'comentario' => 'Excelente servicio, el producto llegó en perfecto estado y a tiempo.',
+                'fecha' => now()->subDays(7),
+            ],
+            [
+                'id_envio' => $envioCompletado->id,
+                'id_usuario' => $clientesIds[1],
+                'id_transportista' => $transportistasIds[1],
+                'puntuacion' => 4,
+                'comentario' => 'Buen servicio, pero hubo un pequeño retraso.',
+                'fecha' => now()->subDays(5),
+            ],
+        ];
+
+        foreach ($calificaciones as $calif) {
+            DB::table('calificaciones')->insert($calif);
+        }
+
+        $this->command->info('  ✓ Calificaciones (2) - Promedio: 4.5 estrellas');
     }
 }

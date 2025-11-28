@@ -64,6 +64,22 @@ CREATE TABLE estados_qrtoken (
     nombre  VARCHAR(30) NOT NULL UNIQUE
 );
 
+CREATE TABLE unidades_medida (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(20)  NOT NULL UNIQUE,
+    nombre      VARCHAR(50)  NOT NULL,
+    tipo        VARCHAR(20)  NOT NULL,
+    descripcion VARCHAR(150)
+);
+
+CREATE TABLE motivos_cancelacion (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(50)  NOT NULL UNIQUE,
+    titulo      VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    activo      BOOLEAN DEFAULT true
+);
+
 CREATE TABLE persona (
     id        SERIAL PRIMARY KEY,
     nombre    VARCHAR(100) NOT NULL,
@@ -163,21 +179,30 @@ CREATE TABLE carga (
     id_catalogo_carga INTEGER       NOT NULL,
     cantidad          INTEGER       NOT NULL,
     peso              NUMERIC(10,2) NOT NULL,
+    id_unidad_medida  INTEGER,
     CONSTRAINT fk_carga_catalogo
-        FOREIGN KEY (id_catalogo_carga) REFERENCES catalogo_carga(id)
+        FOREIGN KEY (id_catalogo_carga) REFERENCES catalogo_carga(id),
+    CONSTRAINT fk_carga_unidad
+        FOREIGN KEY (id_unidad_medida) REFERENCES unidades_medida(id)
 );
 
 CREATE TABLE envios (
-    id             SERIAL PRIMARY KEY,
-    id_usuario     INTEGER     NOT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
-    fecha_inicio   TIMESTAMPTZ,
-    fecha_entrega  TIMESTAMPTZ,
-    id_direccion   INTEGER     NOT NULL,
+    id                    SERIAL PRIMARY KEY,
+    id_usuario            INTEGER     NOT NULL,
+    fecha_creacion        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_inicio          TIMESTAMPTZ,
+    fecha_entrega         TIMESTAMPTZ,
+    id_direccion          INTEGER     NOT NULL,
+    cancelado             BOOLEAN     DEFAULT false,
+    id_motivo_cancelacion INTEGER,
+    fecha_cancelacion     TIMESTAMPTZ,
+    observacion_cancelacion VARCHAR(500),
     CONSTRAINT fk_envios_usuario
         FOREIGN KEY (id_usuario)   REFERENCES usuarios(id),
     CONSTRAINT fk_envios_direccion
-        FOREIGN KEY (id_direccion) REFERENCES direccion(id)
+        FOREIGN KEY (id_direccion) REFERENCES direccion(id),
+    CONSTRAINT fk_envios_motivo
+        FOREIGN KEY (id_motivo_cancelacion) REFERENCES motivos_cancelacion(id)
 );
 
 CREATE TABLE historialestados (
@@ -259,6 +284,58 @@ CREATE TABLE incidentes_transporte (
         FOREIGN KEY (id_tipo_incidente) REFERENCES tipos_incidente_transporte(id)
 );
 
+CREATE TABLE checklist_incidente (
+    id            SERIAL PRIMARY KEY,
+    id_asignacion INTEGER     NOT NULL UNIQUE,
+    fecha         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    observaciones VARCHAR(255),
+    CONSTRAINT fk_checkincid_asig
+        FOREIGN KEY (id_asignacion) REFERENCES asignacionmultiple(id)
+);
+
+CREATE TABLE checklist_incidente_detalle (
+    id                SERIAL PRIMARY KEY,
+    id_checklist      INTEGER     NOT NULL,
+    id_tipo_incidente INTEGER     NOT NULL,
+    ocurrio           BOOLEAN     NOT NULL,
+    descripcion       VARCHAR(255),
+    CONSTRAINT fk_checkinciddet_check
+        FOREIGN KEY (id_checklist)      REFERENCES checklist_incidente(id),
+    CONSTRAINT fk_checkinciddet_tipo
+        FOREIGN KEY (id_tipo_incidente) REFERENCES tipos_incidente_transporte(id)
+);
+
+CREATE TABLE calificaciones (
+    id                SERIAL PRIMARY KEY,
+    id_envio          INTEGER     NOT NULL,
+    id_usuario        INTEGER     NOT NULL,
+    id_transportista  INTEGER     NOT NULL,
+    puntuacion        INTEGER     NOT NULL CHECK (puntuacion >= 1 AND puntuacion <= 5),
+    comentario        VARCHAR(500),
+    fecha             TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT fk_calif_envio
+        FOREIGN KEY (id_envio)         REFERENCES envios(id),
+    CONSTRAINT fk_calif_usuario
+        FOREIGN KEY (id_usuario)       REFERENCES usuarios(id),
+    CONSTRAINT fk_calif_transportista
+        FOREIGN KEY (id_transportista) REFERENCES transportistas(id)
+);
+
+CREATE TABLE notificaciones (
+    id         SERIAL PRIMARY KEY,
+    id_usuario INTEGER      NOT NULL,
+    tipo       VARCHAR(50)  NOT NULL,
+    titulo     VARCHAR(150) NOT NULL,
+    mensaje    VARCHAR(500) NOT NULL,
+    leida      BOOLEAN      DEFAULT false,
+    id_envio   INTEGER,
+    fecha      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    CONSTRAINT fk_notif_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notif_envio
+        FOREIGN KEY (id_envio)   REFERENCES envios(id) ON DELETE CASCADE
+);
+
 CREATE TABLE firmaenvio (
     id            SERIAL PRIMARY KEY,
     id_asignacion INTEGER     NOT NULL UNIQUE,
@@ -310,3 +387,15 @@ CREATE INDEX ix_qrtoken_estado
 
 CREATE INDEX ix_direccion_id_usuario 
     ON direccion(id_usuario);
+
+CREATE INDEX ix_notificaciones_usuario 
+    ON notificaciones(id_usuario, fecha DESC);
+
+CREATE INDEX ix_notificaciones_leida 
+    ON notificaciones(leida);
+
+CREATE INDEX ix_calificaciones_envio 
+    ON calificaciones(id_envio);
+
+CREATE INDEX ix_calificaciones_transportista 
+    ON calificaciones(id_transportista);
