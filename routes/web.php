@@ -155,4 +155,14 @@ Route::prefix('admin')->group(function () {
     Route::get('/incidentes', function () {
         return view('admin.incidentes.index');
     })->name('admin.incidentes.index');
+
+    // Unidades de medida
+    Route::get('/unidades-medida', function () {
+        return view('admin.unidades_medida.index');
+    })->name('admin.unidades_medida.index');
+
+    // Catálogo de carga
+    Route::get('/catalogo-carga', function () {
+        return view('admin.catalogo_carga.index');
+    })->name('admin.catalogo_carga.index');
 });

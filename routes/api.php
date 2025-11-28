@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\TransportistaController;
 use App\Http\Controllers\Api\FirmaController;
 use App\Http\Controllers\Api\QrController;
+use App\Http\Controllers\Api\UnidadesMedidaController;
+use App\Http\Controllers\Api\CatalogoCargaController;
 
 Route::middleware([])->group(function () {
 
@@ -135,12 +137,30 @@ Route::middleware([])->group(function () {
 
     // Routes QR Tokens
     Route::middleware('jwt')->prefix('qr')->group(function () {
-        Route::post('/generar/{id_asignacion}', [QrController::class, 'generarQrToken']);
+        Route::get('/generar/{id_asignacion}', [QrController::class, 'generarQrToken']);
         Route::get('/{id_asignacion}', [QrController::class, 'obtenerQrToken']);
         Route::get('/transportista/{id_asignacion}', [QrController::class, 'obtenerQR']);
         Route::post('/validar', [QrController::class, 'validarQrToken']);
         Route::get('/cliente/tokens', [QrController::class, 'obtenerQrTokensCliente']);
         Route::delete('/{id_asignacion}', [QrController::class, 'eliminarQrToken']);
+    });
+
+    // Routes Unidades de Medida
+    Route::middleware('jwt')->group(function () {
+        Route::get('/unidades-medida', [UnidadesMedidaController::class, 'index']);
+        Route::get('/unidades-medida/{id}', [UnidadesMedidaController::class, 'show']);
+        Route::post('/unidades-medida', [UnidadesMedidaController::class, 'store']);
+        Route::put('/unidades-medida/{id}', [UnidadesMedidaController::class, 'update']);
+        Route::delete('/unidades-medida/{id}', [UnidadesMedidaController::class, 'destroy']);
+    });
+
+    // Routes Catálogo de Carga
+    Route::middleware('jwt')->group(function () {
+        Route::get('/catalogo-carga', [CatalogoCargaController::class, 'index']);
+        Route::get('/catalogo-carga/{id}', [CatalogoCargaController::class, 'show']);
+        Route::post('/catalogo-carga', [CatalogoCargaController::class, 'store']);
+        Route::put('/catalogo-carga/{id}', [CatalogoCargaController::class, 'update']);
+        Route::delete('/catalogo-carga/{id}', [CatalogoCargaController::class, 'destroy']);
     });
 });
 

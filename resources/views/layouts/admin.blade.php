@@ -133,6 +133,19 @@
                             <p>Documentos</p>
                         </a>
                     </li>
+                    <li class="nav-header">PARAMETRIZACIÓN</li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.unidades_medida.index') }}" class="nav-link {{ request()->routeIs('admin.unidades_medida.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-balance-scale"></i>
+                            <p>Unidades de Medida</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.catalogo_carga.index') }}" class="nav-link {{ request()->routeIs('admin.catalogo_carga.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-boxes"></i>
+                            <p>Catálogo de Carga</p>
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <!-- /.sidebar-menu -->
