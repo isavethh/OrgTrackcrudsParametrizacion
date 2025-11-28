@@ -24,11 +24,10 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Temp. Min/Max</th>
-                    <th>Humedad Min/Max</th>
-                    <th>Refrigeración</th>
+                    <th>Tipo</th>
+                    <th>Variedad</th>
+                    <th>Empaque</th>
+                    <th>Descripción</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -52,64 +51,36 @@
             <form id="formCrear">
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="crear_nombre_producto">Nombre del Producto <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="crear_nombre_producto" name="nombre_producto" required maxlength="100">
+                                <label for="crear_tipo">Tipo <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="crear_tipo" name="tipo" required maxlength="50" placeholder="Ej: Tomate, Papa, Maíz">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="crear_categoria">Categoría <span class="text-danger">*</span></label>
-                                <select class="form-control" id="crear_categoria" name="categoria" required>
+                                <label for="crear_variedad">Variedad <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="crear_variedad" name="variedad" required maxlength="50" placeholder="Ej: Roma, Criolla, Amarillo">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="crear_empaque">Empaque <span class="text-danger">*</span></label>
+                                <select class="form-control" id="crear_empaque" name="empaque" required>
                                     <option value="">Seleccione...</option>
-                                    <option value="Frutas">Frutas</option>
-                                    <option value="Verduras">Verduras</option>
-                                    <option value="Hortalizas">Hortalizas</option>
-                                    <option value="Granos">Granos</option>
-                                    <option value="Cereales">Cereales</option>
-                                    <option value="Tubérculos">Tubérculos</option>
-                                    <option value="Legumbres">Legumbres</option>
-                                    <option value="Otros">Otros</option>
+                                    <option value="Bolsa plástica">Bolsa plástica</option>
+                                    <option value="Cajas">Cajas</option>
+                                    <option value="Cajón">Cajón</option>
+                                    <option value="Saco">Saco</option>
+                                    <option value="Granel">Granel</option>
+                                    <option value="Malla">Malla</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="crear_descripcion">Descripción</label>
-                        <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="2" maxlength="500"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="crear_temp_min">Temperatura Mín (°C)</label>
-                                <input type="number" step="0.1" class="form-control" id="crear_temp_min" name="temp_min">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="crear_temp_max">Temperatura Máx (°C)</label>
-                                <input type="number" step="0.1" class="form-control" id="crear_temp_max" name="temp_max">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="crear_humedad_min">Humedad Mín (%)</label>
-                                <input type="number" step="0.1" class="form-control" id="crear_humedad_min" name="humedad_min" min="0" max="100">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="crear_humedad_max">Humedad Máx (%)</label>
-                                <input type="number" step="0.1" class="form-control" id="crear_humedad_max" name="humedad_max" min="0" max="100">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="crear_requiere_refrigeracion" name="requiere_refrigeracion">
-                            <label class="custom-control-label" for="crear_requiere_refrigeracion">Requiere Refrigeración</label>
-                        </div>
+                        <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="2" maxlength="150" placeholder="Información adicional (opcional)"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -135,64 +106,36 @@
                 <input type="hidden" id="editar_id">
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="editar_nombre_producto">Nombre del Producto <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editar_nombre_producto" name="nombre_producto" required maxlength="100">
+                                <label for="editar_tipo">Tipo <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editar_tipo" name="tipo" required maxlength="50">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label for="editar_categoria">Categoría <span class="text-danger">*</span></label>
-                                <select class="form-control" id="editar_categoria" name="categoria" required>
+                                <label for="editar_variedad">Variedad <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editar_variedad" name="variedad" required maxlength="50">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editar_empaque">Empaque <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editar_empaque" name="empaque" required>
                                     <option value="">Seleccione...</option>
-                                    <option value="Frutas">Frutas</option>
-                                    <option value="Verduras">Verduras</option>
-                                    <option value="Hortalizas">Hortalizas</option>
-                                    <option value="Granos">Granos</option>
-                                    <option value="Cereales">Cereales</option>
-                                    <option value="Tubérculos">Tubérculos</option>
-                                    <option value="Legumbres">Legumbres</option>
-                                    <option value="Otros">Otros</option>
+                                    <option value="Bolsa plástica">Bolsa plástica</option>
+                                    <option value="Cajas">Cajas</option>
+                                    <option value="Cajón">Cajón</option>
+                                    <option value="Saco">Saco</option>
+                                    <option value="Granel">Granel</option>
+                                    <option value="Malla">Malla</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="editar_descripcion">Descripción</label>
-                        <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="2" maxlength="500"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="editar_temp_min">Temperatura Mín (°C)</label>
-                                <input type="number" step="0.1" class="form-control" id="editar_temp_min" name="temp_min">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="editar_temp_max">Temperatura Máx (°C)</label>
-                                <input type="number" step="0.1" class="form-control" id="editar_temp_max" name="temp_max">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="editar_humedad_min">Humedad Mín (%)</label>
-                                <input type="number" step="0.1" class="form-control" id="editar_humedad_min" name="humedad_min" min="0" max="100">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="editar_humedad_max">Humedad Máx (%)</label>
-                                <input type="number" step="0.1" class="form-control" id="editar_humedad_max" name="humedad_max" min="0" max="100">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="editar_requiere_refrigeracion" name="requiere_refrigeracion">
-                            <label class="custom-control-label" for="editar_requiere_refrigeracion">Requiere Refrigeración</label>
-                        </div>
+                        <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="2" maxlength="150"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -252,39 +195,19 @@
             },
             responsive: true,
             columns: [
-                { data: 'id_catalogo' },
-                { data: 'nombre_producto' },
-                { data: 'categoria' },
-                {
-                    data: null,
-                    render: function(data) {
-                        const min = data.temp_min !== null ? data.temp_min + '°C' : '-';
-                        const max = data.temp_max !== null ? data.temp_max + '°C' : '-';
-                        return min + ' / ' + max;
-                    }
-                },
-                {
-                    data: null,
-                    render: function(data) {
-                        const min = data.humedad_min !== null ? data.humedad_min + '%' : '-';
-                        const max = data.humedad_max !== null ? data.humedad_max + '%' : '-';
-                        return min + ' / ' + max;
-                    }
-                },
-                {
-                    data: 'requiere_refrigeracion',
-                    render: function(data) {
-                        return data ? '<span class="badge badge-info">Sí</span>' : '<span class="badge badge-secondary">No</span>';
-                    }
-                },
+                { data: 'id' },
+                { data: 'tipo' },
+                { data: 'variedad' },
+                { data: 'empaque' },
+                { data: 'descripcion', defaultContent: '-' },
                 {
                     data: null,
                     render: function(data, type, row) {
                         return `
-                            <button class="btn btn-sm btn-info btn-editar" data-id="${row.id_catalogo}">
+                            <button class="btn btn-sm btn-info btn-editar" data-id="${row.id}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id_catalogo}">
+                            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         `;
@@ -355,14 +278,10 @@
 
     function crearProducto() {
         const datos = {
-            nombre_producto: $('#crear_nombre_producto').val(),
-            categoria: $('#crear_categoria').val(),
-            descripcion: $('#crear_descripcion').val() || null,
-            temp_min: $('#crear_temp_min').val() || null,
-            temp_max: $('#crear_temp_max').val() || null,
-            humedad_min: $('#crear_humedad_min').val() || null,
-            humedad_max: $('#crear_humedad_max').val() || null,
-            requiere_refrigeracion: $('#crear_requiere_refrigeracion').is(':checked')
+            tipo: $('#crear_tipo').val(),
+            variedad: $('#crear_variedad').val(),
+            empaque: $('#crear_empaque').val(),
+            descripcion: $('#crear_descripcion').val() || null
         };
 
         $.ajax({
@@ -402,15 +321,11 @@
             success: function(response) {
                 if (response.success) {
                     const producto = response.data;
-                    $('#editar_id').val(producto.id_catalogo);
-                    $('#editar_nombre_producto').val(producto.nombre_producto);
-                    $('#editar_categoria').val(producto.categoria);
+                    $('#editar_id').val(producto.id);
+                    $('#editar_tipo').val(producto.tipo);
+                    $('#editar_variedad').val(producto.variedad);
+                    $('#editar_empaque').val(producto.empaque);
                     $('#editar_descripcion').val(producto.descripcion);
-                    $('#editar_temp_min').val(producto.temp_min);
-                    $('#editar_temp_max').val(producto.temp_max);
-                    $('#editar_humedad_min').val(producto.humedad_min);
-                    $('#editar_humedad_max').val(producto.humedad_max);
-                    $('#editar_requiere_refrigeracion').prop('checked', producto.requiere_refrigeracion);
                     $('#modalEditar').modal('show');
                 }
             },
@@ -423,14 +338,10 @@
     function actualizarProducto() {
         const id = $('#editar_id').val();
         const datos = {
-            nombre_producto: $('#editar_nombre_producto').val(),
-            categoria: $('#editar_categoria').val(),
-            descripcion: $('#editar_descripcion').val() || null,
-            temp_min: $('#editar_temp_min').val() || null,
-            temp_max: $('#editar_temp_max').val() || null,
-            humedad_min: $('#editar_humedad_min').val() || null,
-            humedad_max: $('#editar_humedad_max').val() || null,
-            requiere_refrigeracion: $('#editar_requiere_refrigeracion').is(':checked')
+            tipo: $('#editar_tipo').val(),
+            variedad: $('#editar_variedad').val(),
+            empaque: $('#editar_empaque').val(),
+            descripcion: $('#editar_descripcion').val() || null
         };
 
         $.ajax({

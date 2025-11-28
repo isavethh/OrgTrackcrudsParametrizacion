@@ -24,8 +24,9 @@
             <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Código</th>
                     <th>Nombre</th>
-                    <th>Abreviatura</th>
+                    <th>Tipo</th>
                     <th>Descripción</th>
                     <th>Acciones</th>
                 </tr>
@@ -50,16 +51,20 @@
             <form id="formCrear">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="crear_nombre">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="crear_nombre" name="nombre" required maxlength="50">
+                        <label for="crear_codigo">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="crear_codigo" name="codigo" required maxlength="20" placeholder="Ej: KG, TON, UNI">
                     </div>
                     <div class="form-group">
-                        <label for="crear_abreviatura">Abreviatura <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="crear_abreviatura" name="abreviatura" required maxlength="10">
+                        <label for="crear_nombre">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="crear_nombre" name="nombre" required maxlength="50" placeholder="Ej: Kilogramos">
+                    </div>
+                    <div class="form-group">
+                        <label for="crear_tipo">Tipo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="crear_tipo" name="tipo" required maxlength="20" placeholder="Ej: Peso, Volumen, Cantidad">
                     </div>
                     <div class="form-group">
                         <label for="crear_descripcion">Descripción</label>
-                        <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="3" maxlength="200"></textarea>
+                        <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="3" maxlength="150"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -85,16 +90,20 @@
                 <input type="hidden" id="editar_id">
                 <div class="modal-body">
                     <div class="form-group">
+                        <label for="editar_codigo">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editar_codigo" name="codigo" required maxlength="20">
+                    </div>
+                    <div class="form-group">
                         <label for="editar_nombre">Nombre <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="editar_nombre" name="nombre" required maxlength="50">
                     </div>
                     <div class="form-group">
-                        <label for="editar_abreviatura">Abreviatura <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="editar_abreviatura" name="abreviatura" required maxlength="10">
+                        <label for="editar_tipo">Tipo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editar_tipo" name="tipo" required maxlength="20">
                     </div>
                     <div class="form-group">
                         <label for="editar_descripcion">Descripción</label>
-                        <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="3" maxlength="200"></textarea>
+                        <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="3" maxlength="150"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -154,18 +163,19 @@
             },
             responsive: true,
             columns: [
-                { data: 'id_unidad_medida' },
+                { data: 'id' },
+                { data: 'codigo' },
                 { data: 'nombre' },
-                { data: 'abreviatura' },
-                { data: 'descripcion' },
+                { data: 'tipo' },
+                { data: 'descripcion', defaultContent: '-' },
                 {
                     data: null,
                     render: function(data, type, row) {
                         return `
-                            <button class="btn btn-sm btn-info btn-editar" data-id="${row.id_unidad_medida}">
+                            <button class="btn btn-sm btn-info btn-editar" data-id="${row.id}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id_unidad_medida}">
+                            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         `;
@@ -236,8 +246,9 @@
 
     function crearUnidad() {
         const datos = {
+            codigo: $('#crear_codigo').val(),
             nombre: $('#crear_nombre').val(),
-            abreviatura: $('#crear_abreviatura').val(),
+            tipo: $('#crear_tipo').val(),
             descripcion: $('#crear_descripcion').val()
         };
 
@@ -278,9 +289,10 @@
             success: function(response) {
                 if (response.success) {
                     const unidad = response.data;
-                    $('#editar_id').val(unidad.id_unidad_medida);
+                    $('#editar_id').val(unidad.id);
+                    $('#editar_codigo').val(unidad.codigo);
                     $('#editar_nombre').val(unidad.nombre);
-                    $('#editar_abreviatura').val(unidad.abreviatura);
+                    $('#editar_tipo').val(unidad.tipo);
                     $('#editar_descripcion').val(unidad.descripcion);
                     $('#modalEditar').modal('show');
                 }
@@ -294,8 +306,9 @@
     function actualizarUnidad() {
         const id = $('#editar_id').val();
         const datos = {
+            codigo: $('#editar_codigo').val(),
             nombre: $('#editar_nombre').val(),
-            abreviatura: $('#editar_abreviatura').val(),
+            tipo: $('#editar_tipo').val(),
             descripcion: $('#editar_descripcion').val()
         };
 

@@ -36,14 +36,15 @@ class UnidadesMedidaController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:50|unique:unidades_medida,nombre',
-            'abreviatura' => 'required|string|max:10|unique:unidades_medida,abreviatura',
-            'descripcion' => 'nullable|string|max:200'
+            'codigo' => 'required|string|max:20|unique:unidades_medida,codigo',
+            'nombre' => 'required|string|max:50',
+            'tipo' => 'required|string|max:20',
+            'descripcion' => 'nullable|string|max:150'
         ], [
+            'codigo.required' => 'El código es obligatorio',
+            'codigo.unique' => 'Ya existe una unidad de medida con este código',
             'nombre.required' => 'El nombre es obligatorio',
-            'nombre.unique' => 'Ya existe una unidad de medida con este nombre',
-            'abreviatura.required' => 'La abreviatura es obligatoria',
-            'abreviatura.unique' => 'Ya existe una unidad de medida con esta abreviatura'
+            'tipo.required' => 'El tipo es obligatorio'
         ]);
 
         if ($validator->fails()) {
@@ -56,8 +57,9 @@ class UnidadesMedidaController extends Controller
 
         try {
             $unidad = UnidadMedida::create([
+                'codigo' => $request->codigo,
                 'nombre' => $request->nombre,
-                'abreviatura' => $request->abreviatura,
+                'tipo' => $request->tipo,
                 'descripcion' => $request->descripcion
             ]);
 
@@ -118,14 +120,15 @@ class UnidadesMedidaController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:50|unique:unidades_medida,nombre,' . $id . ',id_unidad_medida',
-            'abreviatura' => 'required|string|max:10|unique:unidades_medida,abreviatura,' . $id . ',id_unidad_medida',
-            'descripcion' => 'nullable|string|max:200'
+            'codigo' => 'required|string|max:20|unique:unidades_medida,codigo,' . $id,
+            'nombre' => 'required|string|max:50',
+            'tipo' => 'required|string|max:20',
+            'descripcion' => 'nullable|string|max:150'
         ], [
+            'codigo.required' => 'El código es obligatorio',
+            'codigo.unique' => 'Ya existe una unidad de medida con este código',
             'nombre.required' => 'El nombre es obligatorio',
-            'nombre.unique' => 'Ya existe una unidad de medida con este nombre',
-            'abreviatura.required' => 'La abreviatura es obligatoria',
-            'abreviatura.unique' => 'Ya existe una unidad de medida con esta abreviatura'
+            'tipo.required' => 'El tipo es obligatorio'
         ]);
 
         if ($validator->fails()) {
@@ -138,8 +141,9 @@ class UnidadesMedidaController extends Controller
 
         try {
             $unidad->update([
+                'codigo' => $request->codigo,
                 'nombre' => $request->nombre,
-                'abreviatura' => $request->abreviatura,
+                'tipo' => $request->tipo,
                 'descripcion' => $request->descripcion
             ]);
 

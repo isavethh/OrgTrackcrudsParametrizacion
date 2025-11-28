@@ -15,7 +15,7 @@ class CatalogoCargaController extends Controller
     public function index()
     {
         try {
-            $catalogos = CatalogoCarga::orderBy('nombre_producto', 'asc')->get();
+            $catalogos = CatalogoCarga::orderBy('tipo', 'asc')->get();
             
             return response()->json([
                 'success' => true,
@@ -36,24 +36,14 @@ class CatalogoCargaController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nombre_producto' => 'required|string|max:100|unique:catalogo_carga,nombre_producto',
-            'categoria' => 'required|string|max:50',
-            'descripcion' => 'nullable|string|max:500',
-            'temp_min' => 'nullable|numeric',
-            'temp_max' => 'nullable|numeric',
-            'humedad_min' => 'nullable|numeric|min:0|max:100',
-            'humedad_max' => 'nullable|numeric|min:0|max:100',
-            'requiere_refrigeracion' => 'boolean'
+            'tipo' => 'required|string|max:50',
+            'variedad' => 'required|string|max:50',
+            'empaque' => 'required|string|max:50',
+            'descripcion' => 'nullable|string|max:150'
         ], [
-            'nombre_producto.required' => 'El nombre del producto es obligatorio',
-            'nombre_producto.unique' => 'Ya existe un producto con este nombre',
-            'categoria.required' => 'La categoría es obligatoria',
-            'temp_min.numeric' => 'La temperatura mínima debe ser un número',
-            'temp_max.numeric' => 'La temperatura máxima debe ser un número',
-            'humedad_min.min' => 'La humedad mínima debe ser mayor o igual a 0',
-            'humedad_min.max' => 'La humedad mínima debe ser menor o igual a 100',
-            'humedad_max.min' => 'La humedad máxima debe ser mayor o igual a 0',
-            'humedad_max.max' => 'La humedad máxima debe ser menor o igual a 100'
+            'tipo.required' => 'El tipo es obligatorio',
+            'variedad.required' => 'La variedad es obligatoria',
+            'empaque.required' => 'El empaque es obligatorio'
         ]);
 
         if ($validator->fails()) {
@@ -65,15 +55,24 @@ class CatalogoCargaController extends Controller
         }
 
         try {
+            // Verificar si ya existe la combinación
+            $existe = CatalogoCarga::where('tipo', $request->tipo)
+                ->where('variedad', $request->variedad)
+                ->where('empaque', $request->empaque)
+                ->first();
+
+            if ($existe) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe un producto con esta combinación de tipo, variedad y empaque'
+                ], 422);
+            }
+
             $catalogo = CatalogoCarga::create([
-                'nombre_producto' => $request->nombre_producto,
-                'categoria' => $request->categoria,
-                'descripcion' => $request->descripcion,
-                'temp_min' => $request->temp_min,
-                'temp_max' => $request->temp_max,
-                'humedad_min' => $request->humedad_min,
-                'humedad_max' => $request->humedad_max,
-                'requiere_refrigeracion' => $request->requiere_refrigeracion ?? false
+                'tipo' => $request->tipo,
+                'variedad' => $request->variedad,
+                'empaque' => $request->empaque,
+                'descripcion' => $request->descripcion
             ]);
 
             return response()->json([
@@ -133,24 +132,14 @@ class CatalogoCargaController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nombre_producto' => 'required|string|max:100|unique:catalogo_carga,nombre_producto,' . $id . ',id_catalogo',
-            'categoria' => 'required|string|max:50',
-            'descripcion' => 'nullable|string|max:500',
-            'temp_min' => 'nullable|numeric',
-            'temp_max' => 'nullable|numeric',
-            'humedad_min' => 'nullable|numeric|min:0|max:100',
-            'humedad_max' => 'nullable|numeric|min:0|max:100',
-            'requiere_refrigeracion' => 'boolean'
+            'tipo' => 'required|string|max:50',
+            'variedad' => 'required|string|max:50',
+            'empaque' => 'required|string|max:50',
+            'descripcion' => 'nullable|string|max:150'
         ], [
-            'nombre_producto.required' => 'El nombre del producto es obligatorio',
-            'nombre_producto.unique' => 'Ya existe un producto con este nombre',
-            'categoria.required' => 'La categoría es obligatoria',
-            'temp_min.numeric' => 'La temperatura mínima debe ser un número',
-            'temp_max.numeric' => 'La temperatura máxima debe ser un número',
-            'humedad_min.min' => 'La humedad mínima debe ser mayor o igual a 0',
-            'humedad_min.max' => 'La humedad mínima debe ser menor o igual a 100',
-            'humedad_max.min' => 'La humedad máxima debe ser mayor o igual a 0',
-            'humedad_max.max' => 'La humedad máxima debe ser menor o igual a 100'
+            'tipo.required' => 'El tipo es obligatorio',
+            'variedad.required' => 'La variedad es obligatoria',
+            'empaque.required' => 'El empaque es obligatorio'
         ]);
 
         if ($validator->fails()) {
@@ -162,15 +151,25 @@ class CatalogoCargaController extends Controller
         }
 
         try {
+            // Verificar si ya existe otra combinación igual
+            $existe = CatalogoCarga::where('tipo', $request->tipo)
+                ->where('variedad', $request->variedad)
+                ->where('empaque', $request->empaque)
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existe) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe un producto con esta combinación de tipo, variedad y empaque'
+                ], 422);
+            }
+
             $catalogo->update([
-                'nombre_producto' => $request->nombre_producto,
-                'categoria' => $request->categoria,
-                'descripcion' => $request->descripcion,
-                'temp_min' => $request->temp_min,
-                'temp_max' => $request->temp_max,
-                'humedad_min' => $request->humedad_min,
-                'humedad_max' => $request->humedad_max,
-                'requiere_refrigeracion' => $request->requiere_refrigeracion ?? false
+                'tipo' => $request->tipo,
+                'variedad' => $request->variedad,
+                'empaque' => $request->empaque,
+                'descripcion' => $request->descripcion
             ]);
 
             return response()->json([
