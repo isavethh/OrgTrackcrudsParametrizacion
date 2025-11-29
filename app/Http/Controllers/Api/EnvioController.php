@@ -164,6 +164,17 @@ class EnvioController extends Controller
             $ubicacion = $request->ubicacion;
             $particiones = $request->particiones;
 
+            // Validar duplicados en recursos (Transportistas y Vehículos)
+            $transportistasIds = array_column($particiones, 'id_transportista');
+            $vehiculosIds = array_column($particiones, 'id_vehiculo');
+
+            if (count($transportistasIds) !== count(array_unique($transportistasIds))) {
+                return response()->json(['error' => 'No se puede asignar el mismo transportista a múltiples particiones en el mismo envío.'], 400);
+            }
+            if (count($vehiculosIds) !== count(array_unique($vehiculosIds))) {
+                return response()->json(['error' => 'No se puede asignar el mismo vehículo a múltiples particiones en el mismo envío.'], 400);
+            }
+
             return DB::transaction(function () use ($id_usuario_cliente, $ubicacion, $particiones) {
                 // 1. Guardar ubicación en PostgreSQL (en lugar de MongoDB)
                 $nuevaUbicacion = Direccion::create([

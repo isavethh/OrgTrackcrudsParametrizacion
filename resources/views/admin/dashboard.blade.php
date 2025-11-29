@@ -63,6 +63,47 @@
 </div>
 <!-- /.row -->
 
+<!-- CONFIGURACIÓN ROW -->
+<h5 class="mb-2 mt-4">Resumen de Configuración</h5>
+<div class="row">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-map-marker-alt"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Direcciones</span>
+                <span class="info-box-number" id="total-direcciones">-</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box mb-3">
+            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-truck-pickup"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Tipos Vehículo</span>
+                <span class="info-box-number" id="total-tipos-vehiculo">-</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box mb-3">
+            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-boxes"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Catálogo Carga</span>
+                <span class="info-box-number" id="total-catalogo">-</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box mb-3">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-exclamation-triangle"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Tipos Incidente</span>
+                <span class="info-box-number" id="total-incidentes">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-6">
         <!-- Recent Envios -->
@@ -202,6 +243,33 @@
                 const vehiculos = await resVehiculos.json();
                 document.getElementById('total-vehiculos').textContent = Array.isArray(vehiculos) ? vehiculos.length : 0;
             }
+
+            // --- NUEVOS CONTADORES ---
+            
+            // Direcciones
+            fetch(`${window.location.origin}/api/ubicaciones`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.json())
+                .then(d => document.getElementById('total-direcciones').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
+                .catch(e => console.error(e));
+
+            // Tipos Vehículo
+            fetch(`${window.location.origin}/api/tipos-vehiculo`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.json())
+                .then(d => document.getElementById('total-tipos-vehiculo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
+                .catch(e => console.error(e));
+
+            // Catálogo Carga
+            fetch(`${window.location.origin}/api/catalogo-carga`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.json())
+                .then(d => document.getElementById('total-catalogo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
+                .catch(e => console.error(e));
+
+            // Incidentes
+            fetch(`${window.location.origin}/api/tipos-incidente-transporte`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.json())
+                .then(d => document.getElementById('total-incidentes').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
+                .catch(e => console.error(e));
+
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
         }

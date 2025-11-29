@@ -17,7 +17,8 @@
                     <tr>
                         <th style="width: 70px;">ID</th>
                         <th>Placa</th>
-                        <th>Tipo</th>
+                        <th>Tipo Vehículo</th>
+                        <th>Tipo Transporte</th>
                         <th>Capacidad</th>
                         <th>Estado</th>
                         <th style="width: 160px;">Acciones</th>
@@ -25,7 +26,7 @@
                 </thead>
                 <tbody id="vehiculosTableBody">
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             Cargando vehículos...
                         </td>
                     </tr>
@@ -319,7 +320,7 @@
             }
             const vehiculos = await res.json();
             if (!Array.isArray(vehiculos) || vehiculos.length === 0){
-                tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay vehículos registrados.</td></tr>`;
+                tablaBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay vehículos registrados.</td></tr>`;
                 return;
             }
             tablaBody.innerHTML = vehiculos.map(v => {
@@ -329,6 +330,7 @@
                     <td>${v.id}</td>
                     <td>${v.placa}</td>
                     <td>${v.tipo}</td>
+                    <td>${v.tipo_transporte?.nombre || '—'}</td>
                     <td>${v.capacidad ?? '—'}</td>
                     <td>${badgeEstado(v.estado)}</td>
                     <td>
@@ -341,7 +343,7 @@
             `;
             }).join('');
         } catch (e){
-            tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${e.message}</td></tr>`;
+            tablaBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${e.message}</td></tr>`;
         }
     }
 

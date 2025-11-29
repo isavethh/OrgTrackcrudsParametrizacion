@@ -165,4 +165,14 @@ Route::prefix('admin')->group(function () {
     Route::get('/catalogo-carga', function () {
         return view('admin.catalogo_carga.index');
     })->name('admin.catalogo_carga.index');
+
+    // Tipos de Vehículo
+    Route::get('/tipos-vehiculo', function () {
+        return view('admin.tipos_vehiculo.index');
+    })->name('admin.tipos_vehiculo.index');
+
+    // Tipos de Transporte
+    Route::get('/tipos-transporte', function () {
+        return view('admin.tipos_transporte.index');
+    })->name('admin.tipos_transporte.index');
 });
