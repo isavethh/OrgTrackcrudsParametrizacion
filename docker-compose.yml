@@ -45,7 +45,5 @@ networks:
     driver: bridge
   internal-network:
     external: true
-    name: mau_internal-network
   proxy-network:
     external: true
-    name: mau_proxy-network
