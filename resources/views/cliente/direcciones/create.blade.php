@@ -1,14 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', isset($editId) ? 'Editar Dirección - OrgTrack' : 'Nueva Dirección - OrgTrack')
 @section('page-title', isset($editId) ? 'Editar Dirección' : 'Nueva Dirección')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('direcciones.index') }}">Direcciones Guardadas</a></li>
-    <li class="breadcrumb-item active">{{ isset($editId) ? 'Editar Dirección' : 'Nueva Dirección' }}</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -55,8 +49,11 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+@endpush
+
+@push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -69,6 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const ORS_API_KEY = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
     const editId = @json($editId ?? null);
     const isEditMode = editId !== null;
+    
+    // Limpiar mapa si ya existe
+    const mapContainer = document.getElementById('mapDirecciones');
+    if (mapContainer && mapContainer._leaflet_id) {
+        mapContainer._leaflet_id = null;
+    }
     
     const mapD = L.map('mapDirecciones').setView([-17.7833, -63.1833], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
@@ -442,10 +445,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endpush
+
+@push('css')
 <style>
 .custom-marker {
     background: transparent;
     border: none;
 }
 </style>
-@endsection
+@endpush

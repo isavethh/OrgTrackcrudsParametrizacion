@@ -1,15 +1,8 @@
-@extends('layouts.admin')
-
-@section('title', 'Catálogo de Carga')
+@extends('layouts.adminlte')
 
 @section('page-title', 'Gestión de Catálogo de Productos')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-    <li class="breadcrumb-item active">Catálogo de Carga</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Lista de Productos Transportables</h3>
@@ -148,8 +141,11 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+@endpush
+
+@push('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
@@ -407,4 +403,4 @@
         });
     }
 </script>
-@endsection
+@endpush

@@ -1,13 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Documentos - OrgTrack')
-@section('page-title', 'Mis documentos')
+@section('page-title', 'Mis Documentos')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Documentos</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <style>
     @media print {
         body * { visibility: hidden; }
@@ -118,7 +113,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
@@ -769,4 +764,4 @@
 
     cargarEnvios();
 </script>
-@endsection
+@endpush

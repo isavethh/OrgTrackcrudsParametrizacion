@@ -1,14 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Subir Documento - OrgTrack')
 @section('page-title', 'Subir Documento')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('documentos.index') }}">Documentos</a></li>
-    <li class="breadcrumb-item active">Subir Documento</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-md-8">
         <div class="card">
@@ -131,7 +125,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
 // Actualizar el label del input file
 $('.custom-file-input').on('change', function() {
@@ -139,4 +133,4 @@ $('.custom-file-input').on('change', function() {
     $(this).next('.custom-file-label').addClass("selected").html(fileName);
 });
 </script>
-@endsection
+@endpush

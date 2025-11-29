@@ -1,13 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
 @section('page-title', 'Transportistas')
 
-@section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
-<li class="breadcrumb-item active">Transportistas</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title mb-0">Listado de Transportistas</h3>
@@ -140,7 +135,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
     const tokenRaw = localStorage.getItem('authToken');
     const authToken = tokenRaw ? tokenRaw.replace(/^"+|"+$/g, '') : null;
@@ -436,5 +431,4 @@
 
     cargarTransportistas();
 </script>
-@endsection
-
+@endpush

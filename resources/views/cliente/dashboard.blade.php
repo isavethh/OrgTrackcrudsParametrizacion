@@ -1,13 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Dashboard - OrgTrack')
-@section('page-title', 'Dashboard')
+@section('page-title', 'Dashboard Cliente')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Dashboard</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-lg-3 col-6">
         <!-- small box -->

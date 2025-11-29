@@ -1,186 +1,89 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Gestión de Envíos - OrgTrack Admin')
 @section('page-title', 'Gestión de Envíos')
 
-
-@section('content')
+@push('css')
 <style>
-    .envios-admin-page {
-        background-color: #f5f7fb;
-        border-radius: 1rem;
-        padding: 1.5rem;
-    }
-    .status-card {
-        border-radius: .75rem;
-        padding: 1rem;
-        background: #fff;
-        display: flex;
-        align-items: center;
-        min-height: 120px;
-        box-shadow: 0 5px 15px rgba(15, 23, 42, 0.05);
-        border: 1px solid transparent;
-    }
-    .status-card .status-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        margin-right: .9rem;
-    }
-    .status-card h3 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.75rem;
-    }
-    .status-card small {
-        color: #94a3b8;
-    }
-    .status-todos .status-icon { background: #eef2ff; color: #3730a3; }
-    .status-pendientes .status-icon { background: #fff7e6; color: #d97706; }
-    .status-asignados .status-icon { background: #fce7f3; color: #be185d; }
-    .status-curso .status-icon { background: #e0f2fe; color: #0369a1; }
-    .status-completados .status-icon { background: #dcfce7; color: #15803d; }
-
-    .envio-card {
-        border-radius: .85rem;
-        border: 1px solid #e2e8f0;
-        padding: 1.25rem;
-        background: #fff;
-        transition: box-shadow .2s, transform .2s;
-        cursor: pointer;
-        height: 100%;
-    }
-    .envio-card:hover {
-        box-shadow: 0 15px 25px rgba(15, 23, 42, 0.12);
-        transform: translateY(-4px);
-    }
-    .envio-badge {
-        border-radius: 9999px;
-        padding: .35rem .9rem;
-        font-size: .8rem;
-        font-weight: 600;
-    }
-    .badge-pendiente { background: #fef3c7; color: #c2410c; }
-    .badge-asignado { background: #fce7f3; color: #be185d; }
-    .badge-curso { background: #dbeafe; color: #1d4ed8; }
-    .badge-completado { background: #dcfce7; color: #15803d; }
-    .envio-route {
-        border-left: 3px solid #e2e8f0;
-        padding-left: 1rem;
-        margin: 1rem 0;
-    }
-    .envio-meta {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    .envio-meta div {
-        background: #f8fafc;
-        border-radius: .75rem;
-        padding: .65rem .9rem;
-        flex: 1;
-        min-width: 120px;
-    }
-    .envio-meta span {
-        display: block;
-        font-size: .85rem;
-        color: #94a3b8;
-    }
-    .envio-meta strong {
-        font-size: 1.05rem;
-        color: #0f172a;
-    }
-    .filter-card {
-        cursor: pointer;
-        transition: all .2s;
-    }
-    .filter-card.active {
-        border-color: #2563eb;
-        box-shadow: 0 12px 28px rgba(37,99,235,.25);
-    }
-    @media (max-width: 767px) {
-        .status-card { flex-direction: column; text-align: center; }
-        .status-card .status-icon { margin-bottom: .5rem; }
-        .envio-meta { flex-direction: column; }
-    }
+.filter-card { cursor: pointer; }
+.card[data-href] { cursor: pointer; transition: all 0.3s; }
+.envio-route { border-left: 3px solid #dee2e6; padding-left: 1rem; }
 </style>
-<div class="envios-admin-page">
-    <div class="row mb-3">
-        <div class="col-sm-6 col-lg-4 col-xl-2 mb-3">
-            <div class="status-card status-todos filter-card active" data-filter="todos">
-                <div class="status-icon"><i class="fas fa-clipboard-list"></i></div>
-                <div>
-                    <p class="text-uppercase text-muted mb-1">Todos</p>
-                    <h3 id="statTodos" data-count-pill="todos">0</h3>
-                    <small>Todos los envíos</small>
-                </div>
+@endpush
+
+@section('page-content')
+<!-- Info boxes -->
+<div class="row">
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="todos">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-clipboard-list"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Todos</span>
+                <span class="info-box-number" id="statTodos">0</span>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-4 col-xl-2 mb-3">
-            <div class="status-card status-pendientes filter-card" data-filter="pendientes">
-                <div class="status-icon"><i class="fas fa-clock"></i></div>
-                <div>
-                    <p class="text-uppercase text-muted mb-1">Pendientes</p>
-                    <h3 id="statPendientes" data-count-pill="pendientes">0</h3>
-                    <small>Esperando asignación</small>
-                </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="pendientes">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-clock"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Pendientes</span>
+                <span class="info-box-number" id="statPendientes">0</span>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-4 col-xl-2 mb-3">
-            <div class="status-card status-asignados filter-card" data-filter="asignados">
-                <div class="status-icon"><i class="fas fa-file-signature"></i></div>
-                <div>
-                    <p class="text-uppercase text-muted mb-1">Asignados</p>
-                    <h3 id="statAsignados" data-count-pill="asignados">0</h3>
-                    <small>Listos para recoger</small>
-                </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="asignados">
+            <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-file-signature"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Asignados</span>
+                <span class="info-box-number" id="statAsignados">0</span>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-4 col-xl-2 mb-3">
-            <div class="status-card status-curso filter-card" data-filter="curso">
-                <div class="status-icon"><i class="fas fa-truck"></i></div>
-                <div>
-                    <p class="text-uppercase text-muted mb-1">En curso</p>
-                    <h3 id="statCurso" data-count-pill="curso">0</h3>
-                    <small>En tránsito</small>
-                </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="curso">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-truck"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">En curso</span>
+                <span class="info-box-number" id="statCurso">0</span>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-4 col-xl-2 mb-3">
-            <div class="status-card status-completados filter-card" data-filter="completados">
-                <div class="status-icon"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <p class="text-uppercase text-muted mb-1">Completados</p>
-                    <h3 id="statCompletados" data-count-pill="completados">0</h3>
-                    <small>Entregados con éxito</small>
+    </div>
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="completados">
+            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-check-circle"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Completados</span>
+                <span class="info-box-number" id="statCompletados">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Listado de envíos de clientes</h3>
+        <div class="card-tools">
+            <div class="input-group input-group-sm" style="width: 250px;">
+                <input type="text" id="inputBuscarEnvio" class="form-control" placeholder="Buscar envíos...">
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="card border-0 shadow-sm mt-3">
-        <div class="card-body">
-            <div class="d-flex flex-column flex-md-row align-items-md-center mb-3">
-                <h5 class="mb-3 mb-md-0 font-weight-bold text-secondary">Listado de envíos de clientes</h5>
-                <div class="input-group ml-md-auto w-100" style="max-width: 320px;">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
-                    </div>
-                    <input type="text" id="inputBuscarEnvio" class="form-control border-left-0" placeholder="Buscar envíos, clientes, origen o destino">
-                </div>
-            </div>
-            <div class="row" id="envioGrid"></div>
-        </div>
+    <div class="card-body p-0">
+        <div class="row p-3" id="envioGrid"></div>
     </div>
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
+if (!window.__envioIndexAdminInitialized) {
+    window.__envioIndexAdminInitialized = true;
+    
     (function(){
         const rawToken = localStorage.getItem('authToken');
         const token = rawToken ? rawToken.replace(/^"+|"+$/g, '') : null;
@@ -330,10 +233,12 @@
             }
 
             grid.innerHTML = filtrados.map(envio => crearCard(envio)).join('');
-            grid.querySelectorAll('.envio-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const href = card.getAttribute('data-href');
-                    if (href) window.location.href = href;
+            grid.querySelectorAll('.card[data-href]').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('button')) {
+                        const href = card.getAttribute('data-href');
+                        if (href) window.location.href = href;
+                    }
                 });
             });
         }
@@ -341,48 +246,67 @@
         function crearCard(envio) {
             const estado = normalizarEstado(envio.estado);
             const meta = STATUS_META[estado] || { label: envio.estado || 'Sin estado', badge: 'badge-light' };
+            const badgeClass = meta.badge.replace('badge-pendiente', 'badge-warning')
+                                        .replace('badge-asignado', 'badge-info')
+                                        .replace('badge-curso', 'badge-primary')
+                                        .replace('badge-completado', 'badge-success');
             const metricas = envio.metricas || { particiones: 0, items: 0, peso: 0 };
             const cliente = `${envio.usuario?.nombre || ''} ${envio.usuario?.apellido || ''}`.trim() || 'Cliente sin nombre';
             const fecha = formatearFecha(envio.fecha_creacion);
 
             return `
-                <div class="col-xl-4 col-lg-6 mb-4">
-                    <div class="envio-card" data-href="{{ url('/admin/envios') }}/${envio.id}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="h5 mb-0">#${envio.id}</div>
-                            <span class="envio-badge ${meta.badge}">${meta.label}</span>
+                <div class="col-xl-4 col-lg-6 mb-3">
+                    <div class="card card-outline card-primary" data-href="{{ url('/admin/envios') }}/${envio.id}">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <strong>#${envio.id}</strong>
+                                <span class="badge ${badgeClass} float-right">${meta.label}</span>
+                            </h5>
                         </div>
-                        <p class="text-muted mb-2">${fecha}</p>
-        <div class="envio-route">
-                            <div class="mb-2">
-                                <small class="text-uppercase text-muted">Recogida</small>
-                <div class="font-weight-bold">${envio.nombre_origen || 'Sin origen'}</div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3"><i class="far fa-calendar mr-1"></i>${fecha}</p>
+                            
+                            <div class="mb-3 pb-3 envio-route">
+                                <div class="mb-2">
+                                    <small class="text-muted text-uppercase">Recogida</small>
+                                    <div class="font-weight-bold">${envio.nombre_origen || 'Sin origen'}</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted text-uppercase">Entrega</small>
+                                    <div class="font-weight-bold">${envio.nombre_destino || 'Sin destino'}</div>
+                                </div>
                             </div>
-                            <div>
-                                <small class="text-uppercase text-muted">Entrega</small>
-                <div class="font-weight-bold">${envio.nombre_destino || 'Sin destino'}</div>
+
+                            <div class="row mb-3">
+                                <div class="col-4 text-center">
+                                    <div class="bg-light p-2 rounded">
+                                        <small class="text-muted d-block">Productos</small>
+                                        <strong>${metricas.items || 0}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="bg-light p-2 rounded">
+                                        <small class="text-muted d-block">Peso</small>
+                                        <strong>${metricas.peso || 0} kg</strong>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="bg-light p-2 rounded">
+                                        <small class="text-muted d-block">Particiones</small>
+                                        <strong>${metricas.particiones || 0}</strong>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="envio-meta mb-3">
-                            <div>
-                                <span>Productos</span>
-                                <strong>${metricas.items || 0}</strong>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted text-uppercase">Cliente</small>
+                                    <div class="font-weight-bold">${cliente}</div>
+                                </div>
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye mr-1"></i>Ver
+                                </button>
                             </div>
-                            <div>
-                                <span>Peso total</span>
-                                <strong>${metricas.peso || 0} kg</strong>
-                            </div>
-                            <div>
-                                <span>Particiones</span>
-                                <strong>${metricas.particiones || 0}</strong>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="text-uppercase text-muted">Cliente</small>
-                <div class="font-weight-bold">${cliente}</div>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm">Ver detalle</button>
                         </div>
                     </div>
                 </div>`;
@@ -417,6 +341,7 @@
 
         fetchEnvios();
     })();
+    
+} // Fin de window.__envioIndexAdminInitialized
 </script>
-@endsection
-
+@endpush

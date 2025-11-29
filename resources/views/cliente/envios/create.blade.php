@@ -1,14 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Nuevo Envío - OrgTrack')
 @section('page-title', 'Crear Nuevo Envío')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('envios.index') }}">Envíos</a></li>
-    <li class="breadcrumb-item active">Nuevo Envío</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <!-- Paso / Progreso -->
@@ -223,16 +217,27 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+@endpush
+
+@push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+// Prevenir ejecución múltiple
+if (!window.__envioCreateInitialized) {
+    window.__envioCreateInitialized = true;
+    
+(function() {
+    'use strict';
+    
     // --- Auth ---
     // Normalizar token por si está guardado como string con comillas
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
     if (!token) {
         window.location.href = '/login';
+        return;
     }
     // OpenRouteService
     const ORS_API_KEY = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
@@ -304,190 +309,297 @@
     renderStep();
     actualizarResumen();
 
-    // --- Leaflet ---
-    const map = L.map('mapNuevoEnvio').setView([-17.7833, -63.1833], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+    // --- GESTOR DE MAPA Y RUTAS (REFACTORIZADO) ---
+    const MapManager = {
+        map: null,
+        apiKey: '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080',
+        markers: { origin: null, destination: null },
+        routeLayer: null,
+        lastGeoJSON: null,
 
-    let origenMarker = null, destinoMarker = null, routeLine = null;
-    let lastRouteGeoJSON = null;
-    const origenNombre = document.getElementById('origenNombre');
-    const destinoNombre = document.getElementById('destinoNombre');
-    const hintInput = document.getElementById('hintInput');
+        init: function() {
+            // Limpiar contenedor si existe instancia previa
+            const container = document.getElementById('mapNuevoEnvio');
+            if (container && container._leaflet_id) container._leaflet_id = null;
 
-    function resetMap(){
-        if (origenMarker) map.removeLayer(origenMarker);
-        if (destinoMarker) map.removeLayer(destinoMarker);
-        if (routeLine) map.removeLayer(routeLine);
-        origenMarker = destinoMarker = routeLine = null;
-        lastRouteGeoJSON = null;
-        origenNombre.value = '';
-        destinoNombre.value = '';
-        hintInput.value = 'Haz clic en el mapa para marcar el origen';
-    }
+            this.map = L.map('mapNuevoEnvio').setView([-17.7833, -63.1833], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(this.map);
 
-    document.getElementById('btnReset').onclick = resetMap;
-    resetMap();
+            this.map.on('click', (e) => this.handleMapClick(e));
+            
+            // Botones
+            document.getElementById('btnReset').onclick = () => this.reset();
+            document.getElementById('selRutaGuardada').onchange = (e) => this.loadRouteFromId(e.target.value);
+            document.getElementById('btnGuardarDireccion').onclick = () => this.saveRoute();
+            
+            this.loadSavedRoutesList();
+        },
 
-    async function trazarRutaORS(oLatLng, dLatLng){
-        try{
-            if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-            const res = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
-                method: 'POST',
-                headers: {
-                    'Authorization': ORS_API_KEY,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    coordinates: [[oLatLng.lng, oLatLng.lat],[dLatLng.lng, dLatLng.lat]]
-                })
-            });
-            if (!res.ok) throw new Error('No se pudo trazar la ruta');
-            const geojson = await res.json();
-            lastRouteGeoJSON = JSON.stringify(geojson);
-            routeLine = L.geoJSON(geojson, { style: { color: '#3b82f6', weight: 4 } }).addTo(map);
-            map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
-            hintInput.value = 'Ruta calculada';
-        } catch(err){
-            console.warn(err);
-            // fallback: línea recta
-            routeLine = L.polyline([oLatLng, dLatLng], {color:'#3b82f6', weight:4}).addTo(map);
-            map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
-            lastRouteGeoJSON = JSON.stringify({
-                type:'FeatureCollection',
-                features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[oLatLng.lng,oLatLng.lat],[dLatLng.lng,dLatLng.lat]]},properties:{}}]
-            });
-            hintInput.value = 'Ruta aproximada';
-        }
-    }
-
-    map.on('click', async function(e){
-        if (!origenMarker){
-            origenMarker = L.marker(e.latlng, {icon: L.divIcon({className:'text-success', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Origen');
-            hintInput.value = 'Ahora haz clic para marcar el destino';
-        } else if (!destinoMarker){
-            destinoMarker = L.marker(e.latlng, {icon: L.divIcon({className:'text-danger', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Destino');
-            await trazarRutaORS(origenMarker.getLatLng(), e.latlng);
-        }
-    });
-
-    // --- Direcciones reales desde API ---
-    const selRutaGuardada = document.getElementById('selRutaGuardada');
-    async function cargarDirecciones(){
-        selRutaGuardada.innerHTML = '<option value=\"\">Seleccionar ruta guardada</option>';
-        try{
-            const res = await fetch(`${window.location.origin}/api/ubicaciones`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok){
-                if (res.status === 401) { localStorage.removeItem('authToken'); window.location.href = '/login'; return; }
-                throw new Error('No se pudieron cargar tus direcciones');
+        handleMapClick: async function(e) {
+            if (!this.markers.origin) {
+                this.setMarker('origin', e.latlng);
+                this.updateUI('Selecciona el destino en el mapa');
+            } else if (!this.markers.destination) {
+                this.setMarker('destination', e.latlng);
+                await this.calculateRoute();
             }
-            const items = await res.json();
-            items.forEach(d => {
-                const text = `${d.nombreorigen || 'Origen'} → ${d.nombredestino || 'Destino'}`;
-                const opt = document.createElement('option');
-                opt.value = String(d.id);
-                opt.textContent = text;
-                selRutaGuardada.appendChild(opt);
-            });
-        } catch(e){
-            console.error(e);
-        }
-    }
-    cargarDirecciones();
+        },
 
-    async function aplicarDireccionPorId(id){
-        if (!id){ resetMap(); document.getElementById('idDireccionSeleccionada').value = ''; return; }
-        try{
-            const res = await fetch(`${window.location.origin}/api/ubicaciones/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+        setMarker: function(type, latlng) {
+            const color = type === 'origin' ? 'text-success' : 'text-danger';
+            const icon = L.divIcon({
+                className: color,
+                html: '<i class="fas fa-map-marker-alt fa-2x"></i>',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41]
             });
-            if (!res.ok) throw new Error('No se pudo obtener la dirección');
-            const d = await res.json();
-            resetMap();
-            const origen = [d.origen_lat, d.origen_lng];
-            const destino = [d.destino_lat, d.destino_lng];
-            if (origen[0] && origen[1]) {
-                origenMarker = L.marker(origen, {icon: L.divIcon({className:'text-success', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Origen');
+
+            if (this.markers[type]) this.map.removeLayer(this.markers[type]);
+            
+            this.markers[type] = L.marker(latlng, {icon: icon}).addTo(this.map);
+            
+            // Actualizar inputs visuales
+            const inputId = type === 'origin' ? 'origenNombre' : 'destinoNombre';
+            document.getElementById(inputId).value = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+        },
+
+        reset: function() {
+            if (this.markers.origin) this.map.removeLayer(this.markers.origin);
+            if (this.markers.destination) this.map.removeLayer(this.markers.destination);
+            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
+            
+            this.markers = { origin: null, destination: null };
+            this.routeLayer = null;
+            this.lastGeoJSON = null;
+            
+            document.getElementById('origenNombre').value = '';
+            document.getElementById('destinoNombre').value = '';
+            document.getElementById('idDireccionSeleccionada').value = '';
+            document.getElementById('selRutaGuardada').value = '';
+            this.updateUI('Haz clic en el mapa para marcar el origen');
+        },
+
+        calculateRoute: async function() {
+            if (!this.markers.origin || !this.markers.destination) return;
+
+            this.updateUI('Calculando ruta...');
+            const start = this.markers.origin.getLatLng();
+            const end = this.markers.destination.getLatLng();
+
+            try {
+                const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': this.apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        coordinates: [[start.lng, start.lat], [end.lng, end.lat]]
+                    })
+                });
+
+                if (!response.ok) throw new Error('Error en servicio de rutas');
+                
+                const geoJSON = await response.json();
+                this.drawRoute(geoJSON);
+                this.updateUI('Ruta calculada correctamente');
+
+            } catch (e) {
+                console.error(e);
+                this.drawFallbackRoute(start, end);
+                this.updateUI('Ruta calculada (modo simple)');
             }
-            if (destino[0] && destino[1]) {
-                destinoMarker = L.marker(destino, {icon: L.divIcon({className:'text-danger', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Destino');
+        },
+
+        drawRoute: function(geoJSON) {
+            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
+            
+            // Validar que el GeoJSON tenga coordenadas válidas
+            if (!geoJSON || !geoJSON.features || !geoJSON.features[0].geometry || !geoJSON.features[0].geometry.coordinates) {
+                console.warn('GeoJSON inválido, usando fallback');
+                if (this.markers.origin && this.markers.destination) {
+                    this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
+                }
+                return;
             }
-            if (d.rutageojson){
-                try{
-                    const gj = JSON.parse(d.rutageojson);
-                    routeLine = L.geoJSON(gj, { style: { color:'#3b82f6', weight:4 } }).addTo(map);
-                    map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
-                    lastRouteGeoJSON = d.rutageojson;
-                } catch{
-                    if (origenMarker && destinoMarker){
-                        await trazarRutaORS(origenMarker.getLatLng(), destinoMarker.getLatLng());
+
+            try {
+                this.routeLayer = L.geoJSON(geoJSON, {
+                    style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+                }).addTo(this.map);
+                
+                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+                this.lastGeoJSON = JSON.stringify(geoJSON);
+            } catch (e) {
+                console.error('Error dibujando GeoJSON:', e);
+                if (this.markers.origin && this.markers.destination) {
+                    this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
+                }
+            }
+        },
+
+        drawFallbackRoute: function(start, end) {
+            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
+            
+            // Asegurar números
+            const sLat = parseFloat(start.lat), sLng = parseFloat(start.lng);
+            const eLat = parseFloat(end.lat), eLng = parseFloat(end.lng);
+
+            if (isNaN(sLat) || isNaN(sLng) || isNaN(eLat) || isNaN(eLng)) {
+                console.error('Coordenadas inválidas para fallback:', start, end);
+                return;
+            }
+
+            const line = [[sLat, sLng], [eLat, eLng]];
+            
+            try {
+                this.routeLayer = L.polyline(line, {
+                    color: '#ff6b6b', weight: 4, dashArray: '5, 10'
+                }).addTo(this.map);
+                
+                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+                
+                // Crear un GeoJSON simple para el fallback
+                const simpleGeoJSON = {
+                    type: "FeatureCollection",
+                    features: [{
+                        type: "Feature",
+                        geometry: {
+                            type: "LineString",
+                            coordinates: [[sLng, sLat], [eLng, eLat]]
+                        }
+                    }]
+                };
+                this.lastGeoJSON = JSON.stringify(simpleGeoJSON);
+            } catch (e) {
+                console.error('Error dibujando fallback:', e);
+            }
+        },
+
+        loadSavedRoutesList: async function() {
+            const select = document.getElementById('selRutaGuardada');
+            select.innerHTML = '<option value="">Cargando...</option>';
+            
+            try {
+                const res = await fetch('/api/ubicaciones', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Error cargando rutas');
+                
+                const rutas = await res.json();
+                select.innerHTML = '<option value="">Seleccionar ruta guardada</option>';
+                
+                rutas.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    opt.textContent = `${r.nombreorigen || 'Origen'} → ${r.nombredestino || 'Destino'}`;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                select.innerHTML = '<option value="">Error al cargar rutas</option>';
+            }
+        },
+
+        loadRouteFromId: async function(id) {
+            if (!id) { this.reset(); return; }
+            
+            try {
+                const res = await fetch(`/api/ubicaciones/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Error obteniendo detalle de ruta');
+                
+                const data = await res.json();
+                this.reset(); // Limpiar mapa antes de cargar
+                
+                // Setear ID
+                document.getElementById('idDireccionSeleccionada').value = data.id;
+                document.getElementById('origenNombre').value = data.nombreorigen || '';
+                document.getElementById('destinoNombre').value = data.nombredestino || '';
+
+                // Marcadores
+                if (data.origen_lat && data.origen_lng) {
+                    this.setMarker('origin', { lat: parseFloat(data.origen_lat), lng: parseFloat(data.origen_lng) });
+                }
+                if (data.destino_lat && data.destino_lng) {
+                    this.setMarker('destination', { lat: parseFloat(data.destino_lat), lng: parseFloat(data.destino_lng) });
+                }
+
+                // Ruta
+                if (data.rutageojson) {
+                    try {
+                        const geoJSON = JSON.parse(data.rutageojson);
+                        this.drawRoute(geoJSON);
+                    } catch (e) {
+                        // Si falla el GeoJSON, intentar recalcular o fallback si hay puntos
+                        if (this.markers.origin && this.markers.destination) {
+                            this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
+                        }
                     }
                 }
-            } else if (origenMarker && destinoMarker){
-                await trazarRutaORS(origenMarker.getLatLng(), destinoMarker.getLatLng());
+                this.updateUI('Ruta cargada');
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo cargar la ruta seleccionada');
             }
-            origenNombre.value = d.nombreorigen || '';
-            destinoNombre.value = d.nombredestino || '';
-            document.getElementById('idDireccionSeleccionada').value = String(d.id);
-            hintInput.value = 'Ruta seleccionada';
-        } catch(e){
-            alert(e.message);
-        }
-    }
+        },
 
-    selRutaGuardada.addEventListener('change', (e)=>{
-        aplicarDireccionPorId(e.target.value);
-    });
-
-    // Guardar la ruta dibujada en el mapa como nueva dirección
-    document.getElementById('btnGuardarDireccion').addEventListener('click', async ()=>{
-        if (!origenMarker || !destinoMarker){
-            alert('Marca un origen y un destino en el mapa antes de guardar.');
-            return;
-        }
-        const o = origenMarker.getLatLng();
-        const d = destinoMarker.getLatLng();
-        // Usar el último GeoJSON de ORS si está disponible, si no, generar lineal
-        const rutaGeoJSON = lastRouteGeoJSON || JSON.stringify({
-            type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: [[o.lng, o.lat],[d.lng, d.lat]] },
-                properties: {}
-            }]
-        });
-        try{
-            const res = await fetch(`${window.location.origin}/api/ubicaciones`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    nombreOrigen: origenNombre.value || null,
-                    origen_lng: o.lng,
-                    origen_lat: o.lat,
-                    nombreDestino: destinoNombre.value || null,
-                    destino_lng: d.lng,
-                    destino_lat: d.lat,
-                    rutaGeoJSON
-                })
-            });
-            if (!res.ok){
-                const err = await res.json().catch(()=>({}));
-                throw new Error(err.error || 'No se pudo guardar la dirección');
+        saveRoute: async function() {
+            if (!this.markers.origin || !this.markers.destination) {
+                alert('Debes tener un origen y destino marcados');
+                return;
             }
-            const nueva = await res.json();
-            // Recargar lista y seleccionar nueva
-            await cargarDirecciones();
-            selRutaGuardada.value = String(nueva.id);
-            document.getElementById('idDireccionSeleccionada').value = String(nueva.id);
-            hintInput.value = 'Dirección guardada';
-        } catch(e){
-            alert(e.message);
+            
+            const nombreOrigen = document.getElementById('origenNombre').value;
+            const nombreDestino = document.getElementById('destinoNombre').value;
+            const o = this.markers.origin.getLatLng();
+            const d = this.markers.destination.getLatLng();
+
+            const payload = {
+                nombreOrigen: nombreOrigen,
+                origen_lat: o.lat,
+                origen_lng: o.lng,
+                nombreDestino: nombreDestino,
+                destino_lat: d.lat,
+                destino_lng: d.lng,
+                rutaGeoJSON: this.lastGeoJSON
+            };
+
+            try {
+                const res = await fetch('/api/ubicaciones', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) throw new Error('Error guardando ruta');
+                
+                const nueva = await res.json();
+                await this.loadSavedRoutesList();
+                document.getElementById('selRutaGuardada').value = nueva.id;
+                document.getElementById('idDireccionSeleccionada').value = nueva.id;
+                alert('Ruta guardada correctamente');
+            } catch (e) {
+                alert('Error al guardar la ruta');
+            }
+        },
+
+        updateUI: function(msg) {
+            document.getElementById('hintInput').value = msg;
         }
-    });
+    };
+
+    // Iniciar mapa
+    MapManager.init();
+
+    // Exponer MapManager globalmente si es necesario para otras funciones (como enviarEnvioCompleto)
+    window.MapManager = MapManager;
 
     // --- Productos y particiones ---
     // Delegación: agregar producto dentro de la partición correspondiente
@@ -763,15 +875,20 @@
 
     async function enviarEnvioCompleto(){
         let id_direccion = document.getElementById('idDireccionSeleccionada').value;
+        
         // Si no hay id_direccion pero el usuario marcó en el mapa, crear la dirección al vuelo
-        if (!id_direccion && origenMarker && destinoMarker){
+        if (!id_direccion && MapManager.markers.origin && MapManager.markers.destination){
             try{
-                const o = origenMarker.getLatLng();
-                const d = destinoMarker.getLatLng();
-                const rutaGeoJSON = lastRouteGeoJSON || JSON.stringify({
+                const o = MapManager.markers.origin.getLatLng();
+                const d = MapManager.markers.destination.getLatLng();
+                const nombreOrigen = document.getElementById('origenNombre').value;
+                const nombreDestino = document.getElementById('destinoNombre').value;
+
+                const rutaGeoJSON = MapManager.lastGeoJSON || JSON.stringify({
                     type:'FeatureCollection',
                     features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[o.lng,o.lat],[d.lng,d.lat]]},properties:{}}]
                 });
+                
                 const resDir = await fetch(`${window.location.origin}/api/ubicaciones`, {
                     method: 'POST',
                     headers: {
@@ -779,25 +896,28 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        nombreOrigen: origenNombre.value || null,
+                        nombreOrigen: nombreOrigen || null,
                         origen_lng: o.lng,
                         origen_lat: o.lat,
-                        nombreDestino: destinoNombre.value || null,
+                        nombreDestino: nombreDestino || null,
                         destino_lng: d.lng,
                         destino_lat: d.lat,
                         rutaGeoJSON
                     })
                 });
+                
                 if (!resDir.ok){
                     const e = await resDir.json().catch(()=>({}));
                     throw new Error(e.error || 'No se pudo crear la dirección desde el mapa');
                 }
+                
                 const creada = await resDir.json();
                 id_direccion = String(creada.id);
+                
                 // reflejar en UI
                 document.getElementById('idDireccionSeleccionada').value = id_direccion;
-                await cargarDirecciones();
-                selRutaGuardada.value = id_direccion;
+                await MapManager.loadSavedRoutesList();
+                document.getElementById('selRutaGuardada').value = id_direccion;
             } catch(err){
                 alert(err.message);
                 return;
@@ -869,6 +989,8 @@
         e.preventDefault();
         enviarEnvioCompleto();
     });
-</script>
-@endsection
+})();
 
+} // Fin de window.__envioCreateInitialized
+</script>
+@endpush

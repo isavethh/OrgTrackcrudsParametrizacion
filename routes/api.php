@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\FirmaController;
 use App\Http\Controllers\Api\QrController;
 use App\Http\Controllers\Api\UnidadesMedidaController;
 use App\Http\Controllers\Api\CatalogoCargaController;
+use App\Http\Controllers\Api\ProductorEnvioController;
 
 Route::middleware([])->group(function () {
 
@@ -33,6 +34,9 @@ Route::middleware([])->group(function () {
 
     // Routes Envios
     // Routes Envios - ORDEN IMPORTANTE: rutas específicas primero, luego genéricas
+    // Endpoint público para productores externos
+    Route::post('/envios/productor', [ProductorEnvioController::class, 'store']);
+    Route::get('/envios/productor/recursos-disponibles', [ProductorEnvioController::class, 'recursosDisponibles']);
     Route::middleware('jwt')->post('/envios/completo', [EnvioController::class, 'crearEnvioCompleto']);
     Route::middleware('jwt')->post('/envios/completo-admin', [EnvioController::class, 'crearEnvioCompletoAdmin']);
     

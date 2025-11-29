@@ -1,64 +1,74 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login | OrgTrack</title>
+@extends('adminlte::auth.auth-page', ['authType' => 'login'])
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/icheck-bootstrap/3.0.1/icheck-bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-</head>
-<body class="hold-transition login-page">
-<div class="login-box">
-    <div class="login-logo">
-        <a href="#"><b>Org</b>Track</a>
-    </div>
-    <div class="card">
-        <div class="card-body login-card-body">
-            <p class="login-box-msg">Inicia sesión para continuar</p>
+@php
+    $loginUrl = route('login.post');
+    $registerUrl = route('register');
+    $passResetUrl = route('password.request');
+@endphp
 
-            <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+@section('auth_header', 'Inicia sesión para continuar')
 
-            <form id="login-form" action="{{ route('login.post') }}" method="post">
-                @csrf
-                <div class="input-group mb-3">
-                    <input type="email" name="correo" class="form-control" placeholder="Correo" required autofocus>
-                    <div class="input-group-append">
-                        <div class="input-group-text"><span class="fas fa-envelope"></span></div>
-                    </div>
+@section('auth_body')
+    <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+
+    <form id="login-form" action="{{ $loginUrl }}" method="post">
+        @csrf
+        
+        {{-- Correo field --}}
+        <div class="input-group mb-3">
+            <input type="email" name="correo" class="form-control" placeholder="Correo" required autofocus>
+            <div class="input-group-append">
+                <div class="input-group-text">
+                    <span class="fas fa-envelope"></span>
                 </div>
-                <div class="input-group mb-3">
-                    <input type="password" name="contrasena" class="form-control" placeholder="Contraseña" required>
-                    <div class="input-group-append">
-                        <div class="input-group-text"><span class="fas fa-lock"></span></div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-8">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember">
-                            <label for="remember">Recordarme</label>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="text-center mt-3">
-                <p class="mb-1"><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
-                <p class="mb-0"><a href="{{ route('register') }}" class="text-center">Registrar nueva cuenta</a></p>
             </div>
         </div>
-    </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+        {{-- Contraseña field --}}
+        <div class="input-group mb-3">
+            <input type="password" name="contrasena" class="form-control" placeholder="Contraseña" required>
+            <div class="input-group-append">
+                <div class="input-group-text">
+                    <span class="fas fa-lock"></span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Recordarme y botón --}}
+        <div class="row">
+            <div class="col-7">
+                <div class="form-check">
+                    <input type="checkbox" name="remember" id="remember" class="form-check-input">
+                    <label for="remember" class="form-check-label">Recordarme</label>
+                </div>
+            </div>
+            <div class="col-5">
+                <button type="submit" class="btn btn-block btn-primary">
+                    <span class="fas fa-sign-in-alt"></span>
+                    Entrar
+                </button>
+            </div>
+        </div>
+    </form>
+@stop
+
+@section('auth_footer')
+    {{-- Password reset link --}}
+    <p class="my-0">
+        <a href="{{ $passResetUrl }}">
+            ¿Olvidaste tu contraseña?
+        </a>
+    </p>
+
+    {{-- Register link --}}
+    <p class="my-0">
+        <a href="{{ $registerUrl }}">
+            Registrar nueva cuenta
+        </a>
+    </p>
+@stop
+
+@section('js')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('login-form');
@@ -109,5 +119,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-</body>
-</html>
+@stop

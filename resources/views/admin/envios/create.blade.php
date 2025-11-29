@@ -1,14 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Nuevo Envío - OrgTrack')
 @section('page-title', 'Crear Nuevo Envío')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.envios.index') }}">Envíos</a></li>
-    <li class="breadcrumb-item active">Nuevo Envío</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <!-- Paso / Progreso -->
@@ -223,16 +217,27 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+@endpush
+
+@push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+// Prevenir ejecución múltiple
+if (!window.__envioCreateAdminInitialized) {
+    window.__envioCreateAdminInitialized = true;
+    
+(function() {
+    'use strict';
+    
     // --- Auth ---
     // Normalizar token por si está guardado como string con comillas
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
     if (!token) {
         window.location.href = '/login';
+        return;
     }
     // OpenRouteService
     const ORS_API_KEY = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
@@ -305,6 +310,12 @@
     actualizarResumen();
 
     // --- Leaflet ---
+    // Verificar si el contenedor ya tiene un mapa y limpiarlo
+    const mapContainer = document.getElementById('mapNuevoEnvio');
+    if (mapContainer._leaflet_id) {
+        mapContainer._leaflet_id = null;
+    }
+    
     const map = L.map('mapNuevoEnvio').setView([-17.7833, -63.1833], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
@@ -328,9 +339,287 @@
     document.getElementById('btnReset').onclick = resetMap;
     resetMap();
 
+    // Función para validar y limpiar GeoJSON
+    function validarGeoJSON(gj) {
+        console.log('Validando GeoJSON:', gj);
+        
+        if (!gj || !gj.type) {
+            console.warn('GeoJSON sin tipo');
+            return null;
+        }
+        
+        // Soporte para LineString directo (como viene de la BD)
+        if (gj.type === 'LineString' && Array.isArray(gj.coordinates)) {
+            console.log('Convirtiendo LineString directo a FeatureCollection');
+            const coords = gj.coordinates;
+            
+            if (coords.length < 2) {
+                console.warn('LineString con menos de 2 puntos');
+                return null;
+            }
+            
+            const normalizedCoords = [];
+            
+            for (let idx = 0; idx < coords.length; idx++) {
+                const c = coords[idx];
+                
+                if (!Array.isArray(c) || c.length < 2) {
+                    console.warn(`Coordenada ${idx} inválida:`, c);
+                    continue;
+                }
+                
+                const lng = parseFloat(c[0]);
+                const lat = parseFloat(c[1]);
+                
+                if (isNaN(lng) || isNaN(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90) {
+                    console.warn(`Coordenada ${idx} fuera de rango:`, {lng, lat});
+                    continue;
+                }
+                
+                normalizedCoords.push([lng, lat]);
+            }
+            
+            if (normalizedCoords.length < 2) {
+                console.warn('No hay suficientes coordenadas válidas');
+                return null;
+            }
+            
+            // Convertir a FeatureCollection
+            return {
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: normalizedCoords
+                    },
+                    properties: {}
+                }]
+            };
+        }
+        
+        if (gj.type === 'FeatureCollection' && Array.isArray(gj.features)) {
+            const validFeatures = [];
+            
+            gj.features.forEach(feature => {
+                if (!feature || !feature.geometry || !feature.geometry.coordinates) {
+                    console.warn('Feature sin geometría:', feature);
+                    return;
+                }
+                
+                if (feature.geometry.type === 'LineString') {
+                    const coords = feature.geometry.coordinates;
+                    
+                    if (!Array.isArray(coords) || coords.length < 2) {
+                        console.warn('LineString con menos de 2 puntos:', coords);
+                        return;
+                    }
+                    
+                    // Normalizar coordenadas: solo [lng, lat], sin elevación u otros valores
+                    const normalizedCoords = [];
+                    
+                    for (let idx = 0; idx < coords.length; idx++) {
+                        const c = coords[idx];
+                        
+                        if (!Array.isArray(c) || c.length < 2) {
+                            console.warn(`Coordenada ${idx} no es array de 2+:`, c);
+                            continue;
+                        }
+                        
+                        const lng = parseFloat(c[0]);
+                        const lat = parseFloat(c[1]);
+                        
+                        if (isNaN(lng) || isNaN(lat)) {
+                            console.warn(`Coordenada ${idx} tiene valores NaN:`, c, {lng, lat});
+                            continue;
+                        }
+                        
+                        if (Math.abs(lng) > 180 || Math.abs(lat) > 90) {
+                            console.warn(`Coordenada ${idx} fuera de rango:`, {lng, lat});
+                            continue;
+                        }
+                        
+                        // Solo guardar [lng, lat] exactamente
+                        normalizedCoords.push([lng, lat]);
+                    }
+                    
+                    if (normalizedCoords.length < 2) {
+                        console.warn('Menos de 2 coordenadas válidas después de normalizar');
+                        return;
+                    }
+                    
+                    // Crear feature limpia con coordenadas normalizadas
+                    validFeatures.push({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: normalizedCoords
+                        },
+                        properties: feature.properties || {}
+                    });
+                } else {
+                    console.warn('Tipo de geometría no soportado:', feature.geometry.type);
+                }
+            });
+            
+            if (validFeatures.length === 0) {
+                console.warn('No hay features válidas después del filtrado');
+                return null;
+            }
+            
+            console.log(`GeoJSON validado: ${validFeatures.length} features válidas con coordenadas normalizadas`);
+            return { type: 'FeatureCollection', features: validFeatures };
+        }
+        
+        console.warn('GeoJSON no es FeatureCollection:', gj.type);
+        return null;
+    }
+
     async function trazarRutaORS(oLatLng, dLatLng){
-        try{
-            if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        if (routeLine) { 
+            map.removeLayer(routeLine); 
+            routeLine = null; 
+        }
+        
+        const origenLat = oLatLng.lat;
+        const origenLng = oLatLng.lng;
+        const destinoLat = dLatLng.lat;
+        const destinoLng = dLatLng.lng;
+        
+        hintInput.value = 'Calculando ruta...';
+        
+        try {
+            const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
+                method: 'POST',
+                headers: {
+                    'Authorization': ORS_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    coordinates: [[origenLng, origenLat], [destinoLng, destinoLat]],
+                    format: 'geojson'
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error de OpenRouteService:', response.status, errorText);
+                throw new Error(`Error al calcular la ruta: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Respuesta OpenRouteService:', data);
+            
+            // OpenRouteService devuelve GeoJSON directamente
+            let coordinates = null;
+            
+            if (data.type === 'FeatureCollection' && data.features && data.features.length > 0) {
+                // Formato FeatureCollection
+                const feature = data.features[0];
+                if (feature.geometry && feature.geometry.coordinates) {
+                    coordinates = feature.geometry.coordinates;
+                }
+            } else if (data.type === 'Feature' && data.geometry && data.geometry.coordinates) {
+                // Formato Feature directo
+                coordinates = data.geometry.coordinates;
+            } else if (data.routes && data.routes.length > 0 && data.routes[0].geometry) {
+                // Formato JSON con routes
+                coordinates = data.routes[0].geometry.coordinates;
+            }
+            
+            if (coordinates && coordinates.length > 0) {
+                // Las coordenadas vienen como [lng, lat], las convertimos a [lat, lng] para Leaflet
+                const leafletCoords = coordinates.map(coord => [coord[1], coord[0]]);
+                
+                routeLine = L.polyline(leafletCoords, {
+                    color: '#3b82f6',
+                    weight: 5,
+                    opacity: 0.8
+                }).addTo(map);
+                
+                // Ajustar el mapa para mostrar toda la ruta
+                const bounds = L.latLngBounds(leafletCoords);
+                map.fitBounds(bounds, { padding: [50, 50] });
+                
+                // Guardar GeoJSON para enviar
+                lastRouteGeoJSON = JSON.stringify({
+                    type:'FeatureCollection',
+                    features:[{type:'Feature',geometry:{type:'LineString',coordinates:coordinates},properties:{}}]
+                });
+                
+                hintInput.value = 'Ruta trazada correctamente';
+            } else {
+                console.error('No se encontraron coordenadas en la respuesta:', data);
+                throw new Error('Formato de respuesta inválido');
+            }
+        } catch (error) {
+            console.error('Error al trazar ruta:', error);
+            // Si falla la API, trazar línea recta como fallback
+            routeLine = L.polyline([[origenLat, origenLng], [destinoLat, destinoLng]], {
+                color: '#ff6b6b',
+                weight: 4,
+                opacity: 0.5,
+                dashArray: '5, 5'
+            }).addTo(map);
+            map.fitBounds([[origenLat, origenLng], [destinoLat, destinoLng]], { padding: [50, 50] });
+            
+            lastRouteGeoJSON = JSON.stringify({
+                type:'FeatureCollection',
+                features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[origenLng,origenLat],[destinoLng,destinoLat]]},properties:{}}]
+            });
+            
+            hintInput.value = 'Ruta trazada (línea recta - fallback)';
+        }
+    }
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        
+        // Extraer y validar coordenadas
+        const oLat = Number(oLatLng?.lat);
+        const oLng = Number(oLatLng?.lng);
+        const dLat = Number(dLatLng?.lat);
+        const dLng = Number(dLatLng?.lng);
+        
+        // Validación estricta - rechazar 0, NaN, undefined, null
+        if (!oLat || !oLng || !dLat || !dLng || 
+            isNaN(oLat) || isNaN(oLng) || isNaN(dLat) || isNaN(dLng) ||
+            !isFinite(oLat) || !isFinite(oLng) || !isFinite(dLat) || !isFinite(dLng)) {
+            hintInput.value = 'Error: coordenadas inválidas';
+            return;
+        }
+        
+        // Crear array de coordenadas explícitamente
+        const straightLine = [
+            [oLat, oLng],
+            [dLat, dLng]
+        ];
+        
+        // Dibujar línea recta inmediatamente con manejo de error
+        try {
+            routeLine = L.polyline(straightLine, {color:'#999', weight:2, dashArray:'5,5'}).addTo(map);
+        } catch(e) {
+            console.error('Error al añadir polyline inicial:', e);
+            hintInput.value = 'Error al dibujar ruta';
+            return;
+        }
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        
+        // Simplemente dibujar línea recta primero
+        const oLat = Number(oLatLng?.lat);
+        const oLng = Number(oLatLng?.lng);
+        const dLat = Number(dLatLng?.lat);
+        const dLng = Number(dLatLng?.lng);
+        
+        if (!oLat || !oLng || !dLat || !dLng) {
+            hintInput.value = 'Error: coordenadas inválidas';
+            return;
+        }
+        
+        // Dibujar línea recta inmediatamente
+        routeLine = L.polyline([[oLat, oLng], [dLat, dLng]], {color:'#999', weight:2, dashArray:'5,5'}).addTo(map);
+        hintInput.value = 'Calculando ruta...';
+        
+        // Intentar obtener ruta de ORS en segundo plano
+        try {
             const res = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
                 method: 'POST',
                 headers: {
@@ -338,25 +627,193 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    coordinates: [[oLatLng.lng, oLatLng.lat],[dLatLng.lng, dLatLng.lat]]
+                    coordinates: [[oLng, oLat], [dLng, dLat]]
+                })
+            });
+            
+            if (!res.ok) throw new Error('API fail');
+            
+            const data = await res.json();
+            
+            // Extraer coordenadas de forma simple
+            const geometry = data.features?.[0]?.geometry;
+            if (!geometry || geometry.type !== 'LineString') throw new Error('No geometry');
+            
+            const coords = geometry.coordinates;
+            if (!Array.isArray(coords) || coords.length < 2) throw new Error('No coords');
+            
+            // Convertir a formato Leaflet de forma simple
+            const latlngs = [];
+            for (let i = 0; i < coords.length; i++) {
+                const lng = Number(coords[i][0]);
+                const lat = Number(coords[i][1]);
+                if (lng && lat) {
+                    latlngs.push([lat, lng]);
+                }
+            }
+            
+            if (latlngs.length < 2) throw new Error('Not enough points');
+            
+            // Reemplazar línea temporal con ruta real
+            if (routeLine) map.removeLayer(routeLine);
+            try {
+                routeLine = L.polyline(latlngs, {color:'#3b82f6', weight:4}).addTo(map);
+                map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+            } catch(e) {
+                console.error('Error al añadir polyline de ruta ORS:', e);
+                throw new Error('Polyline error');
+            }
+            
+            // Guardar para enviar
+            lastRouteGeoJSON = JSON.stringify({
+                type:'FeatureCollection',
+                features:[{type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{}}]
+            });
+            hintInput.value = 'Ruta calculada';
+            
+        } catch(err) {
+            // Si falla ORS, mantener la línea recta
+            if (routeLine) map.removeLayer(routeLine);
+            try {
+                routeLine = L.polyline(straightLine, {color:'#3b82f6', weight:4}).addTo(map);
+                map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+            } catch(e) {
+                console.error('Error al añadir polyline de fallback:', e);
+                hintInput.value = 'Error al dibujar ruta';
+                return;
+            }
+            lastRouteGeoJSON = JSON.stringify({
+                type:'FeatureCollection',
+                features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[oLng,oLat],[dLng,dLat]]},properties:{}}]
+            });
+            hintInput.value = 'Ruta aproximada (línea recta)';
+        }
+    }
+        try{
+            if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+            
+            // Validar coordenadas de forma robusta
+            if (!oLatLng || !dLatLng) {
+                console.error('Coordenadas undefined:', oLatLng, dLatLng);
+                hintInput.value = 'Error: coordenadas inválidas';
+                return;
+            }
+            
+            const oLat = parseFloat(oLatLng.lat);
+            const oLng = parseFloat(oLatLng.lng);
+            const dLat = parseFloat(dLatLng.lat);
+            const dLng = parseFloat(dLatLng.lng);
+            
+            console.log('Coordenadas extraídas:', {oLat, oLng, dLat, dLng});
+            
+            if (isNaN(oLat) || isNaN(oLng) || isNaN(dLat) || isNaN(dLng)) {
+                console.error('Coordenadas no numéricas:', {oLat, oLng, dLat, dLng});
+                hintInput.value = 'Error: coordenadas inválidas';
+                return;
+            }
+            
+            if (oLat === 0 && oLng === 0 || dLat === 0 && dLng === 0) {
+                console.error('Coordenadas en cero:', {oLat, oLng, dLat, dLng});
+                hintInput.value = 'Error: coordenadas inválidas';
+                return;
+            }
+            
+            const res = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
+                method: 'POST',
+                headers: {
+                    'Authorization': ORS_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    coordinates: [[oLng, oLat], [dLng, dLat]]
                 })
             });
             if (!res.ok) throw new Error('No se pudo trazar la ruta');
             const geojson = await res.json();
-            lastRouteGeoJSON = JSON.stringify(geojson);
-            routeLine = L.geoJSON(geojson, { style: { color: '#3b82f6', weight: 4 } }).addTo(map);
+            console.log('GeoJSON recibido de ORS:', geojson);
+            
+            // Validar el GeoJSON de ORS antes de dibujarlo
+            const validGj = validarGeoJSON(geojson);
+            console.log('GeoJSON validado:', validGj);
+            
+            if (!validGj) {
+                console.error('GeoJSON inválido:', geojson);
+                throw new Error('GeoJSON inválido recibido de ORS');
+            }
+            
+            lastRouteGeoJSON = JSON.stringify(validGj);
+            console.log('GeoJSON validado completo:', JSON.stringify(validGj, null, 2));
+            
+            // Extraer coordenadas y convertir a formato Leaflet [lat, lng]
+            const feature = validGj.features[0];
+            const coords = feature.geometry.coordinates;
+            console.log('Coordenadas a dibujar:', coords);
+            
+            // Validar que coords sea un array válido
+            if (!Array.isArray(coords) || coords.length === 0) {
+                throw new Error('El GeoJSON no contiene coordenadas válidas');
+            }
+            
+            // Convertir de [lng, lat] a [lat, lng] para Leaflet con validación exhaustiva
+            const leafletCoords = coords
+                .filter(c => {
+                    // Filtrar elementos que no sean arrays o que no tengan al menos 2 elementos
+                    if (!Array.isArray(c) || c.length < 2) {
+                        console.warn('Coordenada inválida (no es array o muy corta):', c);
+                        return false;
+                    }
+                    // Filtrar elementos con valores undefined o null
+                    if (c[0] === undefined || c[0] === null || c[1] === undefined || c[1] === null) {
+                        console.warn('Coordenada con valores undefined/null:', c);
+                        return false;
+                    }
+                    return true;
+                })
+                .map(c => {
+                    const lat = parseFloat(c[1]);
+                    const lng = parseFloat(c[0]);
+                    return [lat, lng];
+                })
+                .filter(c => {
+                    // Filtrar coordenadas que no sean números válidos
+                    if (isNaN(c[0]) || isNaN(c[1]) || !isFinite(c[0]) || !isFinite(c[1])) {
+                        console.warn('Coordenada con valores inválidos después de parseo:', c);
+                        return false;
+                    }
+                    return true;
+                });
+            
+            console.log('Coordenadas formato Leaflet [lat,lng]:', leafletCoords);
+            console.log('Total coordenadas válidas:', leafletCoords.length);
+            
+            if (leafletCoords.length < 2) {
+                throw new Error('No hay suficientes coordenadas válidas para dibujar la ruta');
+            }
+            
+            // Usar polyline en lugar de geoJSON para mayor control
+            routeLine = L.polyline(leafletCoords, {color: '#3b82f6', weight: 4}).addTo(map);
             map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
             hintInput.value = 'Ruta calculada';
         } catch(err){
-            console.warn(err);
-            // fallback: línea recta
-            routeLine = L.polyline([oLatLng, dLatLng], {color:'#3b82f6', weight:4}).addTo(map);
-            map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
-            lastRouteGeoJSON = JSON.stringify({
-                type:'FeatureCollection',
-                features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[oLatLng.lng,oLatLng.lat],[dLatLng.lng,dLatLng.lat]]},properties:{}}]
-            });
-            hintInput.value = 'Ruta aproximada';
+            console.warn('Error trazando ruta ORS:', err);
+            // fallback: línea recta con coordenadas validadas
+            const oLat = parseFloat(oLatLng?.lat);
+            const oLng = parseFloat(oLatLng?.lng);
+            const dLat = parseFloat(dLatLng?.lat);
+            const dLng = parseFloat(dLatLng?.lng);
+            
+            if (!isNaN(oLat) && !isNaN(oLng) && !isNaN(dLat) && !isNaN(dLng) && 
+                oLat !== 0 && oLng !== 0 && dLat !== 0 && dLng !== 0) {
+                routeLine = L.polyline([[oLat, oLng], [dLat, dLng]], {color:'#3b82f6', weight:4}).addTo(map);
+                map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+                lastRouteGeoJSON = JSON.stringify({
+                    type:'FeatureCollection',
+                    features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[oLng,oLat],[dLng,dLat]]},properties:{}}]
+                });
+                hintInput.value = 'Ruta aproximada';
+            } else {
+                hintInput.value = 'Error al trazar ruta';
+            }
         }
     }
 
@@ -366,7 +823,10 @@
             hintInput.value = 'Ahora haz clic para marcar el destino';
         } else if (!destinoMarker){
             destinoMarker = L.marker(e.latlng, {icon: L.divIcon({className:'text-danger', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Destino');
-            await trazarRutaORS(origenMarker.getLatLng(), e.latlng);
+            const origenCoords = origenMarker.getLatLng();
+            const destinoCoords = {lat: e.latlng.lat, lng: e.latlng.lng};
+            console.log('Llamando trazarRutaORS desde click:', origenCoords, destinoCoords);
+            await trazarRutaORS(origenCoords, destinoCoords);
         }
     });
 
@@ -405,21 +865,60 @@
             if (!res.ok) throw new Error('No se pudo obtener la dirección');
             const d = await res.json();
             resetMap();
-            const origen = [d.origen_lat, d.origen_lng];
-            const destino = [d.destino_lat, d.destino_lng];
-            if (origen[0] && origen[1]) {
-                origenMarker = L.marker(origen, {icon: L.divIcon({className:'text-success', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Origen');
+            
+            // Validar y crear marcadores
+            const origenLat = parseFloat(d.origen_lat);
+            const origenLng = parseFloat(d.origen_lng);
+            const destinoLat = parseFloat(d.destino_lat);
+            const destinoLng = parseFloat(d.destino_lng);
+            
+            if (!isNaN(origenLat) && !isNaN(origenLng) && origenLat && origenLng) {
+                origenMarker = L.marker([origenLat, origenLng], {
+                    icon: L.divIcon({className:'text-success', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})
+                }).addTo(map).bindPopup('Origen');
             }
-            if (destino[0] && destino[1]) {
-                destinoMarker = L.marker(destino, {icon: L.divIcon({className:'text-danger', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})}).addTo(map).bindPopup('Destino');
+            
+            if (!isNaN(destinoLat) && !isNaN(destinoLng) && destinoLat && destinoLng) {
+                destinoMarker = L.marker([destinoLat, destinoLng], {
+                    icon: L.divIcon({className:'text-danger', html:'<i class="fas fa-map-marker-alt fa-lg"></i>'})
+                }).addTo(map).bindPopup('Destino');
             }
+            
+            // Trazar ruta
             if (d.rutageojson){
                 try{
                     const gj = JSON.parse(d.rutageojson);
-                    routeLine = L.geoJSON(gj, { style: { color:'#3b82f6', weight:4 } }).addTo(map);
-                    map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
-                    lastRouteGeoJSON = d.rutageojson;
-                } catch{
+                    let coords = [];
+                    
+                    // Manejar diferentes formatos
+                    if (gj.type === 'LineString' && gj.coordinates) {
+                        coords = gj.coordinates;
+                    } else if (gj.features?.[0]?.geometry?.coordinates) {
+                        coords = gj.features[0].geometry.coordinates;
+                    }
+                    
+                    if (coords.length >= 2) {
+                        // Convertir simple
+                        const latlngs = [];
+                        for (let i = 0; i < coords.length; i++) {
+                            const lng = Number(coords[i][0]);
+                            const lat = Number(coords[i][1]);
+                            if (lng && lat) latlngs.push([lat, lng]);
+                        }
+                        
+                        if (latlngs.length >= 2) {
+                            routeLine = L.polyline(latlngs, {color: '#3b82f6', weight: 4}).addTo(map);
+                            map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+                            lastRouteGeoJSON = d.rutageojson;
+                            hintInput.value = 'Ruta cargada';
+                        } else {
+                            throw new Error('No hay coordenadas');
+                        }
+                    } else {
+                        throw new Error('Datos incompletos');
+                    }
+                } catch(err){
+                    // Si falla, trazar desde marcadores
                     if (origenMarker && destinoMarker){
                         await trazarRutaORS(origenMarker.getLatLng(), destinoMarker.getLatLng());
                     }
@@ -427,6 +926,58 @@
             } else if (origenMarker && destinoMarker){
                 await trazarRutaORS(origenMarker.getLatLng(), destinoMarker.getLatLng());
             }
+                try{
+                    const gj = JSON.parse(d.rutageojson);
+                    const validGj = validarGeoJSON(gj);
+                    
+                    if (validGj) {
+                        const feature = validGj.features[0];
+                        const coords = feature.geometry.coordinates;
+                        
+                        // Validar y convertir con filtrado exhaustivo
+                        const leafletCoords = coords
+                            .filter(c => Array.isArray(c) && c.length >= 2 && 
+                                        c[0] !== undefined && c[0] !== null && 
+                                        c[1] !== undefined && c[1] !== null)
+                            .map(c => {
+                                const lat = parseFloat(c[1]);
+                                const lng = parseFloat(c[0]);
+                                return [lat, lng];
+                            })
+                            .filter(c => !isNaN(c[0]) && !isNaN(c[1]) && isFinite(c[0]) && isFinite(c[1]));
+                        
+                        if (leafletCoords.length < 2) {
+                            throw new Error('No hay suficientes coordenadas válidas');
+                        }
+                        
+                        routeLine = L.polyline(leafletCoords, {color: '#3b82f6', weight: 4}).addTo(map);
+                        map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+                        lastRouteGeoJSON = d.rutageojson;
+                        hintInput.value = 'Ruta cargada desde dirección guardada';
+                    } else {
+                        throw new Error('GeoJSON inválido');
+                    }
+                } catch(err){
+                    console.warn('Error al cargar ruta guardada:', err);
+                    // Si falla, intentar trazar nueva ruta desde ORS
+                    if (origenMarker && destinoMarker){
+                        hintInput.value = 'Trazando nueva ruta...';
+                        await trazarRutaORS(origenMarker.getLatLng(), destinoMarker.getLatLng());
+                    } else {
+                        hintInput.value = 'No se pudo cargar la ruta';
+                    }
+                }
+            } else if (origenMarker && destinoMarker){
+                const oCoords = origenMarker.getLatLng();
+                const dCoords = destinoMarker.getLatLng();
+                if (oCoords && dCoords && oCoords.lat && oCoords.lng && dCoords.lat && dCoords.lng) {
+                    hintInput.value = 'Trazando ruta...';
+                    await trazarRutaORS(oCoords, dCoords);
+                } else {
+                    hintInput.value = 'Error: coordenadas de marcadores inválidas';
+                }
+            }
+            
             origenNombre.value = d.nombreorigen || '';
             destinoNombre.value = d.nombredestino || '';
             document.getElementById('idDireccionSeleccionada').value = String(d.id);
@@ -869,6 +1420,8 @@
         e.preventDefault();
         enviarEnvioCompleto();
     });
-</script>
-@endsection
+})();
 
+} // Fin de window.__envioCreateAdminInitialized
+</script>
+@endpush

@@ -1,13 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Usuarios - OrgTrack')
 @section('page-title', 'Gestión de Usuarios')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Usuarios</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -177,7 +172,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
@@ -440,4 +435,4 @@
 
     cargarUsuarios();
 </script>
-@endsection
+@endpush

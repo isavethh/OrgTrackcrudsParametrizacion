@@ -1,0 +1,6 @@
+{
+  "tipos_transporte": [
+    { "id": 1, "nombre": "Camión", "descripcion": "Transporte por carretera" },
+    { "id": 2, "nombre": "Furgón", "descripcion": "Pequeñas cargas" }
+  ]
+}

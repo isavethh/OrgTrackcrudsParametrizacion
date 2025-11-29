@@ -1,14 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Seguimiento del envío - OrgTrack')
-@section('page-title', 'Seguimiento del envío')
+@section('page-title', 'Seguimiento del Envío')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('envios.index') }}">Envíos</a></li>
-    <li class="breadcrumb-item active">Detalle</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -20,10 +14,16 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+@endpush
+
+@push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+if (!window.__envioShowClienteInitialized) {
+    window.__envioShowClienteInitialized = true;
+    
     // Auth
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
@@ -146,7 +146,7 @@
         }
     }
     cargarEnvio();
+    
+} // Fin de window.__envioShowClienteInitialized
 </script>
-@endsection
-
-
+@endpush

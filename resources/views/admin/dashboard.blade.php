@@ -1,13 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Dashboard Admin - OrgTrack')
 @section('page-title', 'Dashboard Admin')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Dashboard</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-lg-3 col-6">
         <!-- small box -->
@@ -146,7 +141,7 @@
 <!-- /.row -->
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -214,5 +209,4 @@
 
     cargarEstadisticas();
 </script>
-@endsection
-
+@endpush

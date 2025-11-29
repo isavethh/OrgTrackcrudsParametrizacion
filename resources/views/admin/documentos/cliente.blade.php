@@ -1,14 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Documentos del Cliente - OrgTrack')
 @section('page-title', 'Documentos de Envíos')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.documentos.index') }}">Documentos</a></li>
-    <li class="breadcrumb-item active">Cliente #{{ $id_cliente }}</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <style>
     @media print {
         body * { visibility: hidden; }
@@ -136,7 +130,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
 const idCliente = {{ $id_cliente }};
 const token = localStorage.getItem('authToken')?.replace(/^"+|"+$/g, '') || null;
@@ -562,4 +556,4 @@ searchInput.addEventListener('input', function() {
 cargarInfoCliente();
 cargarEnvios();
 </script>
-@endsection
+@endpush

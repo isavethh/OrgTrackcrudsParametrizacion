@@ -1,15 +1,8 @@
-@extends('layouts.admin')
-
-@section('title', 'Unidades de Medida')
+@extends('layouts.adminlte')
 
 @section('page-title', 'Gestión de Unidades de Medida')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-    <li class="breadcrumb-item active">Unidades de Medida</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Lista de Unidades de Medida</h3>
@@ -116,8 +109,11 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+@endpush
+
+@push('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
@@ -375,4 +371,4 @@
         });
     }
 </script>
-@endsection
+@endpush

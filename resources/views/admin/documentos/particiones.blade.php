@@ -1,14 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Particiones del Envío - OrgTrack')
 @section('page-title', 'Particiones del Envío')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.documentos.index') }}">Documentos</a></li>
-    <li class="breadcrumb-item active">Particiones</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <a href="{{ route('admin.documentos.index') }}" class="mb-3 d-inline-block"><i class="fas fa-arrow-left mr-1"></i> Volver atrás</a>

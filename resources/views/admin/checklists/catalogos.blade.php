@@ -1,14 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Catálogos de Checklist - OrgTrack')
 @section('page-title', 'Catálogos de Checklist')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Inicio</a></li>
-    <li class="breadcrumb-item active">Catálogos Checklist</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-lg-6 mb-4">
         <div class="card shadow-sm h-100">
@@ -196,7 +190,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
 (function () {
     const rawToken = localStorage.getItem('authToken');
@@ -523,5 +517,4 @@
     init();
 })();
 </script>
-@endsection
-
+@endpush

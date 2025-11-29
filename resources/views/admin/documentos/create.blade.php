@@ -1,14 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Subir Documento - OrgTrack')
 @section('page-title', 'Subir Documento')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.documentos.index') }}">Documentos</a></li>
-    <li class="breadcrumb-item active">Subir Documento</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-md-8">
         <div class="card">

@@ -1,106 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Seguimiento del envío - OrgTrack')
-@section('page-title', 'Seguimiento del envío')
+@section('page-title', 'Seguimiento del Envío')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.envios.index') }}">Envíos</a></li>
-    <li class="breadcrumb-item active">Detalle</li>
-@endsection
-
-@section('content')
-<style>
-    .assignment-section {
-        background: #fdfdfd;
-        border: 1px solid #e8edf5;
-        border-radius: 16px;
-        padding: 1.25rem;
-    }
-    .selection-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .selection-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 0.85rem 1rem;
-        background: #fff;
-        width: 100%;
-        text-align: left;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: all .2s ease;
-        cursor: pointer;
-    }
-    .selection-card:hover {
-        border-color: #c3d4ff;
-        box-shadow: 0 8px 20px rgba(96, 165, 250, 0.25);
-    }
-    .selection-card.active {
-        border-color: #28a745;
-        background: #f5fff8;
-        box-shadow: 0 12px 24px rgba(40, 167, 69, 0.22);
-    }
-    .selection-card.disabled {
-        opacity: .6;
-        cursor: not-allowed;
-        box-shadow: none;
-    }
-    .selection-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
-        background: #eef2ff;
-        color: #4f46e5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        margin-right: 0.75rem;
-    }
-    .selection-title {
-        font-weight: 600;
-        margin-bottom: 0.15rem;
-    }
-    .selection-subtitle {
-        font-size: 0.85rem;
-        color: #6b7280;
-    }
-    .selection-status {
-        font-size: 0.78rem;
-        font-weight: 600;
-    }
-    .assignment-empty {
-        border: 1px dashed #d1d5db;
-        background: #f9fafb;
-        padding: 1rem;
-        border-radius: 12px;
-        text-align: center;
-        color: #6b7280;
-        font-weight: 500;
-    }
-    .assignment-confirm-btn {
-        border-radius: 999px;
-        font-weight: 600;
-        padding: 0.9rem;
-    }
-    .assignment-alert {
-        border-radius: 14px;
-        border: 1px solid #bbf7d0;
-        background: #f0fdf4;
-        padding: 1rem 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    @media (max-width: 991px) {
-        .assignment-section {
-            padding: 1rem;
-        }
-    }
-</style>
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -112,10 +14,16 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+@endpush
+
+@push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+if (!window.__envioShowAdminInitialized) {
+    window.__envioShowAdminInitialized = true;
+    
     const _rawToken = localStorage.getItem('authToken');
     const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
     if (!token) { window.location.href = '/login'; }
@@ -158,20 +66,22 @@
 
     function buildTransportistasList(asignacionId) {
         if (!state.transportistas.length) {
-            return '<div class="assignment-empty">No hay transportistas disponibles</div>';
+            return '<div class="alert alert-info">No hay transportistas disponibles</div>';
         }
         return state.transportistas.map(t => {
             const nombreCompleto = [t.nombre, t.apellido].filter(Boolean).join(' ') || 'Sin nombre';
             return `
-                <button type="button" class="selection-card" data-role="transportista" data-id="${t.id}" data-asignacion="${asignacionId}">
-                    <div class="d-flex align-items-center">
-                        <div class="selection-avatar">${initials(t.nombre, t.apellido)}</div>
-                        <div class="text-left">
-                            <div class="selection-title">${nombreCompleto}</div>
-                            <div class="selection-subtitle">Tel: ${t.telefono || '—'}</div>
+                <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="transportista" data-id="${t.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <span class="badge badge-primary badge-pill mr-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">${initials(t.nombre, t.apellido)}</span>
+                            <div>
+                                <div class="font-weight-bold">${nombreCompleto}</div>
+                                <small class="text-muted">Tel: ${t.telefono || '—'}</small>
+                            </div>
                         </div>
+                        <span class="badge badge-success">Disponible</span>
                     </div>
-                    <div class="selection-status text-success">Disponible</div>
                 </button>
             `;
         }).join('');
@@ -179,15 +89,17 @@
 
     function buildVehiculosList(asignacionId, vehiculos) {
         if (!vehiculos.length) {
-            return '<div class="assignment-empty">No hay vehículos compatibles disponibles</div>';
+            return '<div class="alert alert-info">No hay vehículos compatibles disponibles</div>';
         }
         return vehiculos.map(v => `
-            <button type="button" class="selection-card" data-role="vehiculo" data-id="${v.id}" data-asignacion="${asignacionId}">
-                <div class="text-left">
-                    <div class="selection-title">${v.tipo || 'Vehículo'} - ${v.placa || 'Sin placa'}</div>
-                    <div class="selection-subtitle">Cap: ${formatCapacidad(v.capacidad)} · ${v.tipo_transporte?.nombre || 'Sin tipo'}</div>
+            <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="vehiculo" data-id="${v.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="font-weight-bold">${v.tipo || 'Vehículo'} - ${v.placa || 'Sin placa'}</div>
+                        <small class="text-muted">Cap: ${formatCapacidad(v.capacidad)} · ${v.tipo_transporte?.nombre || 'Sin tipo'}</small>
+                    </div>
+                    <span class="badge badge-success">Disponible</span>
                 </div>
-                <div class="selection-status text-success">Disponible</div>
             </button>
         `).join('');
     }
@@ -234,7 +146,13 @@
         }
 
         cont.querySelectorAll(`.selection-card[data-role="${rol}"][data-asignacion="${asignacionId}"]`).forEach(el => {
-            el.classList.toggle('active', Number(el.dataset.id) === entityId);
+            if (Number(el.dataset.id) === entityId) {
+                el.classList.remove('btn-outline-secondary');
+                el.classList.add('btn-success');
+            } else {
+                el.classList.remove('btn-success');
+                el.classList.add('btn-outline-secondary');
+            }
         });
         actualizarEstadoBoton(asignacionId);
     }
@@ -328,18 +246,16 @@
 
             if (alreadyAssigned || estadoNoEditable) {
                 assignmentSection.innerHTML = `
-                    <div class="assignment-alert">
-                        <span class="badge badge-${alreadyAssigned ? 'success' : 'secondary'} mb-0">
-                            ${alreadyAssigned ? 'Asignado' : 'No disponible'}
-                        </span>
-                        <div>
-                            <strong>${alreadyAssigned ? 'Recursos confirmados.' : 'No se puede asignar.'}</strong>
-                            <div class="text-muted small">
-                                ${alreadyAssigned
-                                    ? 'Esta partición ya tiene transportista y vehículo.'
-                                    : `Estado actual: ${p.estado || 'Desconocido'}. Las asignaciones solo se permiten cuando está pendiente.`}
-                            </div>
-                        </div>
+                    <div class="alert alert-${alreadyAssigned ? 'success' : 'secondary'}">
+                        <h5 class="alert-heading">
+                            <i class="icon fas fa-${alreadyAssigned ? 'check' : 'ban'}"></i>
+                            ${alreadyAssigned ? 'Recursos confirmados' : 'No disponible'}
+                        </h5>
+                        <p class="mb-0">
+                            ${alreadyAssigned
+                                ? 'Esta partición ya tiene transportista y vehículo asignados.'
+                                : `Estado actual: ${p.estado || 'Desconocido'}. Las asignaciones solo se permiten cuando está pendiente.`}
+                        </p>
                     </div>
                 `;
             } else {
@@ -347,35 +263,41 @@
                 assignmentSection.innerHTML = `
                     <div class="row">
                         <div class="col-lg-6 mb-4">
-                            <div class="assignment-section">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div>
-                                        <h6 class="mb-0">Seleccionar transportista</h6>
-                                        <small class="text-muted">Elige uno disponible para la ruta</small>
+                            <div class="card card-outline card-primary">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-user mr-1"></i>
+                                        Seleccionar transportista
+                                    </h3>
+                                    <div class="card-tools">
+                                        <span class="badge badge-primary">${state.transportistas.length}</span>
                                     </div>
-                                    <span class="badge badge-light text-secondary">${state.transportistas.length}</span>
                                 </div>
-                                <div class="selection-list" data-role="transportista" data-asignacion="${p.id_asignacion}">
+                                <div class="card-body" data-role="transportista" data-asignacion="${p.id_asignacion}">
                                     ${buildTransportistasList(p.id_asignacion)}
                                 </div>
                             </div>
                         </div>
                         <div class="col-lg-6 mb-4">
-                            <div class="assignment-section">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div>
-                                        <h6 class="mb-0">Seleccionar vehículo</h6>
-                                        <small class="text-muted">Debe cumplir el tipo requerido</small>
+                            <div class="card card-outline card-primary">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-truck mr-1"></i>
+                                        Seleccionar vehículo
+                                    </h3>
+                                    <div class="card-tools">
+                                        <span class="badge badge-primary">${vehiculosCompatibles.length}</span>
                                     </div>
-                                    <span class="badge badge-light text-secondary">${vehiculosCompatibles.length}</span>
                                 </div>
-                                <div class="selection-list" data-role="vehiculo" data-asignacion="${p.id_asignacion}">
+                                <div class="card-body" data-role="vehiculo" data-asignacion="${p.id_asignacion}">
                                     ${buildVehiculosList(p.id_asignacion, vehiculosCompatibles)}
                                 </div>
                             </div>
                         </div>
                         <div class="col-12">
-                            <button type="button" class="btn btn-success btn-lg assignment-confirm-btn w-100 mt-2" data-asignacion="${p.id_asignacion}" disabled>Confirmar asignación</button>
+                            <button type="button" class="btn btn-success btn-lg btn-block assignment-confirm-btn" data-asignacion="${p.id_asignacion}" disabled>
+                                <i class="fas fa-check mr-2"></i>Confirmar asignación
+                            </button>
                         </div>
                     </div>
                 `;
@@ -508,7 +430,7 @@
     }
 
     recargarTodo(true);
+    
+} // Fin de window.__envioShowAdminInitialized
 </script>
-@endsection
-
-
+@endpush

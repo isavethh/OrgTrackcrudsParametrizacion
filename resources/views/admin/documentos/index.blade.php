@@ -1,13 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.adminlte')
 
-@section('title', 'Documentos de Clientes - OrgTrack')
 @section('page-title', 'Documentos de Clientes')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Documentos</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm">
@@ -78,7 +73,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
 (function () {
     const rawToken = localStorage.getItem('authToken');
@@ -197,5 +192,4 @@
     cargarClientes();
 })();
 </script>
-@endsection
-
+@endpush

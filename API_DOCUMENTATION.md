@@ -1636,6 +1636,157 @@ Authorization: Bearer {token}
 
 ---
 
+---
+
+## 🚜 Envíos - Productores (Público)
+
+### POST `/api/envios/productor`
+**Descripción:** Endpoint público para que un productor (otro sistema) cree un envío sin que el usuario haga register explícito.
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Comportamiento clave:**
+- Si `usuario.correo` ya existe: se reutiliza ese `Usuario` (no se modifica su contraseña).
+- Si no existe: se crea `Persona` (si se envían datos), `Usuario` (rol `cliente`) y `cliente`. Si no llega `usuario.contrasena`, el servidor genera una contraseña pero **no la devuelve** (decisión de seguridad).
+- El envío se crea ligado al `Usuario` (existente o creado) y sus particiones quedan con `id_tipo_transporte` y estado `Pendiente`.
+
+**Body (ejemplo A — productor envía contraseña, login inmediato posible):**
+```json
+{
+  "usuario": {
+    "correo": "cliente@example.com",
+    "contrasena": "Pass1234!",
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "ci": "1234567",
+    "telefono": "777-11111"
+  },
+  "ubicacion": {
+    "nombreorigen": "Finca Las Flores",
+    "origen_lng": -66.123456,
+    "origen_lat": -17.123456,
+    "nombredestino": "Planta Central",
+    "destino_lng": -66.654321,
+    "destino_lat": -17.654321,
+    "rutageojson": {
+      "type": "LineString",
+      "coordinates": [
+        [ -66.123456, -17.123456 ],
+        [ -66.654321, -17.654321 ]
+      ]
+    }
+  },
+  "particiones": [
+    {
+      "id_tipo_transporte": 1,
+      "recogidaEntrega": {
+        "fecha_recogida": "2025-12-01",
+        "hora_recogida": "08:00:00",
+        "hora_entrega": "12:00:00",
+        "instrucciones_recogida": "Llamar al celular al llegar",
+        "instrucciones_entrega": "Entregar en recepción"
+      },
+      "cargas": [
+        {
+          "tipo": "Papa",
+          "variedad": "Andina",
+          "cantidad": 100,
+          "empaquetado": "Sacos",
+          "peso": 500
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Body (ejemplo B — productor NO envía contraseña; el servidor crea cuenta internamente y NO devuelve la contraseña):**
+```json
+{
+  "usuario": {
+    "correo": "cliente2@example.com",
+    "nombre": "Ana",
+    "apellido": "Gómez",
+    "ci": "7654321",
+    "telefono": "777-22222"
+  },
+  "ubicacion": {
+    "nombreorigen": "Finca El Sol",
+    "origen_lng": -66.222222,
+    "origen_lat": -17.222222,
+    "nombredestino": "Centro de Acopio",
+    "destino_lng": -66.333333,
+    "destino_lat": -17.333333,
+    "rutageojson": {
+      "type": "LineString",
+      "coordinates": [
+        [ -66.222222, -17.222222 ],
+        [ -66.333333, -17.333333 ]
+      ]
+    }
+  },
+  "particiones": [ /* ver ejemplo A */ ]
+}
+```
+
+**Respuesta Exitosa (201):**
+```json
+{
+  "mensaje": "Envío creado exitosamente",
+  "id_envio": 123,
+  "id_usuario": 45
+}
+```
+
+**Notas:**
+- El productor debe incluir en cada partición solo `id_tipo_transporte` (no puede asignar transportista/vehículo).
+- Si quieres que el usuario pueda iniciar sesión inmediatamente, el productor debe enviar `usuario.contrasena` (opción A).
+- Si no se envía contraseña, implementamos un flujo seguro para que el usuario establezca su contraseña (puede pedirse implementación adicional si lo deseas).
+
+**URLs (ejemplos):**
+- Desarrollo local: `http://localhost:8000/api/envios/productor`
+- Entorno de prueba/prod (ejemplo): `https://tu-api.test/api/envios/productor`
+
+**Curl (PowerShell) — ejemplo rápido:**
+```powershell
+$body = @{
+  usuario = @{ correo = 'cliente@example.com'; contrasena = 'Pass1234!'; nombre = 'Juan'; apellido = 'Pérez' }
+  ubicacion = @{ nombreorigen = 'Finca'; origen_lng = -66.1; origen_lat = -17.1; nombredestino = 'Central'; destino_lng = -66.5; destino_lat = -17.5 }
+  particiones = @( @{ id_tipo_transporte = 1; recogidaEntrega = @{ fecha_recogida = '2025-12-01'; hora_recogida = '08:00:00'; hora_entrega = '12:00:00' }; cargas = @( @{ tipo='Papa'; variedad='Andina'; cantidad=100; empaquetado='Sacos'; peso=500 } ) } )
+} | ConvertTo-Json -Depth 6
+
+curl -Method POST -Uri "http://localhost:8000/api/envios/productor" -Headers @{ 'Content-Type' = 'application/json' } -Body $body
+```
+
+---
+
+### GET `/api/envios/productor/recursos-disponibles`
+**Descripción:** Devuelve los `tipos_transporte` disponibles para que el productor elija el `id_tipo_transporte` correcto en cada partición.
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Respuesta Exitosa (200):**
+```json
+{
+  "tipos_transporte": [
+    { "id": 1, "nombre": "Refrigerado", "descripcion": "Transporte con temperatura controlada" },
+    { "id": 2, "nombre": "Aislado", "descripcion": "Transporte con aislamiento térmico" }
+  ]
+}
+```
+
+**URLs (ejemplos):**
+- Local: `http://localhost:8000/api/envios/productor/recursos-disponibles`
+- Prueba/Prod (ejemplo): `https://tu-api.test/api/envios/productor/recursos-disponibles`
+
+---
+
 ## 📍 Ubicaciones Endpoints
 
 ### GET `/api/ubicaciones`

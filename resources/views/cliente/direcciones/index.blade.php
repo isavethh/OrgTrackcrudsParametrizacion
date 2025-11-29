@@ -1,13 +1,8 @@
-@extends('cliente.layouts.app')
+@extends('layouts.cliente')
 
-@section('title', 'Direcciones Guardadas - OrgTrack')
 @section('page-title', 'Direcciones Guardadas')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Direcciones Guardadas</li>
-@endsection
-
-@section('content')
+@section('page-content')
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -48,7 +43,7 @@
 
 @endsection
 
-@section('scripts')
+@push('js')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('authToken');
@@ -194,4 +189,4 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDirecciones();
 });
 </script>
-@endsection
+@endpush

@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Productor - Crear Envío</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      :root{--bg:#f6f8fb;--card:#ffffff;--muted:#666;--accent:#0b74de}
+      body{font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;margin:16px;background:var(--bg);color:#222}
+      .container{max-width:1100px;margin:0 auto}
+      .grid{display:grid;grid-template-columns:1fr 420px;gap:16px}
+      .card{background:var(--card);padding:16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+      h1{margin:0 0 8px 0}
+      label{display:block;margin-top:10px;font-size:14px}
+      input, select, textarea, button{font-size:14px}
+      input, select, textarea{width:100%;padding:10px;margin-top:6px;border:1px solid #e2e8f0;border-radius:6px}
+      .particion{border:1px solid #e6eef9;padding:12px;margin-top:12px;border-radius:6px;background:#fbfeff}
+      .carga{border:1px dashed #e0e6ef;padding:8px;margin:8px 0;border-radius:4px}
+      button{margin-top:8px;padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+      .small{width:auto;display:inline-block;background:#e9f2ff;color:var(--accent);padding:6px 8px;margin-left:8px;border-radius:6px}
+      .muted{color:var(--muted);font-size:13px}
+      pre{background:#0f1724;color:#e6eef8;padding:12px;border-radius:6px;white-space:pre-wrap}
+      #map{height:360px;border-radius:6px;border:1px solid #e2e8f0}
+      .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
+      .fullwidth{width:100%}
+      @media(max-width:980px){.grid{grid-template-columns:1fr;}.card{padding:12px}}
+    </style>
+  </head>
+  <body>
+    <h1>Formulario Productor — Crear Envío</h1>
+
+    <section>
+      <h2>Datos del usuario (remitente)</h2>
+      <label>Correo
+        <input id="u_correo" type="email" placeholder="cliente@example.com" />
+      </label>
+      <label>Contraseña (opcional — si se envía, el usuario podrá logearse inmediatamente)
+        <input id="u_contrasena" type="text" placeholder="Pass1234! (opcional)" />
+      </label>
+      <label>Nombre
+        <input id="u_nombre" type="text" />
+      </label>
+      <label>Apellido
+        <input id="u_apellido" type="text" />
+      </label>
+      <label>CI
+        <input id="u_ci" type="text" />
+      </label>
+      <label>Teléfono
+        <input id="u_telefono" type="text" />
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>Ubicación (origen → destino)</h2>
+      <div id="map" class="card"></div>
+      <div class="controls">
+        <button id="modeOrigen" type="button">Seleccionar origen</button>
+        <button id="modeDestino" type="button">Seleccionar destino</button>
+        <button id="clearMarkers" type="button" class="small">Limpiar</button>
+        <div class="muted" style="margin-left:auto">Haz clic en el mapa para fijar puntos</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <div style="flex:1">
+          <label>Nombre Origen
+            <input id="o_nombre" type="text" placeholder="Finca Las Flores" />
+          </label>
+          <label>Origen Lat
+            <input id="o_lat" type="text" readonly />
+          </label>
+          <label>Origen Lng
+            <input id="o_lng" type="text" readonly />
+          </label>
+        </div>
+        <div style="flex:1">
+          <label>Nombre Destino
+            <input id="d_nombre" type="text" placeholder="Planta Central" />
+          </label>
+          <label>Destino Lat
+            <input id="d_lat" type="text" readonly />
+          </label>
+          <label>Destino Lng
+            <input id="d_lng" type="text" readonly />
+          </label>
+        </div>
+      </div>
+
+      <label>Ruta GeoJSON (LineString — se actualiza desde el mapa)
+        <textarea id="ruta_geojson" rows="4">{"type":"LineString","coordinates":[]}</textarea>
+      </label>
+    </section>
+
+    <section>
+      <h2>Particiones</h2>
+      <div id="particiones"></div>
+      <button id="addParticion">+ Agregar partición</button>
+    </section>
+
+    <section>
+      <button id="submitBtn">Enviar envío</button>
+    </section>
+
+    <h3>Respuesta</h3>
+    <pre id="response">No se ha enviado nada aún.</pre>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      const apiBase = window.location.origin + '/api';
+      let tiposTransporte = [];
+      let originMarker = null, destMarker = null, routeLine = null;
+      let mode = null; // 'origin'|'dest'|null
+
+      async function loadTipos() {
+        try {
+          const res = await fetch('/api/envios/productor/recursos-disponibles', { headers: { 'Accept': 'application/json' } });
+          const contentType = res.headers.get('content-type') || '';
+          if (!res.ok) {
+            const text = await res.text();
+            document.getElementById('response').textContent = 'Error cargando tipos (HTTP ' + res.status + '): ' + text;
+            tiposTransporte = [];
+            return;
+          }
+          if (!contentType.includes('application/json')) {
+            const text = await res.text();
+            document.getElementById('response').textContent = 'Respuesta inesperada al cargar tipos (no JSON): ' + (text || res.status);
+            tiposTransporte = [];
+            // Intentar cargar fichero local de respaldo
+            try {
+              const fallback = await fetch('/productor_tipos.json');
+              if (fallback.ok) {
+                const fj = await fallback.json();
+                tiposTransporte = fj.tipos_transporte || [];
+                document.getElementById('response').textContent += '\nUsando tipos locales de respaldo.';
+              }
+            } catch (ex) {
+              console.warn('No hay fallback local para tipos:', ex.message);
+            }
+            return;
+          }
+          const json = await res.json();
+          tiposTransporte = json.tipos_transporte || [];
+        } catch (e) {
+          document.getElementById('response').textContent = 'Error de red cargando tipos: ' + e.message;
+          tiposTransporte = [];
+        } finally {
+          // Create an initial partition regardless, but the select will show a disabled message if no tipos
+          addParticion();
+        }
+      }
+
+      // --- Map setup ---
+      const map = L.map('map').setView([-17.0, -66.0], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+      map.on('click', function(e){
+        if(mode === 'origin') setOrigin(e.latlng);
+        else if(mode === 'dest') setDestino(e.latlng);
+      });
+
+      function setOrigin(latlng){
+        if(originMarker) originMarker.setLatLng(latlng);
+        else originMarker = L.marker(latlng,{draggable:true}).addTo(map).bindPopup('Origen').openPopup();
+        originMarker.on('dragend', ()=> updateFromMarkers());
+        document.getElementById('o_lat').value = latlng.lat.toFixed(6);
+        document.getElementById('o_lng').value = latlng.lng.toFixed(6);
+        updateRouteAndGeoJSON();
+      }
+
+      function setDestino(latlng){
+        if(destMarker) destMarker.setLatLng(latlng);
+        else destMarker = L.marker(latlng,{draggable:true}).addTo(map).bindPopup('Destino').openPopup();
+        destMarker.on('dragend', ()=> updateFromMarkers());
+        document.getElementById('d_lat').value = latlng.lat.toFixed(6);
+        document.getElementById('d_lng').value = latlng.lng.toFixed(6);
+        updateRouteAndGeoJSON();
+      }
+
+      function updateFromMarkers(){
+        if(originMarker){ const p=originMarker.getLatLng(); document.getElementById('o_lat').value = p.lat.toFixed(6); document.getElementById('o_lng').value = p.lng.toFixed(6); }
+        if(destMarker){ const p=destMarker.getLatLng(); document.getElementById('d_lat').value = p.lat.toFixed(6); document.getElementById('d_lng').value = p.lng.toFixed(6); }
+        updateRouteAndGeoJSON();
+      }
+
+      function updateRouteAndGeoJSON(){
+        if(originMarker && destMarker){
+          const a = originMarker.getLatLng();
+          const b = destMarker.getLatLng();
+          const coords = [[a.lng, a.lat],[b.lng, b.lat]]; // GeoJSON expects [lng,lat]
+          if(routeLine) routeLine.setLatLngs([ [a.lat,a.lng],[b.lat,b.lng] ]);
+          else routeLine = L.polyline([ [a.lat,a.lng],[b.lat,b.lng] ],{color:'#0b74de'}).addTo(map);
+          map.fitBounds(routeLine.getBounds(),{padding:[40,40]});
+          document.getElementById('ruta_geojson').value = JSON.stringify({type:'LineString',coordinates:coords});
+        } else {
+          if(routeLine) { map.removeLayer(routeLine); routeLine = null; }
+          // keep ruta empty or single point
+          document.getElementById('ruta_geojson').value = JSON.stringify({type:'LineString',coordinates:[]});
+        }
+      }
+
+      document.getElementById('modeOrigen').addEventListener('click', ()=>{ mode = 'origin'; document.getElementById('modeOrigen').textContent='Modo: origen (clic en mapa)'; document.getElementById('modeDestino').textContent='Seleccionar destino'; });
+      document.getElementById('modeDestino').addEventListener('click', ()=>{ mode = 'dest'; document.getElementById('modeDestino').textContent='Modo: destino (clic en mapa)'; document.getElementById('modeOrigen').textContent='Seleccionar origen'; });
+      document.getElementById('clearMarkers').addEventListener('click', ()=>{ if(originMarker){ map.removeLayer(originMarker); originMarker=null; } if(destMarker){ map.removeLayer(destMarker); destMarker=null; } if(routeLine){ map.removeLayer(routeLine); routeLine=null; } document.getElementById('o_lat').value='';document.getElementById('o_lng').value='';document.getElementById('d_lat').value='';document.getElementById('d_lng').value=''; document.getElementById('ruta_geojson').value = JSON.stringify({type:'LineString',coordinates:[]}); });
+
+      // --- Particiones / cargas ---
+      function createParticion(index){
+        const container = document.createElement('div');
+        container.className='particion';
+        container.dataset.index = index;
+
+        const tipoLabel = document.createElement('label');
+        tipoLabel.textContent = 'Tipo de transporte';
+        const tipoSelect = document.createElement('select');
+        tipoSelect.name = 'id_tipo_transporte';
+        if (tiposTransporte.length > 0) {
+          tiposTransporte.forEach(t=>{
+            const o = document.createElement('option'); o.value = t.id; o.textContent = t.nombre + (t.descripcion?(' — '+t.descripcion):''); tipoSelect.appendChild(o);
+          });
+        } else {
+          const o = document.createElement('option'); o.textContent = 'No hay tipos de transporte disponibles'; o.disabled = true; tipoSelect.appendChild(o);
+          tipoSelect.disabled = true;
+        }
+        tipoLabel.appendChild(tipoSelect);
+        container.appendChild(tipoLabel);
+
+        // Recogida/Entrega
+        const recHtml = document.createElement('div');
+        recHtml.innerHTML = `
+          <label style="margin-top:8px">Fecha recogida<input type="date" name="fecha_recogida" /></label>
+          <label>Hora recogida<input type="time" name="hora_recogida" /></label>
+          <label>Hora entrega<input type="time" name="hora_entrega" /></label>
+          <label>Instrucciones recogida<input type="text" name="instr_recogida" /></label>
+          <label>Instrucciones entrega<input type="text" name="instr_entrega" /></label>
+        `;
+        container.appendChild(recHtml);
+
+        // Cargas
+        const cargasDiv = document.createElement('div'); cargasDiv.className='cargas';
+        cargasDiv.innerHTML = '<h4>Cargas</h4>';
+        container.appendChild(cargasDiv);
+        const addCargaBtn = document.createElement('button'); addCargaBtn.type='button'; addCargaBtn.textContent='+ Agregar carga'; addCargaBtn.className='small';
+        addCargaBtn.onclick = ()=> addCarga(cargasDiv);
+        container.appendChild(addCargaBtn);
+
+        const removeBtn = document.createElement('button'); removeBtn.type='button'; removeBtn.textContent='Eliminar partición'; removeBtn.className='small';
+        removeBtn.onclick = ()=> container.remove();
+        container.appendChild(removeBtn);
+
+        return container;
+      }
+
+      function addParticion(){
+        const idx = document.querySelectorAll('.particion').length;
+        const p = createParticion(idx);
+        document.getElementById('particiones').appendChild(p);
+      }
+
+      function addCarga(cargasDiv){
+        const c = document.createElement('div'); c.className='carga';
+        c.innerHTML = `
+          <label>Tipo<input name="tipo" /></label>
+          <label>Variedad<input name="variedad" /></label>
+          <label>Cantidad<input type="number" name="cantidad" /></label>
+          <label>Empaquetado<input name="empaquetado" /></label>
+          <label>Peso<input type="number" step="0.01" name="peso" /></label>
+          <button type="button" class="small">Eliminar carga</button>
+        `;
+        c.querySelector('button').onclick = ()=> c.remove();
+        cargasDiv.appendChild(c);
+      }
+
+      function gatherPayload(){
+        const usuario = {
+          correo: document.getElementById('u_correo').value,
+          contrasena: document.getElementById('u_contrasena').value || undefined,
+          nombre: document.getElementById('u_nombre').value || undefined,
+          apellido: document.getElementById('u_apellido').value || undefined,
+          ci: document.getElementById('u_ci').value || undefined,
+          telefono: document.getElementById('u_telefono').value || undefined,
+        };
+
+        const ubicacion = {};
+        if(document.getElementById('o_nombre').value) ubicacion.nombreorigen = document.getElementById('o_nombre').value;
+        if(document.getElementById('o_lng').value) ubicacion.origen_lng = parseFloat(document.getElementById('o_lng').value);
+        if(document.getElementById('o_lat').value) ubicacion.origen_lat = parseFloat(document.getElementById('o_lat').value);
+        if(document.getElementById('d_nombre').value) ubicacion.nombredestino = document.getElementById('d_nombre').value;
+        if(document.getElementById('d_lng').value) ubicacion.destino_lng = parseFloat(document.getElementById('d_lng').value);
+        if(document.getElementById('d_lat').value) ubicacion.destino_lat = parseFloat(document.getElementById('d_lat').value);
+        try{ const rj = JSON.parse(document.getElementById('ruta_geojson').value); ubicacion.rutageojson = rj; } catch(e){}
+
+        const particionesEls = document.querySelectorAll('.particion');
+        const particiones = [];
+        particionesEls.forEach(p=>{
+          const id_tipo_transporte = parseInt(p.querySelector('select[name="id_tipo_transporte"]').value);
+          const fecha_recogida = p.querySelector('input[name="fecha_recogida"]').value || undefined;
+          const hora_recogida = p.querySelector('input[name="hora_recogida"]').value || undefined;
+          const hora_entrega = p.querySelector('input[name="hora_entrega"]').value || undefined;
+          const instrucciones_recogida = p.querySelector('input[name="instr_recogida"]').value || undefined;
+          const instrucciones_entrega = p.querySelector('input[name="instr_entrega"]').value || undefined;
+
+          const cargas = [];
+          p.querySelectorAll('.carga').forEach(c=>{
+            cargas.push({
+              tipo: c.querySelector('input[name="tipo"]').value || undefined,
+              variedad: c.querySelector('input[name="variedad"]').value || undefined,
+              cantidad: parseInt(c.querySelector('input[name="cantidad"]').value) || 0,
+              empaquetado: c.querySelector('input[name="empaquetado"]').value || undefined,
+              peso: parseFloat(c.querySelector('input[name="peso"]').value) || 0,
+            });
+          });
+
+          particiones.push({
+            id_tipo_transporte,
+            recogidaEntrega: { fecha_recogida, hora_recogida, hora_entrega, instrucciones_recogida, instrucciones_entrega },
+            cargas
+          });
+        });
+
+        return { usuario, ubicacion, particiones };
+      }
+
+      async function submitForm(){
+        const payload = gatherPayload();
+        document.getElementById('response').textContent = 'Enviando...';
+        try{
+          const res = await fetch(apiBase + '/envios/productor', {
+            method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          document.getElementById('response').textContent = JSON.stringify({status: res.status, body: json}, null, 2);
+        }catch(e){
+          document.getElementById('response').textContent = 'Error: '+e.message;
+        }
+      }
+
+      document.getElementById('addParticion').addEventListener('click', (e)=>{ e.preventDefault(); addParticion(); });
+      document.getElementById('submitBtn').addEventListener('click', (e)=>{ e.preventDefault(); submitForm(); });
+
+      (async function init(){ await loadTipos(); })();
+    </script>
+  </body>
+</html>
