@@ -1,0 +1,51 @@
+services:
+  db-org:
+    image: postgres:latest
+    container_name: org_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: org_db
+    restart: unless-stopped
+    volumes:
+      - org_vol:/var/lib/postgresql/data
+    networks:
+      - red_org
+
+  laravel-org:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: org-container
+    depends_on:
+      - db-org
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: org_db
+      DB_PORT: 5432
+      DB_DATABASE: org_db
+      DB_USERNAME: admin
+      DB_PASSWORD: admin123
+    expose:
+      - "80"  #<-- para server
+    ports:
+      - "9000:80"  #<-- para host, quitar cuando despliegue
+    volumes:
+      - .:/var/www
+    networks:
+      - red_org
+      - internal-network
+      - proxy-network
+
+volumes:
+  org_vol:
+
+networks:
+  red_org:
+    driver: bridge
+  internal-network:
+    external: true
+    name: mau_internal-network
+  proxy-network:
+    external: true
+    name: mau_proxy-network
