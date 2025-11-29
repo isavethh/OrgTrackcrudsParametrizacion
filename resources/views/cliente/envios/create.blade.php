@@ -5,992 +5,872 @@
 @section('page-content')
 <div class="row">
     <div class="col-12">
-        <!-- Paso / Progreso -->
-        <div class="card">
-            <div class="card-body">
+        <!-- Wizard Progress -->
+        <div class="card mb-3">
+            <div class="card-body p-3">
                 <div class="row text-center">
-                    <div class="col">
-                        <div class="mb-1"><span class="badge badge-primary">1</span></div>
-                        <div>Origen y Destino</div>
-                        <small>Paso 1 de 3</small>
+                    <div class="col step-indicator active" id="ind-step1">
+                        <div class="mb-1"><span class="badge badge-primary badge-pill" style="font-size: 1.2em;">1</span></div>
+                        <div class="font-weight-bold">Ubicación</div>
+                        <small class="text-muted">Origen y Destino</small>
                     </div>
-                    <div class="col">
-                        <div class="mb-1"><span class="badge badge-secondary" id="step2-badge">2</span></div>
-                        <div>Datos del envío</div>
-                        <small>Paso 2 de 3</small>
+                    <div class="col step-indicator" id="ind-step2">
+                        <div class="mb-1"><span class="badge badge-secondary badge-pill" style="font-size: 1.2em;">2</span></div>
+                        <div class="font-weight-bold">Detalles</div>
+                        <small class="text-muted">Cargas y Transporte</small>
                     </div>
-                    <div class="col">
-                        <div class="mb-1"><span class="badge badge-secondary" id="step3-badge">3</span></div>
-                        <div>Confirmación</div>
-                        <small>Paso 3 de 3</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PASO 1: Mapa -->
-        <!-- Rutas Guardadas -->
-        <div class="card" id="rutasGuardadas">
-            <div class="card-header"><h3 class="card-title">Rutas Guardadas</h3></div>
-            <div class="card-body">
-                <p class="mb-2">Selecciona una ruta guardada o marca nuevos puntos en el mapa</p>
-                <div class="form-row">
-                    <div class="form-group col-md-9">
-                        <select id="selRutaGuardada" class="form-control">
-                            <option value="">Seleccionar ruta guardada</option>
-                            <option value="ruta1" data-id-direccion="1">Ruta 1: Ferbo → Estación Argentina</option>
-                            <option value="ruta2" data-id-direccion="2">Ruta 2: 4to anillo Norte → Parque Urbano</option>
-                        </select>
-                        <input type="hidden" id="idDireccionSeleccionada" value="">
-                    </div>
-                    <div class="form-group col-md-3 text-right">
-                        <button type="button" id="btnGuardarDireccion" class="btn btn-outline-primary btn-block">
-                            <i class="fas fa-save mr-1"></i> Guardar dirección del mapa
-                        </button>
+                    <div class="col step-indicator" id="ind-step3">
+                        <div class="mb-1"><span class="badge badge-secondary badge-pill" style="font-size: 1.2em;">3</span></div>
+                        <div class="font-weight-bold">Confirmación</div>
+                        <small class="text-muted">Resumen y Envío</small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PASO 1: Mapa -->
-        <div class="card" id="step1">
-            <div class="card-header"><h3 class="card-title">Ubicación en el Mapa</h3></div>
-            <div class="card-body">
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span></div>
-                    <input type="text" class="form-control" placeholder="Haz clic en el mapa para marcar el origen" readonly id="hintInput">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" id="btnReset">Reiniciar</button>
-                    </div>
-                </div>
-
-                <div id="mapNuevoEnvio" style="height: 420px;" class="rounded border"></div>
-
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <span class="text-success"><i class="fas fa-circle"></i></span> <strong>Origen Actual</strong>
-                        <input type="text" class="form-control mt-2" id="origenNombre" placeholder="Se mostrará al seleccionar dirección" readonly>
-                    </div>
-                    <div class="col-md-6">
-                        <span class="text-danger"><i class="fas fa-circle"></i></span> <strong>Destino Actual</strong>
-                        <input type="text" class="form-control mt-2" id="destinoNombre" placeholder="Se mostrará al seleccionar dirección" readonly>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer d-none"></div>
-        </div>
-
-        <!-- PASO 2: Datos del envío -->
-        <div class="card d-none" id="step2">
-            <div class="card-header d-flex justify-content-between align-items-center"><h3 class="card-title mb-0">Partición 1</h3><button type="button" class="btn btn-tool text-danger d-none btn-eliminar-particion" title="Eliminar partición"><i class="fas fa-times"></i></button></div>
-            <div class="card-body particion-template">
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label>Fecha de envío</label>
-                        <input type="date" class="form-control js-fecha" value="">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Hora de recogida</label>
-                        <input type="time" class="form-control js-hora-recogida" value="">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Hora de entrega estimada</label>
-                        <input type="time" class="form-control js-hora-entrega" value="">
-                    </div>
-                </div>
-
-                <h5 class="mt-3">Productos a transportar</h5>
-                <div class="productosContainer">
-                <div class="producto-item border rounded p-3 mb-3">
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label>Categoría</label>
-                        <select class="form-control js-tipo"><option value="">Selecciona</option><option value="Verduras">Verduras</option><option value="Frutas">Frutas</option></select>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label>Producto</label>
-                        <select class="form-control js-variedad"><option value="">Selecciona</option><option value="Zanahorias">Zanahorias</option><option value="Tomates">Tomates</option><option value="Manzanas">Manzanas</option></select>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Cantidad</label>
-                        <input type="number" class="form-control js-cantidad" value="">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Peso volumétrico</label>
-                        <input type="number" class="form-control js-peso" value="">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Tipo de empaque</label>
-                        <select class="form-control js-empaquetado"><option value="">Selecciona</option><option value="Bolsa plástica">Bolsa plástica</option><option value="Cajas">Cajas</option><option value="Cajón">Cajón</option></select>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar-producto"><i class="fas fa-times mr-1"></i> Eliminar</button>
-                </div>
-                </div>
-                </div>
-                <div class="mb-2 only-step2 d-none">
-                    <button class="btn btn-outline-primary btn-agregar-producto"><i class="fas fa-plus mr-1"></i> Agregar producto</button>
-                </div>
-                </div>
-
-                <!-- Lista de productos agregados -->
-                <div id="productosAgregados" class="mt-2"><div class="alert alert-light border">Sin productos agregados</div></div>
-
-                <h5 class="mt-3">Tipo de transporte requerido</h5>
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label>Tipo de transporte</label>
-                        <select class="form-control js-id-tipo-transporte">
-                            <option value="">Selecciona...</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <!-- Contenedor para particiones extra dentro del paso 2 -->
-            <div id="particionesContainer"></div>
-
-            <div class="card-footer d-none"></div>
-        </div>
-
-        <!-- Contenedor donde se agregarán particiones clonadas -->
-        <template id="tplParticion">
-            <div class="card particion-item">
-                <div class="card-header d-flex justify-content-between align-items-center"><h3 class="card-title mb-0">Partición</h3><button type="button" class="btn btn-tool text-danger btn-eliminar-particion" title="Eliminar partición"><i class="fas fa-times"></i></button></div>
-                <div class="card-body"></div>
-                <div class="card-footer text-right"></div>
-            </div>
-        </template>
-
-        <button class="btn btn-outline-secondary btn-block d-none only-step2" id="btnAgregarParticion">
-            <i class="fas fa-layer-group mr-1"></i> Agregar otra partición
-        </button>
-
-        <!-- PASO 3: Confirmación -->
-        <div class="card d-none mx-auto text-center" id="step3" style="max-width: 800px; font-size: 1.1rem;">
-            <div class="card-header">
-                <h3 class="card-title" style="font-size: 1.6rem;">Confirmar Solicitud de Envío</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="callout callout-success">
-                            <h5 style="font-size: 1.2rem;">Origen</h5>
-                            <p id="origenResumen">—</p>
+        <!-- STEP 1: UBICACIÓN -->
+        <div id="step1" class="wizard-step">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="card-title"><i class="fas fa-bookmark mr-2"></i>Mis Direcciones</h3>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="callout callout-danger">
-                            <h5 style="font-size: 1.2rem;">Destino</h5>
-                            <p id="destinoResumen">—</p>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Seleccionar ruta guardada:</label>
+                                <select id="selRutaGuardada" class="form-control select2">
+                                    <option value="">-- Nueva Ruta --</option>
+                                </select>
+                            </div>
+                            <hr>
+                            <div class="form-group">
+                                <label class="text-success"><i class="fas fa-map-marker-alt mr-1"></i> Origen</label>
+                                <input type="text" class="form-control bg-light" id="txtOrigen" readonly placeholder="Selecciona en el mapa">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-danger"><i class="fas fa-map-marker-alt mr-1"></i> Destino</label>
+                                <input type="text" class="form-control bg-light" id="txtDestino" readonly placeholder="Selecciona en el mapa">
+                            </div>
+                            <input type="hidden" id="idDireccionSeleccionada">
+                            
+                            <div class="alert alert-info mt-3 text-sm">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Si seleccionas una ruta guardada, el mapa se centrará automáticamente. Si marcas puntos nuevos, se creará una nueva dirección.
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col"><strong>Particiones</strong><div id="resumenParticiones">0</div></div>
-                            <div class="col"><strong>Peso Total</strong><div id="resumenPeso">0.0 kg</div></div>
-                            <div class="col"><strong>Productos</strong><div id="resumenProductos">0</div></div>
+                <div class="col-md-8">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h3 class="card-title">Mapa Interactivo</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetMap">
+                                    <i class="fas fa-eraser mr-1"></i> Limpiar Mapa
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="mapNuevoEnvio" style="height: 500px; width: 100%; position: relative; z-index: 1;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="card mt-3">
-                    <div class="card-body" id="resumenParticionesDetalle">
-                        <div class="text-muted">Aún no has agregado particiones.</div>
+            </div>
+        </div>
+
+        <!-- STEP 2: DETALLES (PARTICIONES) -->
+        <div id="step2" class="wizard-step d-none">
+            <div id="particionesContainer">
+                <!-- Las particiones se generarán aquí dinámicamente -->
+            </div>
+            
+            <div class="text-center mt-4 mb-5">
+                <button type="button" class="btn btn-outline-primary btn-lg dashed-border" id="btnAgregarParticion">
+                    <i class="fas fa-plus-circle mr-2"></i> Agregar otro camión / partición
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: CONFIRMACIÓN -->
+        <div id="step3" class="wizard-step d-none">
+            <div class="card card-outline card-success">
+                <div class="card-header">
+                    <h3 class="card-title">Resumen de la Solicitud</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-box bg-light">
+                                <span class="info-box-icon bg-success"><i class="fas fa-map-marker-alt"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Origen</span>
+                                    <span class="info-box-number" id="resumenOrigen">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box bg-light">
+                                <span class="info-box-icon bg-danger"><i class="fas fa-map-marker-alt"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Destino</span>
+                                    <span class="info-box-number" id="resumenDestino">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="text-secondary border-bottom pb-2 mb-3">Detalle de Envíos (Particiones)</h5>
+                    <div id="resumenParticiones" class="accordion">
+                        <!-- Resumen dinámico -->
                     </div>
                 </div>
             </div>
-            <div class="card-footer d-none"></div>
         </div>
-    </div>
 
-    <!-- Barra global de navegación del wizard (sobre el copyright) -->
-    <div class="mt-3 d-flex justify-content-between align-items-center" id="wizardActions">
-        <button class="btn btn-secondary d-none" id="btnAnterior"><i class="fas fa-arrow-left mr-1"></i> Anterior</button>
-        <div class="ml-auto">
-            <button class="btn btn-success d-none" id="btnEnviar"><i class="fas fa-paper-plane mr-1"></i> Enviar Solicitud</button>
-            <button class="btn btn-primary" id="btnSiguiente">Continuar <i class="fas fa-arrow-right ml-1"></i></button>
+        <!-- Navigation Buttons -->
+        <div class="card mt-3">
+            <div class="card-body d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" id="btnPrev" disabled>
+                    <i class="fas fa-arrow-left mr-2"></i> Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNext">
+                    Siguiente <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+                <button type="button" class="btn btn-success d-none" id="btnFinish">
+                    <i class="fas fa-check mr-2"></i> Confirmar y Crear Envío
+                </button>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- TEMPLATES -->
+
+<!-- Template: Partición -->
+<template id="tplParticion">
+    <div class="card card-outline card-primary mb-4 particion-item" data-index="{index}">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-truck mr-2"></i> Envío / Camión #<span class="particion-num">1</span></h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool btn-collapse" data-toggle="collapse" data-target="#collapsePart{index}">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-tool text-danger btn-remove-particion" title="Eliminar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body collapse show" id="collapsePart{index}">
+            <!-- Tipo Transporte -->
+            <div class="form-group">
+                <label>Tipo de Transporte Requerido <span class="text-danger">*</span></label>
+                <select class="form-control js-tipo-transporte" required>
+                    <option value="">Seleccione...</option>
+                    <!-- Se llena via JS -->
+                </select>
+            </div>
+
+            <!-- Recogida y Entrega -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Fecha Recogida <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control js-fecha-recogida" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Hora Recogida <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control js-hora-recogida" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Hora Entrega Estimada <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control js-hora-entrega" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Instrucciones de Recogida</label>
+                        <textarea class="form-control js-instr-recogida" rows="2" placeholder="Ej: Puerta trasera, preguntar por..."></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Instrucciones de Entrega</label>
+                        <textarea class="form-control js-instr-entrega" rows="2" placeholder="Ej: Dejar en recepción..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cargas -->
+            <h5 class="mt-4 border-bottom pb-2">Cargas / Productos</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Variedad</th>
+                            <th>Empaque</th>
+                            <th width="100">Cant.</th>
+                            <th width="100">Peso (kg)</th>
+                            <th width="50"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="cargas-container">
+                        <!-- Cargas items here -->
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-success btn-add-carga">
+                <i class="fas fa-plus mr-1"></i> Agregar Producto
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Template: Carga Row -->
+<template id="tplCarga">
+    <tr class="carga-item">
+        <td>
+            <select class="form-control form-control-sm js-carga-tipo" required>
+                <option value="">Seleccione...</option>
+                <option value="Frutas">Frutas</option>
+                <option value="Verduras">Verduras</option>
+                <option value="Hortalizas">Hortalizas</option>
+                <option value="Granos">Granos</option>
+                <option value="Otros">Otros</option>
+            </select>
+        </td>
+        <td><input type="text" class="form-control form-control-sm js-carga-variedad" placeholder="Ej: Manzanas" required></td>
+        <td>
+            <select class="form-control form-control-sm js-carga-empaque" required>
+                <option value="">Seleccione...</option>
+                <option value="Cajas de madera">Cajas de madera</option>
+                <option value="Cajas de cartón">Cajas de cartón</option>
+                <option value="Sacos">Sacos</option>
+                <option value="Bolsas">Bolsas</option>
+                <option value="Granel">Granel</option>
+                <option value="Pallets">Pallets</option>
+            </select>
+        </td>
+        <td><input type="number" class="form-control form-control-sm js-carga-cantidad" min="1" required></td>
+        <td><input type="number" class="form-control form-control-sm js-carga-peso" min="0.1" step="0.1" required></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-xs btn-danger btn-remove-carga"><i class="fas fa-trash"></i></button>
+        </td>
+    </tr>
+</template>
+
 @endsection
 
 @push('css')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    /* INLINE LEAFLET CSS FALLBACK */
+    .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas, .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer { position: absolute; left: 0; top: 0; }
+    .leaflet-container { overflow: hidden; }
+    .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-user-drag: none; }
+    .leaflet-tile::selection { background: transparent; }
+    .leaflet-safari .leaflet-tile { image-rendering: -webkit-optimize-contrast; }
+    .leaflet-safari .leaflet-tile-container { width: 1600px; height: 1600px; -webkit-transform-origin: 0 0; }
+    .leaflet-marker-icon, .leaflet-marker-shadow { display: block; }
+    .leaflet-container .leaflet-overlay-pane svg { max-width: none !important; max-height: none !important; }
+    .leaflet-container .leaflet-marker-pane img, .leaflet-container .leaflet-shadow-pane img, .leaflet-container .leaflet-tile-pane img, .leaflet-container img.leaflet-image-layer, .leaflet-container .leaflet-tile { max-width: none !important; max-height: none !important; width: auto; padding: 0; }
+    .leaflet-container img.leaflet-tile { mix-blend-mode: plus-lighter; }
+    .leaflet-container.leaflet-touch-zoom { -ms-touch-action: pan-x pan-y; touch-action: pan-x pan-y; }
+    .leaflet-container.leaflet-touch-drag { -ms-touch-action: pinch-zoom; touch-action: none; touch-action: pinch-zoom; }
+    .leaflet-container.leaflet-touch-drag.leaflet-touch-zoom { -ms-touch-action: none; touch-action: none; }
+    .leaflet-container { -webkit-tap-highlight-color: transparent; }
+    .leaflet-container a { -webkit-tap-highlight-color: rgba(51, 181, 229, 0.4); }
+    .leaflet-tile { filter: inherit; visibility: hidden; }
+    .leaflet-tile-loaded { visibility: inherit; }
+    .leaflet-zoom-box { width: 0; height: 0; -moz-box-sizing: border-box; box-sizing: border-box; z-index: 800; }
+    .leaflet-overlay-pane svg { -moz-user-select: none; }
+    .leaflet-pane { z-index: 400; }
+    .leaflet-tile-pane { z-index: 200; }
+    .leaflet-overlay-pane { z-index: 400; }
+    .leaflet-shadow-pane { z-index: 500; }
+    .leaflet-marker-pane { z-index: 600; }
+    .leaflet-tooltip-pane { z-index: 650; }
+    .leaflet-popup-pane { z-index: 700; }
+    .leaflet-map-pane canvas { z-index: 100; }
+    .leaflet-map-pane svg { z-index: 200; }
+    .leaflet-vml-shape { width: 1px; height: 1px; }
+    .lvml { behavior: url(#default#VML); display: inline-block; position: absolute; }
+    .leaflet-control { position: relative; z-index: 800; pointer-events: visiblePainted; pointer-events: auto; }
+    .leaflet-top, .leaflet-bottom { position: absolute; z-index: 1000; pointer-events: none; }
+    .leaflet-top { top: 0; }
+    .leaflet-right { right: 0; }
+    .leaflet-bottom { bottom: 0; }
+    .leaflet-left { left: 0; }
+    .leaflet-control { float: left; clear: both; }
+    .leaflet-right .leaflet-control { float: right; }
+    .leaflet-top .leaflet-control { margin-top: 10px; }
+    .leaflet-bottom .leaflet-control { margin-bottom: 10px; }
+    .leaflet-left .leaflet-control { margin-left: 10px; }
+    .leaflet-right .leaflet-control { margin-right: 10px; }
+    .leaflet-fade-anim .leaflet-popup { opacity: 0; -webkit-transition: opacity 0.2s linear; -moz-transition: opacity 0.2s linear; transition: opacity 0.2s linear; }
+    .leaflet-fade-anim .leaflet-map-pane .leaflet-popup { opacity: 1; }
+    .leaflet-zoom-animated { -webkit-transform-origin: 0 0; -ms-transform-origin: 0 0; transform-origin: 0 0; }
+    svg.leaflet-zoom-animated { will-change: transform; }
+    .leaflet-zoom-anim .leaflet-zoom-animated { -webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1); -moz-transition: -moz-transform 0.25s cubic-bezier(0,0,0.25,1); transition: transform 0.25s cubic-bezier(0,0,0.25,1); }
+    .leaflet-zoom-anim .leaflet-tile, .leaflet-pan-anim .leaflet-tile { -webkit-transition: none; -moz-transition: none; transition: none; }
+    .leaflet-zoom-anim .leaflet-zoom-hide { visibility: hidden; }
+    .leaflet-interactive { cursor: pointer; }
+    .leaflet-grab { cursor: -webkit-grab; cursor: -moz-grab; cursor: grab; }
+    .leaflet-crosshair, .leaflet-crosshair .leaflet-interactive { cursor: crosshair; }
+    .leaflet-popup-pane, .leaflet-control { cursor: auto; }
+    .leaflet-dragging .leaflet-grab, .leaflet-dragging .leaflet-grab .leaflet-interactive, .leaflet-dragging .leaflet-marker-draggable { cursor: move; cursor: -webkit-grabbing; cursor: -moz-grabbing; cursor: grabbing; }
+    .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-image-layer, .leaflet-pane > svg path, .leaflet-tile-container { pointer-events: none; }
+    .leaflet-marker-icon.leaflet-interactive, .leaflet-image-layer.leaflet-interactive, .leaflet-pane > svg path.leaflet-interactive, svg.leaflet-image-layer.leaflet-interactive path { pointer-events: visiblePainted; pointer-events: auto; }
+    .leaflet-container { background: #ddd; outline-offset: 1px; }
+    .leaflet-container a { color: #0078A8; }
+    .leaflet-zoom-box { border: 2px dotted #38f; background: rgba(255,255,255,0.5); }
+    .leaflet-container { font-family: "Helvetica Neue", Arial, Helvetica, sans-serif; font-size: 12px; font-size: 0.75rem; line-height: 1.5; }
+    
+    .dashed-border {
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+    .step-indicator {
+        opacity: 0.5;
+        transition: all 0.3s;
+    }
+    .step-indicator.active {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    /* Cursores para el mapa */
+    .leaflet-container { cursor: grab; }
+    .leaflet-container:active { cursor: grabbing; }
+</style>
 @endpush
 
 @push('js')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-// Prevenir ejecución múltiple
-if (!window.__envioCreateInitialized) {
-    window.__envioCreateInitialized = true;
-    
-(function() {
-    'use strict';
-    
-    // --- Auth ---
-    // Normalizar token por si está guardado como string con comillas
-    const _rawToken = localStorage.getItem('authToken');
-    const token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    // OpenRouteService
-    const ORS_API_KEY = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
+document.addEventListener('DOMContentLoaded', function() {
+    // Evitar doble ejecución del script (soluciona duplicidad de particiones)
+    if (window.createEnvioScriptLoaded) return;
+    window.createEnvioScriptLoaded = true;
 
-    // --- Wizard simple ---
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    const step2Badge = document.getElementById('step2-badge');
-    const step3Badge = document.getElementById('step3-badge');
-    const rutasCard = document.getElementById('rutasGuardadas');
-    const btnAgregarParticion = document.getElementById('btnAgregarParticion');
-    const cardParticion2 = document.getElementById('particion2');
+    // --- CONFIGURACIÓN ---
+    const token = localStorage.getItem('authToken')?.replace(/^"+|"+$/g, '');
+    if (!token) { window.location.href = '/login'; return; }
 
-    // Navegación usando barra global
-    let currentStep = 1;
-    const btnAnterior = document.getElementById('btnAnterior');
-    const btnSiguiente = document.getElementById('btnSiguiente');
-    const btnEnviar = document.getElementById('btnEnviar');
-    function renderStep(){
-        if (currentStep === 1){
-            step1.classList.remove('d-none');
-            step2.classList.add('d-none');
-            step3.classList.add('d-none');
-            rutasCard.classList.remove('d-none');
-            document.querySelectorAll('.only-step2').forEach(el=> el.classList.add('d-none'));
-            step2Badge.classList.replace('badge-primary','badge-secondary');
-            step3Badge.classList.replace('badge-primary','badge-secondary');
-            btnAnterior.classList.add('d-none');
-            btnSiguiente.classList.remove('d-none');
-            btnEnviar.classList.add('d-none');
-        } else if (currentStep === 2){
-            step1.classList.add('d-none');
-            step2.classList.remove('d-none');
-            step3.classList.add('d-none');
-            rutasCard.classList.add('d-none');
-            document.querySelectorAll('.only-step2').forEach(el=> el.classList.remove('d-none'));
-            step2Badge.classList.replace('badge-secondary','badge-primary');
-            step3Badge.classList.replace('badge-primary','badge-secondary');
-            btnAnterior.classList.remove('d-none');
-            btnSiguiente.classList.remove('d-none');
-            btnEnviar.classList.add('d-none');
-            // Asegurar selects de tipo transporte poblados al entrar al paso 2
-            cargarTiposTransporte();
-        } else {
-            step1.classList.add('d-none');
-            step2.classList.add('d-none');
-            step3.classList.remove('d-none');
-            rutasCard.classList.add('d-none');
-            document.querySelectorAll('.only-step2').forEach(el=> el.classList.add('d-none'));
-            step3Badge.classList.replace('badge-secondary','badge-primary');
-            document.getElementById('origenResumen').innerText = origenNombre.value || '—';
-            document.getElementById('destinoResumen').innerText = destinoNombre.value || '—';
-            actualizarResumen();
-            btnAnterior.classList.remove('d-none');
-            btnSiguiente.classList.add('d-none');
-            btnEnviar.classList.remove('d-none');
-        }
-    }
-    // Listeners globales
-    btnSiguiente.addEventListener('click', ()=>{
-        if (currentStep === 1) currentStep = 2; else if (currentStep === 2) currentStep = 3;
-        renderStep();
-    });
-    btnAnterior.addEventListener('click', ()=>{
-        if (currentStep === 2) currentStep = 1; else if (currentStep === 3) currentStep = 2;
-        renderStep();
-    });
-    renderStep();
-    actualizarResumen();
-
-    // --- GESTOR DE MAPA Y RUTAS (REFACTORIZADO) ---
-    const MapManager = {
+    // --- ESTADO GLOBAL ---
+    const state = {
+        currentStep: 1,
+        tiposTransporte: [],
         map: null,
-        apiKey: '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080',
         markers: { origin: null, destination: null },
         routeLayer: null,
-        lastGeoJSON: null,
-
-        init: function() {
-            // Limpiar contenedor si existe instancia previa
-            const container = document.getElementById('mapNuevoEnvio');
-            if (container && container._leaflet_id) container._leaflet_id = null;
-
-            this.map = L.map('mapNuevoEnvio').setView([-17.7833, -63.1833], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(this.map);
-
-            this.map.on('click', (e) => this.handleMapClick(e));
-            
-            // Botones
-            document.getElementById('btnReset').onclick = () => this.reset();
-            document.getElementById('selRutaGuardada').onchange = (e) => this.loadRouteFromId(e.target.value);
-            document.getElementById('btnGuardarDireccion').onclick = () => this.saveRoute();
-            
-            this.loadSavedRoutesList();
-        },
-
-        handleMapClick: async function(e) {
-            if (!this.markers.origin) {
-                this.setMarker('origin', e.latlng);
-                this.updateUI('Selecciona el destino en el mapa');
-            } else if (!this.markers.destination) {
-                this.setMarker('destination', e.latlng);
-                await this.calculateRoute();
-            }
-        },
-
-        setMarker: function(type, latlng) {
-            const color = type === 'origin' ? 'text-success' : 'text-danger';
-            const icon = L.divIcon({
-                className: color,
-                html: '<i class="fas fa-map-marker-alt fa-2x"></i>',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41]
-            });
-
-            if (this.markers[type]) this.map.removeLayer(this.markers[type]);
-            
-            this.markers[type] = L.marker(latlng, {icon: icon}).addTo(this.map);
-            
-            // Actualizar inputs visuales
-            const inputId = type === 'origin' ? 'origenNombre' : 'destinoNombre';
-            document.getElementById(inputId).value = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
-        },
-
-        reset: function() {
-            if (this.markers.origin) this.map.removeLayer(this.markers.origin);
-            if (this.markers.destination) this.map.removeLayer(this.markers.destination);
-            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
-            
-            this.markers = { origin: null, destination: null };
-            this.routeLayer = null;
-            this.lastGeoJSON = null;
-            
-            document.getElementById('origenNombre').value = '';
-            document.getElementById('destinoNombre').value = '';
-            document.getElementById('idDireccionSeleccionada').value = '';
-            document.getElementById('selRutaGuardada').value = '';
-            this.updateUI('Haz clic en el mapa para marcar el origen');
-        },
-
-        calculateRoute: async function() {
-            if (!this.markers.origin || !this.markers.destination) return;
-
-            this.updateUI('Calculando ruta...');
-            const start = this.markers.origin.getLatLng();
-            const end = this.markers.destination.getLatLng();
-
-            try {
-                const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': this.apiKey,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        coordinates: [[start.lng, start.lat], [end.lng, end.lat]]
-                    })
-                });
-
-                if (!response.ok) throw new Error('Error en servicio de rutas');
-                
-                const geoJSON = await response.json();
-                this.drawRoute(geoJSON);
-                this.updateUI('Ruta calculada correctamente');
-
-            } catch (e) {
-                console.error(e);
-                this.drawFallbackRoute(start, end);
-                this.updateUI('Ruta calculada (modo simple)');
-            }
-        },
-
-        drawRoute: function(geoJSON) {
-            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
-            
-            // Validar que el GeoJSON tenga coordenadas válidas
-            if (!geoJSON || !geoJSON.features || !geoJSON.features[0].geometry || !geoJSON.features[0].geometry.coordinates) {
-                console.warn('GeoJSON inválido, usando fallback');
-                if (this.markers.origin && this.markers.destination) {
-                    this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
-                }
-                return;
-            }
-
-            try {
-                this.routeLayer = L.geoJSON(geoJSON, {
-                    style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
-                }).addTo(this.map);
-                
-                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
-                this.lastGeoJSON = JSON.stringify(geoJSON);
-            } catch (e) {
-                console.error('Error dibujando GeoJSON:', e);
-                if (this.markers.origin && this.markers.destination) {
-                    this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
-                }
-            }
-        },
-
-        drawFallbackRoute: function(start, end) {
-            if (this.routeLayer) this.map.removeLayer(this.routeLayer);
-            
-            // Asegurar números
-            const sLat = parseFloat(start.lat), sLng = parseFloat(start.lng);
-            const eLat = parseFloat(end.lat), eLng = parseFloat(end.lng);
-
-            if (isNaN(sLat) || isNaN(sLng) || isNaN(eLat) || isNaN(eLng)) {
-                console.error('Coordenadas inválidas para fallback:', start, end);
-                return;
-            }
-
-            const line = [[sLat, sLng], [eLat, eLng]];
-            
-            try {
-                this.routeLayer = L.polyline(line, {
-                    color: '#ff6b6b', weight: 4, dashArray: '5, 10'
-                }).addTo(this.map);
-                
-                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
-                
-                // Crear un GeoJSON simple para el fallback
-                const simpleGeoJSON = {
-                    type: "FeatureCollection",
-                    features: [{
-                        type: "Feature",
-                        geometry: {
-                            type: "LineString",
-                            coordinates: [[sLng, sLat], [eLng, eLat]]
-                        }
-                    }]
-                };
-                this.lastGeoJSON = JSON.stringify(simpleGeoJSON);
-            } catch (e) {
-                console.error('Error dibujando fallback:', e);
-            }
-        },
-
-        loadSavedRoutesList: async function() {
-            const select = document.getElementById('selRutaGuardada');
-            select.innerHTML = '<option value="">Cargando...</option>';
-            
-            try {
-                const res = await fetch('/api/ubicaciones', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error('Error cargando rutas');
-                
-                const rutas = await res.json();
-                select.innerHTML = '<option value="">Seleccionar ruta guardada</option>';
-                
-                rutas.forEach(r => {
-                    const opt = document.createElement('option');
-                    opt.value = r.id;
-                    opt.textContent = `${r.nombreorigen || 'Origen'} → ${r.nombredestino || 'Destino'}`;
-                    select.appendChild(opt);
-                });
-            } catch (e) {
-                select.innerHTML = '<option value="">Error al cargar rutas</option>';
-            }
-        },
-
-        loadRouteFromId: async function(id) {
-            if (!id) { this.reset(); return; }
-            
-            try {
-                const res = await fetch(`/api/ubicaciones/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error('Error obteniendo detalle de ruta');
-                
-                const data = await res.json();
-                this.reset(); // Limpiar mapa antes de cargar
-                
-                // Setear ID
-                document.getElementById('idDireccionSeleccionada').value = data.id;
-                document.getElementById('origenNombre').value = data.nombreorigen || '';
-                document.getElementById('destinoNombre').value = data.nombredestino || '';
-
-                // Marcadores
-                if (data.origen_lat && data.origen_lng) {
-                    this.setMarker('origin', { lat: parseFloat(data.origen_lat), lng: parseFloat(data.origen_lng) });
-                }
-                if (data.destino_lat && data.destino_lng) {
-                    this.setMarker('destination', { lat: parseFloat(data.destino_lat), lng: parseFloat(data.destino_lng) });
-                }
-
-                // Ruta
-                if (data.rutageojson) {
-                    try {
-                        const geoJSON = JSON.parse(data.rutageojson);
-                        this.drawRoute(geoJSON);
-                    } catch (e) {
-                        // Si falla el GeoJSON, intentar recalcular o fallback si hay puntos
-                        if (this.markers.origin && this.markers.destination) {
-                            this.drawFallbackRoute(this.markers.origin.getLatLng(), this.markers.destination.getLatLng());
-                        }
-                    }
-                }
-                this.updateUI('Ruta cargada');
-            } catch (e) {
-                console.error(e);
-                alert('No se pudo cargar la ruta seleccionada');
-            }
-        },
-
-        saveRoute: async function() {
-            if (!this.markers.origin || !this.markers.destination) {
-                alert('Debes tener un origen y destino marcados');
-                return;
-            }
-            
-            const nombreOrigen = document.getElementById('origenNombre').value;
-            const nombreDestino = document.getElementById('destinoNombre').value;
-            const o = this.markers.origin.getLatLng();
-            const d = this.markers.destination.getLatLng();
-
-            const payload = {
-                nombreOrigen: nombreOrigen,
-                origen_lat: o.lat,
-                origen_lng: o.lng,
-                nombreDestino: nombreDestino,
-                destino_lat: d.lat,
-                destino_lng: d.lng,
-                rutaGeoJSON: this.lastGeoJSON
-            };
-
-            try {
-                const res = await fetch('/api/ubicaciones', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!res.ok) throw new Error('Error guardando ruta');
-                
-                const nueva = await res.json();
-                await this.loadSavedRoutesList();
-                document.getElementById('selRutaGuardada').value = nueva.id;
-                document.getElementById('idDireccionSeleccionada').value = nueva.id;
-                alert('Ruta guardada correctamente');
-            } catch (e) {
-                alert('Error al guardar la ruta');
-            }
-        },
-
-        updateUI: function(msg) {
-            document.getElementById('hintInput').value = msg;
-        }
+        lastGeoJSON: null
     };
 
-    // Iniciar mapa
-    MapManager.init();
+    // --- ELEMENTOS DOM ---
+    const steps = {
+        1: document.getElementById('step1'),
+        2: document.getElementById('step2'),
+        3: document.getElementById('step3')
+    };
+    const indicators = {
+        1: document.getElementById('ind-step1'),
+        2: document.getElementById('ind-step2'),
+        3: document.getElementById('ind-step3')
+    };
+    const btns = {
+        prev: document.getElementById('btnPrev'),
+        next: document.getElementById('btnNext'),
+        finish: document.getElementById('btnFinish')
+    };
 
-    // Exponer MapManager globalmente si es necesario para otras funciones (como enviarEnvioCompleto)
-    window.MapManager = MapManager;
+    // --- VARIABLES GLOBALES PARA PARTICIONES ---
+    const container = document.getElementById('particionesContainer');
+    const tplParticion = document.getElementById('tplParticion');
+    const tplCarga = document.getElementById('tplCarga');
+    let partitionCounter = 0;
 
-    // --- Productos y particiones ---
-    // Delegación: agregar producto dentro de la partición correspondiente
-    document.addEventListener('click', (e)=>{
-        // Agregar producto
-        const addBtn = e.target.closest('.btn-agregar-producto');
-        if (addBtn){
-            const body = addBtn.closest('.particion-template');
-            const productosContainer = body.querySelector('.productosContainer');
-            const first = productosContainer.querySelector('.producto-item');
-            const clone = first.cloneNode(true);
-            clone.querySelectorAll('input').forEach(i=> i.value = '');
-            clone.querySelectorAll('select').forEach(s=> s.value = '');
-            productosContainer.appendChild(clone);
-            actualizarResumen();
-        }
-        // Eliminar producto
-        if (e.target.closest('.btn-eliminar-producto')){
-            const cont = e.target.closest('.productosContainer');
-            const items = cont.querySelectorAll('.producto-item');
-            if (items.length > 1) e.target.closest('.producto-item').remove();
-            actualizarResumen();
-        }
-        // Eliminar partición
-        const delPartBtn = e.target.closest('.btn-eliminar-particion');
-        if (delPartBtn){
-            const card = delPartBtn.closest('.particion-item');
-            if (card) card.remove();
-            actualizarResumen();
+    // --- INICIALIZACIÓN ---
+    initMap();
+    loadSavedRoutes();
+    loadTiposTransporte();
+    addPartition(); // Agregar primera partición por defecto
+
+    // --- NAVEGACIÓN WIZARD ---
+    btns.next.addEventListener('click', () => {
+        if (validateStep(state.currentStep)) {
+            goToStep(state.currentStep + 1);
         }
     });
 
-    // Agregar partición: clona el cuerpo de la partición template (igual a la 1)
-    btnAgregarParticion.addEventListener('click', ()=>{
-        const tpl = document.getElementById('tplParticion').content.cloneNode(true);
-        // clonar el contenido de la partición base
-        const baseBody = document.querySelector('#step2 .particion-template');
-        const newBody = baseBody.cloneNode(true);
-        // limpiar datos
-        newBody.querySelectorAll('input').forEach(i=> i.value = '');
-        newBody.querySelectorAll('select').forEach(s=> s.value = '');
-        // asegurar sección de tipo de transporte en la partición clonada
-        if (!newBody.querySelector('.js-id-tipo-transporte')){
-            const titulo = document.createElement('h5');
-            titulo.className = 'mt-3';
-            titulo.textContent = 'Tipo de transporte requerido';
-            const wrapper = document.createElement('div');
-            wrapper.className = 'form-row';
-            const col = document.createElement('div');
-            col.className = 'form-group col-md-6';
-            col.innerHTML = `
-                <label>Tipo de transporte</label>
-                <select class="form-control js-id-tipo-transporte">
-                    <option value="">Selecciona...</option>
-                </select>`;
-            wrapper.appendChild(col);
-            newBody.appendChild(titulo);
-            newBody.appendChild(wrapper);
-        }
-        tpl.querySelector('.card-body').replaceWith(newBody);
-        document.getElementById('particionesContainer').appendChild(tpl);
-        // Poblar tipos para los selects recién creados
-        cargarTiposTransporte();
-        // Renumerar encabezados
-        document.querySelectorAll('#particionesContainer .particion-item').forEach((el, idx)=>{
-            const h = el.querySelector('.card-title');
-            if (h) h.textContent = `Partición ${idx+2}`;
-        });
-        // mostrar botón eliminar en particiones clonadas (no en la primera)
-        const lastCard = document.getElementById('particionesContainer').lastElementChild;
-        if (lastCard){
-            const hdrBtn = lastCard.querySelector('.btn-eliminar-particion');
-            if (hdrBtn) hdrBtn.classList.remove('d-none');
-        }
-        actualizarResumen();
+    btns.prev.addEventListener('click', () => {
+        goToStep(state.currentStep - 1);
     });
 
-    // Actualizar resumen ante cambios en campos de particiones
-    document.addEventListener('input', (e)=>{
-        if (e.target.closest('.particion-template')){
-            actualizarResumen();
-        }
-    });
-    document.addEventListener('change', (e)=>{
-        if (e.target.closest('.particion-template')){
-            actualizarResumen();
-        }
-    });
+    btns.finish.addEventListener('click', submitForm);
 
-    // --- Envío al endpoint /api/envios/completo (cliente) ---
-    function buildParticionFromCard(cardEl){
-        const fecha = cardEl.querySelector('.js-fecha')?.value || '';
-        const horaRecogida = cardEl.querySelector('.js-hora-recogida')?.value || '';
-        const horaEntrega = cardEl.querySelector('.js-hora-entrega')?.value || '';
-        // Buscar el select de tipo de transporte con tolerancia
-        let idTipoSelect = cardEl.querySelector('select.js-id-tipo-transporte');
-        if (!idTipoSelect) {
-            // fallback: primer select con opciones cargadas por Tipotransporte
-            const candidates = cardEl.querySelectorAll('select');
-            idTipoSelect = Array.from(candidates).find(s => Array.from(s.options).some(o => /^\d+$/.test(o.value)));
-        }
-        if (!idTipoSelect) {
-            // último fallback: tomar el primer select global con la clase
-            idTipoSelect = document.querySelector('select.js-id-tipo-transporte');
-        }
-        const cargas = [];
-        cardEl.querySelectorAll('.productosContainer .producto-item').forEach(item=>{
-            const tipo = item.querySelector('.js-tipo')?.value || '';
-            const variedad = item.querySelector('.js-variedad')?.value || '';
-            const cantidad = parseInt(item.querySelector('.js-cantidad')?.value || '0', 10);
-            const empaquetado = item.querySelector('.js-empaquetado')?.value || '';
-            const peso = parseFloat(item.querySelector('.js-peso')?.value || '0');
-            if (tipo && variedad && cantidad > 0 && empaquetado){
-                cargas.push({ tipo, variedad, cantidad, empaquetado, peso: isNaN(peso)?0:peso });
-            }
-        });
-        let id_tipo_transporte = null;
-        let tipo_transporte_nombre = '';
-        if (idTipoSelect) {
-            const raw = (idTipoSelect.value || '').trim();
-            const parsed = Number(raw);
-            if (!Number.isNaN(parsed) && parsed > 0) {
-                id_tipo_transporte = parsed;
-                tipo_transporte_nombre = idTipoSelect.options[idTipoSelect.selectedIndex]?.textContent?.trim() || '';
-            }
-        }
-        // Normalizar horas por si el navegador entrega formato 12h con sufijos
-        const toHHMMSS = (str) => {
-            if (!str) return '';
-            let s = String(str).trim().toLowerCase();
-            // "11:11" -> "11:11:00"
-            if (/^\d{1,2}:\d{2}$/.test(s)) return s + ':00';
-            // "11:11 am" / "11:11 a. m." -> convertir
-            const am = s.includes('am') || s.includes('a. m.');
-            const pm = s.includes('pm') || s.includes('p. m.');
-            s = s.replace(/[^\d:]/g,'');
-            const [hh, mm] = s.split(':').map(n=>parseInt(n||'0',10));
-            let H = hh;
-            if (pm && hh < 12) H = hh + 12;
-            if (am && hh === 12) H = 0;
-            const HH = String(H).padStart(2,'0');
-            const MM = String(isNaN(mm)?0:mm).padStart(2,'0');
-            return `${HH}:${MM}:00`;
-        };
-        const recogidaEntrega = {
-            fecha_recogida: fecha,
-            hora_recogida: toHHMMSS(horaRecogida),
-            hora_entrega: toHHMMSS(horaEntrega),
-            instrucciones_recogida: null,
-            instrucciones_entrega: null
-        };
-        return { cargas, recogidaEntrega, id_tipo_transporte, tipo_transporte_nombre };
-    }
-
-    function obtenerParticiones(validar = false){
-        const items = [];
-        const base = document.querySelector('#step2 .particion-template');
-        if (base) {
-            items.push({ card: base, data: buildParticionFromCard(base) });
-        }
-        document.querySelectorAll('#particionesContainer .particion-item .particion-template, #particionesContainer .particion-item .card-body.particion-template').forEach(el=>{
-            items.push({ card: el, data: buildParticionFromCard(el) });
+    function goToStep(step) {
+        // Ocultar todos
+        Object.values(steps).forEach(el => el.classList.add('d-none'));
+        Object.values(indicators).forEach(el => {
+            el.classList.remove('active');
+            el.querySelector('.badge').classList.replace('badge-primary', 'badge-secondary');
         });
 
-        if (validar){
-            for (let i = 0; i < items.length; i++){
-                const { card, data: p } = items[i];
-                if (!p || !Array.isArray(p.cargas) || p.cargas.length === 0){
-                    return { error: `La partición ${i+1} no tiene productos válidos.` };
-                }
-                if (!p.recogidaEntrega || !p.recogidaEntrega.fecha_recogida || !p.recogidaEntrega.hora_recogida || !p.recogidaEntrega.hora_entrega){
-                    return { error: `La partición ${i+1} requiere fecha y horas de recogida y entrega.` };
-                }
-                const idVal = p.id_tipo_transporte;
-                const isValidId = (typeof idVal === 'number' && idVal > 0) || (/^\d+$/.test(String(idVal)) && Number(idVal) > 0);
-                if (!isValidId){
-                    const sel = card ? card.querySelector('.js-id-tipo-transporte') : null;
-                    if (sel) sel.classList.add('is-invalid');
-                    return { error: `Selecciona el tipo de transporte en la partición ${i+1}.` };
-                }
-                p.id_tipo_transporte = Number(idVal);
-            }
+        // Mostrar actual
+        steps[step].classList.remove('d-none');
+        indicators[step].classList.add('active');
+        indicators[step].querySelector('.badge').classList.replace('badge-secondary', 'badge-primary');
+
+        state.currentStep = step;
+
+        // Actualizar botones
+        btns.prev.disabled = step === 1;
+        if (step === 3) {
+            btns.next.classList.add('d-none');
+            btns.finish.classList.remove('d-none');
+            renderSummary();
+        } else {
+            btns.next.classList.remove('d-none');
+            btns.finish.classList.add('d-none');
         }
 
-        return { particiones: items.map(it => it.data) };
-    }
-
-    function actualizarResumen(particionesOverride = null){
-        const data = particionesOverride ?? obtenerParticiones(false).particiones ?? [];
-        const totalParticiones = data.length;
-        let totalProductos = 0;
-        let totalPeso = 0;
-        data.forEach(p=>{
-            (p.cargas || []).forEach(c=>{
-                totalProductos += 1;
-                totalPeso += Number(c.peso) || 0;
-            });
-        });
-        const elPart = document.getElementById('resumenParticiones');
-        const elProd = document.getElementById('resumenProductos');
-        const elPeso = document.getElementById('resumenPeso');
-        const elDetalle = document.getElementById('resumenParticionesDetalle');
-        if (elPart) elPart.innerText = String(totalParticiones);
-        if (elProd) elProd.innerText = String(totalProductos);
-        if (elPeso) elPeso.innerText = `${totalPeso.toFixed(1)} kg`;
-        if (elDetalle){
-            if (data.length === 0){
-                elDetalle.innerHTML = '<div class="text-muted">Aún no has agregado particiones.</div>';
-            } else {
-                elDetalle.innerHTML = data.map((p, idx) => {
-                    const productos = (p.cargas || []).map(c => `
-                        <li>${c.tipo || '—'} - ${c.variedad || '—'} · ${Number(c.cantidad || 0)} uds · ${Number(c.peso || 0).toFixed(1)} kg · ${c.empaquetado || '—'}</li>
-                    `).join('') || '<li class="text-muted">Sin productos</li>';
-                    return `
-                        <div class="mb-3">
-                            <strong>Partición ${idx+1}</strong>
-                            <ul class="mb-2">${productos}</ul>
-                            <div class="small text-muted">
-                                Recogida: ${p.recogidaEntrega?.fecha_recogida || '—'} ${p.recogidaEntrega?.hora_recogida || ''}
-                                · Entrega: ${p.recogidaEntrega?.hora_entrega || ''}
-                                · Tipo transporte: ${p.tipo_transporte_nombre || p.id_tipo_transporte || '—'}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+        // Fix mapa al volver al paso 1
+        if (step === 1 && state.map) {
+            setTimeout(() => state.map.invalidateSize(), 200);
         }
     }
 
-    // Cargar tipos de transporte y poblar selects en todas las particiones
-    async function cargarTiposTransporte(){
-        if (!token) { window.location.replace('/login'); return; }
-        try{
-            const res = await fetch(`${window.location.origin}/api/tipotransporte`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
+    function validateStep(step) {
+        if (step === 1) {
+            const idDir = document.getElementById('idDireccionSeleccionada').value;
+            const hasMarkers = state.markers.origin && state.markers.destination;
+            
+            if (!idDir && !hasMarkers) {
+                alert('Por favor selecciona una ruta guardada o marca origen y destino en el mapa.');
+                return false;
+            }
+            return true;
+        }
+        if (step === 2) {
+            // Validar que haya al menos una partición
+            const parts = document.querySelectorAll('.particion-item');
+            if (parts.length === 0) {
+                alert('Debes agregar al menos un envío/camión.');
+                return false;
+            }
+            
+            let isValid = true;
+            // Validar campos requeridos HTML5
+            const inputs = steps[2].querySelectorAll('input[required], select[required]');
+            inputs.forEach(input => {
+                if (!input.value) {
+                    input.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
                 }
             });
-            if (res.status === 401) {
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('usuario');
-                window.location.replace('/login');
-                return;
-            }
-            if (!res.ok) {
-                console.warn('No se pudieron cargar los tipos de transporte');
-                return;
-            }
-            const tipos = await res.json();
-            const rellenar = (select) => {
-                if (!tipos.length) {
-                    select.innerHTML = '<option value=\"\">No hay tipos disponibles</option>';
-                    return;
-                }
-                select.innerHTML = '<option value=\"\">Selecciona...</option>';
-                tipos.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = String(t.id);
-                    opt.textContent = t.nombre;
-                    select.appendChild(opt);
-                });
-                // Si no hay valor seleccionado, escoger el primero válido
-                if (!select.value) {
-                    const firstValid = Array.from(select.options).find(o => o.value && /^\d+$/.test(o.value));
-                    if (firstValid) select.value = firstValid.value;
-                }
-            };
-            document.querySelectorAll('.js-id-tipo-transporte').forEach(rellenar);
-        } catch(e){ console.warn(e); }
-    }
-    cargarTiposTransporte();
 
-    async function enviarEnvioCompleto(){
-        let id_direccion = document.getElementById('idDireccionSeleccionada').value;
+            if (!isValid) {
+                alert('Por favor completa todos los campos obligatorios en los detalles del envío.');
+                return false;
+            }
+            
+            // Validar que cada partición tenga cargas
+            let emptyLoads = false;
+            parts.forEach((part, idx) => {
+                if (part.querySelectorAll('.carga-item').length === 0) {
+                    emptyLoads = true;
+                }
+            });
+            
+            if (emptyLoads) {
+                alert('Cada envío debe tener al menos un producto/carga.');
+                return false;
+            }
+
+            return true;
+        }
+        return true;
+    }
+
+    // --- MAPA (LEAFLET) ---
+    function initMap() {
+        if (state.map) return; // Evitar reinicialización
+
+        const mapContainer = document.getElementById('mapNuevoEnvio');
+        if (!mapContainer) return;
         
-        // Si no hay id_direccion pero el usuario marcó en el mapa, crear la dirección al vuelo
-        if (!id_direccion && MapManager.markers.origin && MapManager.markers.destination){
-            try{
-                const o = MapManager.markers.origin.getLatLng();
-                const d = MapManager.markers.destination.getLatLng();
-                const nombreOrigen = document.getElementById('origenNombre').value;
-                const nombreDestino = document.getElementById('destinoNombre').value;
+        // Limpieza defensiva por si acaso Leaflet dejó basura
+        if (mapContainer._leaflet_id) mapContainer._leaflet_id = null;
 
-                const rutaGeoJSON = MapManager.lastGeoJSON || JSON.stringify({
-                    type:'FeatureCollection',
-                    features:[{type:'Feature',geometry:{type:'LineString',coordinates:[[o.lng,o.lat],[d.lng,d.lat]]},properties:{}}]
-                });
+        state.map = L.map('mapNuevoEnvio', { 
+            preferCanvas: false,
+            dragging: true,
+            tap: false // Fix para dispositivos híbridos/Windows
+        }).setView([-17.7833, -63.1833], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(state.map);
+
+        state.map.on('click', handleMapClick);
+        document.getElementById('btnResetMap').addEventListener('click', resetMap);
+        
+        // Force resize
+        setTimeout(() => state.map.invalidateSize(), 500);
+    }
+
+    function handleMapClick(e) {
+        // Si ya hay una dirección guardada seleccionada, limpiar selección
+        if (document.getElementById('selRutaGuardada').value) {
+            document.getElementById('selRutaGuardada').value = "";
+            document.getElementById('idDireccionSeleccionada').value = "";
+        }
+
+        if (!state.markers.origin) {
+            setMarker('origin', e.latlng);
+        } else if (!state.markers.destination) {
+            setMarker('destination', e.latlng);
+            drawRoute(state.markers.origin.getLatLng(), state.markers.destination.getLatLng());
+        }
+    }
+
+    function setMarker(type, latlng) {
+        const color = type === 'origin' ? 'text-success' : 'text-danger';
+        const icon = L.divIcon({
+            className: color,
+            html: '<i class="fas fa-map-marker-alt fa-2x"></i>',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+        });
+
+        if (state.markers[type]) state.map.removeLayer(state.markers[type]);
+        state.markers[type] = L.marker(latlng, {icon: icon}).addTo(state.map);
+
+        const inputId = type === 'origin' ? 'txtOrigen' : 'txtDestino';
+        document.getElementById(inputId).value = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+    }
+
+    async function drawRoute(start, end) {
+        if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+        
+        const apiKey = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Error en servicio de rutas');
+            
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                const geoJSON = data.features[0];
+                state.routeLayer = L.geoJSON(geoJSON, {
+                    style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+                }).addTo(state.map);
                 
-                const resDir = await fetch(`${window.location.origin}/api/ubicaciones`, {
+                state.map.fitBounds(state.routeLayer.getBounds(), { padding: [50, 50] });
+                
+                // Guardar GeoJSON completo (FeatureCollection para compatibilidad)
+                state.lastGeoJSON = JSON.stringify({
+                    type: "FeatureCollection",
+                    features: [geoJSON]
+                });
+            } else {
+                throw new Error('No se encontró ruta');
+            }
+        } catch (e) {
+            console.warn('Falló OpenRouteService, usando línea recta:', e);
+            // Fallback simple line
+            const line = [[start.lat, start.lng], [end.lat, end.lng]];
+            state.routeLayer = L.polyline(line, {color: 'red', weight: 4, dashArray: '10, 10'}).addTo(state.map);
+            state.map.fitBounds(state.routeLayer.getBounds(), {padding: [50, 50]});
+            
+            // GeoJSON simple de respaldo
+            state.lastGeoJSON = JSON.stringify({
+                type: "FeatureCollection",
+                features: [{
+                    type: "Feature",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [[start.lng, start.lat], [end.lng, end.lat]]
+                    }
+                }]
+            });
+        }
+    }
+
+    function resetMap() {
+        if (state.markers.origin) state.map.removeLayer(state.markers.origin);
+        if (state.markers.destination) state.map.removeLayer(state.markers.destination);
+        if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+        state.markers = { origin: null, destination: null };
+        state.routeLayer = null;
+        state.lastGeoJSON = null;
+        
+        document.getElementById('txtOrigen').value = "";
+        document.getElementById('txtDestino').value = "";
+        document.getElementById('idDireccionSeleccionada').value = "";
+        document.getElementById('selRutaGuardada').value = "";
+    }
+
+    // --- API DATA ---
+    async function loadSavedRoutes() {
+        try {
+            const res = await fetch('/api/ubicaciones', { headers: { 'Authorization': `Bearer ${token}` } });
+            const rutas = await res.json();
+            const select = document.getElementById('selRutaGuardada');
+            
+            rutas.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = `${r.nombreorigen || 'Origen'} → ${r.nombredestino || 'Destino'}`;
+                opt.dataset.json = JSON.stringify(r);
+                select.appendChild(opt);
+            });
+
+            select.addEventListener('change', (e) => {
+                const opt = e.target.selectedOptions[0];
+                if (!opt.value) { resetMap(); return; }
+                
+                const data = JSON.parse(opt.dataset.json);
+                document.getElementById('idDireccionSeleccionada').value = data.id;
+                document.getElementById('txtOrigen').value = data.nombreorigen;
+                document.getElementById('txtDestino').value = data.nombredestino;
+
+                // Update map
+                if (state.markers.origin) state.map.removeLayer(state.markers.origin);
+                if (state.markers.destination) state.map.removeLayer(state.markers.destination);
+                if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+
+                if (data.origen_lat && data.origen_lng) {
+                    setMarker('origin', {lat: parseFloat(data.origen_lat), lng: parseFloat(data.origen_lng)});
+                }
+                if (data.destino_lat && data.destino_lng) {
+                    setMarker('destination', {lat: parseFloat(data.destino_lat), lng: parseFloat(data.destino_lng)});
+                }
+                
+                if (state.markers.origin && state.markers.destination) {
+                    drawRoute(state.markers.origin.getLatLng(), state.markers.destination.getLatLng());
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadTiposTransporte() {
+        try {
+            const res = await fetch('/api/tipotransporte', { headers: { 'Authorization': `Bearer ${token}` } });
+            state.tiposTransporte = await res.json();
+            // Actualizar selects existentes
+            document.querySelectorAll('.js-tipo-transporte').forEach(fillTransportSelect);
+        } catch (e) { console.error(e); }
+    }
+
+    function fillTransportSelect(select) {
+        if (select.options.length > 1) return; // Ya llenado
+        state.tiposTransporte.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.nombre;
+            select.appendChild(opt);
+        });
+    }
+
+    // --- GESTIÓN DE PARTICIONES Y CARGAS ---
+    // (Variables ya declaradas arriba)
+
+    document.getElementById('btnAgregarParticion').addEventListener('click', addPartition);
+
+    function addPartition() {
+        partitionCounter++;
+        const clone = tplParticion.content.cloneNode(true);
+        const card = clone.querySelector('.particion-item');
+        
+        // IDs únicos para collapse
+        card.dataset.index = partitionCounter;
+        card.querySelector('.particion-num').textContent = partitionCounter;
+        const collapseId = `collapsePart${partitionCounter}`;
+        card.querySelector('.btn-collapse').dataset.target = `#${collapseId}`;
+        card.querySelector('.card-body').id = collapseId;
+
+        // Eventos
+        card.querySelector('.btn-remove-particion').addEventListener('click', () => {
+            if (document.querySelectorAll('.particion-item').length > 1) {
+                card.remove();
+                renumberPartitions();
+            } else {
+                alert('Debe haber al menos una partición.');
+            }
+        });
+
+        card.querySelector('.btn-add-carga').addEventListener('click', () => addCarga(card.querySelector('.cargas-container')));
+
+        // Llenar select transporte
+        fillTransportSelect(card.querySelector('.js-tipo-transporte'));
+
+        // Agregar carga inicial
+        addCarga(card.querySelector('.cargas-container'));
+
+        container.appendChild(card);
+    }
+
+    function addCarga(tbody) {
+        const clone = tplCarga.content.cloneNode(true);
+        clone.querySelector('.btn-remove-carga').addEventListener('click', (e) => {
+            if (tbody.querySelectorAll('tr').length > 1) {
+                e.target.closest('tr').remove();
+            }
+        });
+        tbody.appendChild(clone);
+    }
+
+    function renumberPartitions() {
+        document.querySelectorAll('.particion-item').forEach((el, idx) => {
+            el.querySelector('.particion-num').textContent = idx + 1;
+        });
+        partitionCounter = document.querySelectorAll('.particion-item').length;
+    }
+
+    // --- RESUMEN Y ENVÍO ---
+    function getFormData() {
+        const particiones = [];
+        document.querySelectorAll('.particion-item').forEach(p => {
+            const cargas = [];
+            p.querySelectorAll('.carga-item').forEach(c => {
+                cargas.push({
+                    tipo: c.querySelector('.js-carga-tipo').value,
+                    variedad: c.querySelector('.js-carga-variedad').value,
+                    empaquetado: c.querySelector('.js-carga-empaque').value,
+                    cantidad: parseInt(c.querySelector('.js-carga-cantidad').value),
+                    peso: parseFloat(c.querySelector('.js-carga-peso').value)
+                });
+            });
+
+            particiones.push({
+                id_tipo_transporte: parseInt(p.querySelector('.js-tipo-transporte').value),
+                recogidaEntrega: {
+                    fecha_recogida: p.querySelector('.js-fecha-recogida').value,
+                    hora_recogida: p.querySelector('.js-hora-recogida').value + ':00',
+                    hora_entrega: p.querySelector('.js-hora-entrega').value + ':00',
+                    instrucciones_recogida: p.querySelector('.js-instr-recogida').value,
+                    instrucciones_entrega: p.querySelector('.js-instr-entrega').value
+                },
+                cargas: cargas
+            });
+        });
+
+        return {
+            id_direccion: document.getElementById('idDireccionSeleccionada').value || null,
+            particiones: particiones,
+            // Datos extra para crear dirección al vuelo si no existe ID
+            temp_direccion: {
+                nombreOrigen: document.getElementById('txtOrigen').value,
+                nombreDestino: document.getElementById('txtDestino').value,
+                origen_lat: state.markers.origin?.getLatLng().lat,
+                origen_lng: state.markers.origin?.getLatLng().lng,
+                destino_lat: state.markers.destination?.getLatLng().lat,
+                destino_lng: state.markers.destination?.getLatLng().lng,
+                rutaGeoJSON: state.lastGeoJSON
+            }
+        };
+    }
+
+    function renderSummary() {
+        const data = getFormData();
+        document.getElementById('resumenOrigen').textContent = data.temp_direccion.nombreOrigen || 'Coordenadas marcadas';
+        document.getElementById('resumenDestino').textContent = data.temp_direccion.nombreDestino || 'Coordenadas marcadas';
+
+        const container = document.getElementById('resumenParticiones');
+        container.innerHTML = '';
+
+        data.particiones.forEach((p, idx) => {
+            const cargasHtml = p.cargas.map(c => `<li>${c.cantidad}x ${c.variedad} (${c.tipo}) - ${c.peso}kg</li>`).join('');
+            
+            const html = `
+                <div class="card mb-2">
+                    <div class="card-header bg-light p-2" id="heading${idx}">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link btn-block text-left text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseRes${idx}">
+                                Camión #${idx + 1} - ${p.recogidaEntrega.fecha_recogida}
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="collapseRes${idx}" class="collapse show" data-parent="#resumenParticiones">
+                        <div class="card-body p-3">
+                            <p class="mb-1"><strong>Horario:</strong> ${p.recogidaEntrega.hora_recogida} - ${p.recogidaEntrega.hora_entrega}</p>
+                            <p class="mb-2"><strong>Instrucciones:</strong> ${p.recogidaEntrega.instrucciones_recogida || 'Ninguna'}</p>
+                            <strong>Cargas:</strong>
+                            <ul class="pl-3 mb-0">${cargasHtml}</ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    async function submitForm() {
+        const data = getFormData();
+        const btn = document.getElementById('btnFinish');
+        
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+            // 1. Si no hay ID de dirección, crearla primero
+            if (!data.id_direccion) {
+                const resDir = await fetch('/api/ubicaciones', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        nombreOrigen: nombreOrigen || null,
-                        origen_lng: o.lng,
-                        origen_lat: o.lat,
-                        nombreDestino: nombreDestino || null,
-                        destino_lng: d.lng,
-                        destino_lat: d.lat,
-                        rutaGeoJSON
-                    })
+                    body: JSON.stringify(data.temp_direccion)
                 });
                 
-                if (!resDir.ok){
-                    const e = await resDir.json().catch(()=>({}));
-                    throw new Error(e.error || 'No se pudo crear la dirección desde el mapa');
-                }
-                
-                const creada = await resDir.json();
-                id_direccion = String(creada.id);
-                
-                // reflejar en UI
-                document.getElementById('idDireccionSeleccionada').value = id_direccion;
-                await MapManager.loadSavedRoutesList();
-                document.getElementById('selRutaGuardada').value = id_direccion;
-            } catch(err){
-                alert(err.message);
-                return;
+                if (!resDir.ok) throw new Error('Error al guardar la ubicación');
+                const nuevaDir = await resDir.json();
+                data.id_direccion = nuevaDir.id;
             }
-        }
-        if (!id_direccion){
-            alert('Selecciona o marca en el mapa una ruta antes de continuar.');
-            return;
-        }
-        if (!token){
-            alert('Sesión expirada. Vuelve a iniciar sesión.');
-            window.location.href = '/login';
-            return;
-        }
-        const { particiones, error } = obtenerParticiones(true);
-        if (error){
-            alert(error);
-            return;
-        }
-        // Debug particiones
-        try { console.debug('DEBUG particiones antes de enviar:', JSON.stringify(particiones)); } catch{}
-        actualizarResumen(particiones);
-        const payload = {
-            id_direccion: parseInt(id_direccion,10),
-            particiones: particiones.map(p => ({
-                cargas: p.cargas,
-                recogidaEntrega: p.recogidaEntrega,
-                id_tipo_transporte: p.id_tipo_transporte
-            }))
-        };
-        const btn = document.getElementById('btnEnviar');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
-        try{
-            // Debug mínimo en consola para verificar selects detectados
-            try {
-                const selects = document.querySelectorAll('.js-id-tipo-transporte');
-                console.debug('DEBUG tipos de transporte:', {
-                    cantidadSelects: selects.length,
-                    valores: Array.from(selects).map(s => s.value)
-                });
-            } catch {}
-            // Redundar el token también en query para sortear proxies/redirecciones que limpian headers
-            const url = `${window.location.origin}/api/envios/completo?token=${encodeURIComponent(token)}`;
-            const res = await fetch(url, {
-                method:'POST',
+
+            // 2. Enviar Envío Completo
+            const payload = {
+                id_direccion: data.id_direccion,
+                particiones: data.particiones
+            };
+
+            const res = await fetch('/api/envios/completo', {
+                method: 'POST',
                 headers: {
-                    'Content-Type':'application/json',
                     'Authorization': `Bearer ${token}`,
-                    'X-Auth-Token': token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok){
-                const err = await res.json().catch(()=>({}));
-                throw new Error(err.error || err.message || 'Error al crear el envío');
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Error al crear el envío');
             }
-            // éxito
-            window.location.href = "{{ route('envios.index') }}";
-        } catch (e){
+
+            alert('¡Envío creado exitosamente!');
+            window.location.href = '/envios'; // Redirigir al index
+
+        } catch (e) {
             alert(e.message);
-        } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Enviar Solicitud';
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmar y Crear Envío';
         }
     }
-
-    document.getElementById('btnEnviar').addEventListener('click', (e)=>{
-        e.preventDefault();
-        enviarEnvioCompleto();
-    });
-})();
-
-} // Fin de window.__envioCreateInitialized
+});
 </script>
 @endpush
