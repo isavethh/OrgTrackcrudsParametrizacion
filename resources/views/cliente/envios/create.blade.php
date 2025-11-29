@@ -46,11 +46,13 @@
                             <hr>
                             <div class="form-group">
                                 <label class="text-success"><i class="fas fa-map-marker-alt mr-1"></i> Origen</label>
-                                <input type="text" class="form-control bg-light" id="txtOrigen" readonly placeholder="Selecciona en el mapa">
+                                <input type="text" class="form-control mb-2" id="txtNombreOrigen" readonly placeholder="Dirección de origen...">
+                                <input type="text" class="form-control bg-light form-control-sm" id="txtOrigen" readonly placeholder="Coordenadas">
                             </div>
                             <div class="form-group">
                                 <label class="text-danger"><i class="fas fa-map-marker-alt mr-1"></i> Destino</label>
-                                <input type="text" class="form-control bg-light" id="txtDestino" readonly placeholder="Selecciona en el mapa">
+                                <input type="text" class="form-control mb-2" id="txtNombreDestino" readonly placeholder="Dirección de destino...">
+                                <input type="text" class="form-control bg-light form-control-sm" id="txtDestino" readonly placeholder="Coordenadas">
                             </div>
                             <input type="hidden" id="idDireccionSeleccionada">
                             
@@ -558,6 +560,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const inputId = type === 'origin' ? 'txtOrigen' : 'txtDestino';
         document.getElementById(inputId).value = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+        
+        // Fetch address name
+        fetchAddressName(latlng.lat, latlng.lng, type === 'origin' ? 'txtNombreOrigen' : 'txtNombreDestino');
+    }
+
+    async function fetchAddressName(lat, lng, elementId) {
+        const el = document.getElementById(elementId);
+        el.value = "Buscando dirección...";
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            el.value = data.display_name || "Dirección desconocida";
+        } catch (e) {
+            el.value = "No se pudo obtener la dirección";
+            console.error(e);
+        }
     }
 
     async function drawRoute(start, end) {
@@ -619,6 +637,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('txtOrigen').value = "";
         document.getElementById('txtDestino').value = "";
+        document.getElementById('txtNombreOrigen').value = "";
+        document.getElementById('txtNombreDestino').value = "";
         document.getElementById('idDireccionSeleccionada').value = "";
         document.getElementById('selRutaGuardada').value = "";
     }
@@ -644,8 +664,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = JSON.parse(opt.dataset.json);
                 document.getElementById('idDireccionSeleccionada').value = data.id;
-                document.getElementById('txtOrigen').value = data.nombreorigen;
-                document.getElementById('txtDestino').value = data.nombredestino;
+                document.getElementById('txtOrigen').value = `${data.origen_lat}, ${data.origen_lng}`;
+                document.getElementById('txtDestino').value = `${data.destino_lat}, ${data.destino_lng}`;
+                document.getElementById('txtNombreOrigen').value = data.nombreorigen;
+                document.getElementById('txtNombreDestino').value = data.nombredestino;
 
                 // Update map
                 if (state.markers.origin) state.map.removeLayer(state.markers.origin);
@@ -773,21 +795,21 @@ document.addEventListener('DOMContentLoaded', function() {
             particiones: particiones,
             // Datos extra para crear dirección al vuelo si no existe ID
             temp_direccion: {
-                nombreOrigen: document.getElementById('txtOrigen').value,
-                nombreDestino: document.getElementById('txtDestino').value,
+                nombreorigen: document.getElementById('txtNombreOrigen').value || 'Origen Seleccionado',
+                nombredestino: document.getElementById('txtNombreDestino').value || 'Destino Seleccionado',
                 origen_lat: state.markers.origin?.getLatLng().lat,
                 origen_lng: state.markers.origin?.getLatLng().lng,
                 destino_lat: state.markers.destination?.getLatLng().lat,
                 destino_lng: state.markers.destination?.getLatLng().lng,
-                rutaGeoJSON: state.lastGeoJSON
+                rutageojson: state.lastGeoJSON
             }
         };
     }
 
     function renderSummary() {
         const data = getFormData();
-        document.getElementById('resumenOrigen').textContent = data.temp_direccion.nombreOrigen || 'Coordenadas marcadas';
-        document.getElementById('resumenDestino').textContent = data.temp_direccion.nombreDestino || 'Coordenadas marcadas';
+        document.getElementById('resumenOrigen').textContent = data.temp_direccion.nombreorigen;
+        document.getElementById('resumenDestino').textContent = data.temp_direccion.nombredestino;
 
         const container = document.getElementById('resumenParticiones');
         container.innerHTML = '';

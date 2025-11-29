@@ -11,7 +11,9 @@ class AdminSeeder extends Seeder
     /**
      * Run the database seeds.
      * 
-     *  php artisan db:seed --class=AdminSeeder
+     *  php artisan db:seed --class=AdminSeeder, para ejecutar este seeder específico
+     * 
+     *  " php artisan db:seed ", para ejecutar todos los seeders registrados 
      * 
      */
     public function run(): void
