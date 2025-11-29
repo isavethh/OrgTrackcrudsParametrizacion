@@ -55,6 +55,20 @@ class UbicacionController extends Controller
             ->with('segmentos')
             ->orderByDesc('id')
             ->get();
+
+        // Deduplicar visualmente: Agrupar por nombres y preferir el que tenga coordenadas
+        // Esto soluciona el caso donde hay una versión con coordenadas y otra sin ellas (duplicado visual)
+        $items = $items->groupBy(function ($item) {
+            return strtolower(trim($item->nombreorigen ?? '')) . '|' . strtolower(trim($item->nombredestino ?? ''));
+        })->map(function ($group) {
+            // De cada grupo de "duplicados por nombre", elegimos el mejor:
+            // Prioridad 1: Que tenga coordenadas (latitud no nula)
+            // Prioridad 2: El más reciente (mayor ID)
+            return $group->sortByDesc(function ($item) {
+                $tieneCoordenadas = !empty($item->origen_lat) && !empty($item->origen_lng);
+                return ($tieneCoordenadas ? 1000000000 : 0) + $item->id;
+            })->first();
+        })->values();
         
         return response()->json($items);
     }
@@ -102,6 +116,21 @@ class UbicacionController extends Controller
             'segmentos.*.segmentogeojson' => ['required_with:segmentos','string'],
         ]);
 
+        // Verificar si ya existe una dirección idéntica para este usuario
+        // Esto evita duplicados si el usuario guarda la misma dirección varias veces
+        $existente = Direccion::where('id_usuario', $usuarioId)
+            ->where('nombreorigen', $data['nombreOrigen'] ?? null)
+            ->where('nombredestino', $data['nombreDestino'] ?? null)
+            ->where('origen_lat', $data['origen_lat'] ?? null)
+            ->where('origen_lng', $data['origen_lng'] ?? null)
+            ->where('destino_lat', $data['destino_lat'] ?? null)
+            ->where('destino_lng', $data['destino_lng'] ?? null)
+            ->first();
+
+        if ($existente) {
+            return response()->json($existente, Response::HTTP_OK);
+        }
+
         $direccion = Direccion::create([
             'id_usuario' => $usuarioId,
             'nombreorigen' => $data['nombreOrigen'] ?? null,
@@ -113,12 +142,26 @@ class UbicacionController extends Controller
             'rutageojson' => $data['rutaGeoJSON'] ?? null,
         ]);
 
-        foreach (($data['segmentos'] ?? []) as $seg) {
+        // Si vienen segmentos explícitos (móvil), guardarlos
+        if (!empty($data['segmentos'])) {
+            foreach ($data['segmentos'] as $seg) {
+                DireccionSegmento::create([
+                    'direccion_id' => $direccion->id,
+                    'segmentogeojson' => $seg['segmentogeojson'],
+                ]);
+            }
+        } 
+        // Si NO vienen segmentos pero SÍ hay rutaGeoJSON (web), crear un segmento automático
+        // Esto asegura compatibilidad con el móvil que espera segmentos
+        elseif (!empty($data['rutaGeoJSON'])) {
             DireccionSegmento::create([
                 'direccion_id' => $direccion->id,
-                'segmentogeojson' => $seg['segmentogeojson'],
+                'segmentogeojson' => $data['rutaGeoJSON'],
             ]);
         }
+
+        // Recargar la relación para que la respuesta incluya los segmentos creados
+        $direccion->load('segmentos');
 
         return response()->json($direccion, Response::HTTP_CREATED);
     }

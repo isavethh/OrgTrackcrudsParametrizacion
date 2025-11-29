@@ -83,7 +83,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Error al cargar direcciones');
             }
 
-            allDirecciones = await response.json();
+            let rawData = await response.json();
+
+            // Deduplicar en frontend para asegurar visualización limpia
+            const unicos = {};
+            rawData.forEach(dir => {
+                // Clave única basada en nombres normalizados
+                const key = (dir.nombreorigen || '').trim().toLowerCase() + '|' + (dir.nombredestino || '').trim().toLowerCase();
+                
+                if (!unicos[key]) {
+                    unicos[key] = dir;
+                } else {
+                    // Lógica de preferencia:
+                    // 1. Preferir el que tiene coordenadas
+                    const actualTieneCoords = dir.origen_lat && dir.origen_lng;
+                    const guardadoTieneCoords = unicos[key].origen_lat && unicos[key].origen_lng;
+                    
+                    if (actualTieneCoords && !guardadoTieneCoords) {
+                        unicos[key] = dir;
+                    }
+                    // 2. Si ambos tienen o no tienen, preferir el más reciente (mayor ID)
+                    else if (actualTieneCoords === guardadoTieneCoords) {
+                        if (dir.id > unicos[key].id) {
+                            unicos[key] = dir;
+                        }
+                    }
+                }
+            });
+            
+            allDirecciones = Object.values(unicos);
             displayDirecciones(allDirecciones);
         } catch (error) {
             errorMessage.textContent = 'Error al cargar las direcciones: ' + error.message;
