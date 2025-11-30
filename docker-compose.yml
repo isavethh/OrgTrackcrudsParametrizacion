@@ -19,9 +19,11 @@ services:
       - org-net
   nginx:
     image: nginx:latest
-    container_name: app-nginx
-    ports:
-      - "8080:80"
+    container_name: orgtrack
+    expose:
+      - "80"
+    # ports:
+    #   - "8080:80" ---> despliegue local con puerto 8080
     volumes:
       - .:/var/www
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
