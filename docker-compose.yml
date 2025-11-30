@@ -32,6 +32,7 @@ services:
       - "9000:80"  #<-- para host, quitar cuando despliegue
     volumes:
       - .:/var/www
+      - vendor_org:/var/www/vendor
     networks:
       - red_org
       - internal-network
@@ -39,6 +40,7 @@ services:
 
 volumes:
   org_vol:
+  vendor_org:
 
 networks:
   red_org:
