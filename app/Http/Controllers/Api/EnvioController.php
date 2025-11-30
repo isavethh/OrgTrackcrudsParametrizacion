@@ -90,11 +90,15 @@ class EnvioController extends Controller
                 // Obtener o crear estado "Pendiente"
                 $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
 
+                // Generar código de acceso único de 6 caracteres
+                $codigoAcceso = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+
                 $asignacion = AsignacionMultiple::create([
                     'id_envio' => $envio->id,
                     'id_tipo_transporte' => $idTipoTransporte,
                     'id_estado_asignacion' => $idEstadoPendiente,
                     'id_recogida_entrega' => $r->id,
+                    'codigo_acceso' => $codigoAcceso,
                 ]);
 
                 foreach ($cargas as $carga) {
@@ -230,6 +234,10 @@ class EnvioController extends Controller
 
                     // 6. Insertar Asignación
                     $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
+                    
+                    // Generar código de acceso único de 6 caracteres
+                    $codigoAcceso = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+                    
                     $asignacion = AsignacionMultiple::create([
                         'id_envio' => $envio->id,
                         'id_transportista' => $id_transportista,
@@ -237,6 +245,7 @@ class EnvioController extends Controller
                         'id_estado_asignacion' => $idEstadoPendiente,
                         'id_tipo_transporte' => $id_tipo_transporte,
                         'id_recogida_entrega' => $recogida->id,
+                        'codigo_acceso' => $codigoAcceso,
                     ]);
 
                     // 7. Marcar transportista y vehículo como no disponibles
@@ -871,26 +880,6 @@ class EnvioController extends Controller
 
                 // Actualizar estado global del envío
                 EstadoHelper::actualizarEstadoGlobalEnvio($asignacion->id_envio);
-
-                // Generar y guardar código de acceso para la asignación si no existe
-                try {
-                    if (empty($asignacion->codigo_acceso)) {
-                        $attempts = 0;
-                        do {
-                            $codigo = strtoupper(substr(Str::random(8), 0, 8));
-                            $exists = AsignacionMultiple::where('codigo_acceso', $codigo)->exists();
-                            $attempts++;
-                        } while ($exists && $attempts < 5);
-
-                        if (!$exists) {
-                            $asignacion->update(['codigo_acceso' => $codigo]);
-                        } else {
-                            \Log::warning('No se pudo generar un código de acceso único para la asignación ' . $asignacion->id);
-                        }
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error al generar codigo de acceso para asignacion: ' . $e->getMessage());
-                }
 
                 // Generar QR automáticamente (si no existe)
                 $qrToken = QrToken::where('id_asignacion', $id_asignacion)->first();
