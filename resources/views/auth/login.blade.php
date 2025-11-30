@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             // If frontend running on localhost, assume API on :8000
             const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-            const apiBase = isLocalhost ? `${window.location.protocol}//${window.location.hostname}:8000` : window.location.origin;
+            const apiBase = window.location.origin;
             console.log('Using apiBase for login:', apiBase);
 
             const response = await fetch(`${apiBase}/api/auth/login`, {

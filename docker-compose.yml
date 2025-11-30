@@ -1,51 +1,56 @@
 services:
-  db-org:
-    image: postgres:latest
-    container_name: org_db
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: org_db
-    restart: unless-stopped
-    volumes:
-      - org_vol:/var/lib/postgresql/data
-    networks:
-      - red_org
-
-  laravel-org:
+  laravel:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: org-container
-    depends_on:
-      - db-org
+    container_name: org-laravel
+    volumes:
+      - .:/var/www
     environment:
       DB_CONNECTION: pgsql
-      DB_HOST: org_db
+      DB_HOST: db       # Nombre del servicio del contenedor de postgres
       DB_PORT: 5432
       DB_DATABASE: org_db
       DB_USERNAME: admin
       DB_PASSWORD: admin123
-    expose:
-      - "80"  #<-- para server
+    depends_on:
+      - db
+    networks:
+      - org-net
+  nginx:
+    image: nginx:latest
+    container_name: app-nginx
     ports:
-      - "9000:80"  #<-- para host, quitar cuando despliegue
+      - "8080:80"
     volumes:
       - .:/var/www
-      - vendor_org:/var/www/vendor
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - laravel
     networks:
-      - red_org
+      - org-net
       - internal-network
       - proxy-network
-
-volumes:
-  org_vol:
-  vendor_org:
+  db:
+    image: postgres:latest
+    container_name: org-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: org_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - db-data:/var/lib/postgresql
+    networks:
+      - org-net
 
 networks:
-  red_org:
+  org-net:
     driver: bridge
   internal-network:
     external: true
   proxy-network:
     external: true
+
+volumes:
+  db-data:
