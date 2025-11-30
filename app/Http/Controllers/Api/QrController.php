@@ -48,9 +48,11 @@ class QrController extends Controller
 
             // Generar nuevo token
             $nuevoToken = Str::uuid();
+            // Construir frontend base desde la configuración y asegurar sin slash final
+            $frontend = rtrim(config('app.frontend_url', config('app.url', 'http://localhost')), '/');
             // URL específica para validar el QR con el token
-            $tokenUrl = config('app.frontend_url', 'https://orgtrackprueba.netlify.app') . '/validar-qr/' . $nuevoToken;
-            
+            $tokenUrl = $frontend . '/validar-qr/' . $nuevoToken;
+
             // Generar imagen QR real usando API
             $qrBase64 = $this->generarQRReal($tokenUrl);
 
@@ -144,9 +146,9 @@ class QrController extends Controller
                 return response()->json(['error' => 'QR no encontrado para esta asignación'], 404);
             }
 
-            // Construir URL completa para el QR
-            $frontendUrl = config('app.frontend_url', 'https://orgtrackprueba.netlify.app');
-            $qrUrl = $frontendUrl . '/validar-qr/' . $qrToken->token;
+            // Construir URL completa para el QR usando la configuración FRONTEND_URL
+            $frontend = rtrim(config('app.frontend_url', config('app.url', 'http://localhost')), '/');
+            $qrUrl = $frontend . '/validar-qr/' . $qrToken->token;
 
             return response()->json([
                 'mensaje' => 'QR encontrado correctamente',
@@ -173,6 +175,7 @@ class QrController extends Controller
         try {
             $request->validate([
                 'token' => 'required|string',
+                'codigo' => 'required|string'
             ]);
 
             $qrToken = QrToken::where('token', $request->token)->first();
@@ -191,10 +194,6 @@ class QrController extends Controller
                 return response()->json(['error' => 'Token QR ya fue utilizado'], 400);
             }
 
-            // Marcar como usado
-            $idEstadoUsado = EstadoHelper::obtenerEstadoQrTokenPorNombre('Usado');
-            $qrToken->update(['id_estado_qrtoken' => $idEstadoUsado]);
-
             // Obtener información de la asignación
             $asignacion = AsignacionMultiple::with([
                 'envio.usuario.persona:id,nombre,apellido',
@@ -202,8 +201,22 @@ class QrController extends Controller
                 'vehiculo.tipoVehiculo:id,nombre',
                 'vehiculo:id,placa',
                 'estadoAsignacion:id,nombre',
-                'transportista:id,ci,telefono'
+                'transportista.usuario:id,id_persona',
+                'transportista.usuario.persona:id,ci,telefono'
             ])->find($qrToken->id_asignacion);
+
+            if (!$asignacion) {
+                return response()->json(['error' => 'Asignación vinculada al QR no encontrada'], 404);
+            }
+
+            // Validar que el código proporcionado coincide con el de la asignación
+            if (empty($asignacion->codigo_acceso) || $asignacion->codigo_acceso !== $request->codigo) {
+                return response()->json(['error' => 'Código de acceso inválido'], 403);
+            }
+
+            // Marcar como usado (opcional, se mantiene comportamiento previo)
+            $idEstadoUsado = EstadoHelper::obtenerEstadoQrTokenPorNombre('Usado');
+            $qrToken->update(['id_estado_qrtoken' => $idEstadoUsado]);
 
             return response()->json([
                 'mensaje' => 'Token QR válido',
@@ -222,8 +235,8 @@ class QrController extends Controller
                         'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
                     ],
                     'transportista' => [
-                        'ci' => $asignacion->transportista?->ci,
-                        'telefono' => $asignacion->transportista?->telefono,
+                        'ci' => $asignacion->transportista?->usuario?->persona?->ci,
+                        'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
                     ],
                 ],
             ]);
@@ -233,6 +246,93 @@ class QrController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error al validar QR token: ' . $e->getMessage());
             return response()->json(['error' => 'Error interno al validar QR token'], 500);
+        }
+    }
+
+    /**
+     * Validar token + codigo de acceso (público) sin modificar estado del QR
+     */
+    public function validarCodigoAcceso(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'codigo' => 'required|string'
+            ]);
+
+            // Buscar la asignación por código de acceso (único)
+            $asignacion = AsignacionMultiple::with([
+                'envio.usuario.persona:id,nombre,apellido',
+                'envio.direccion:id,nombreorigen,nombredestino',
+                'vehiculo.tipoVehiculo:id,nombre',
+                'vehiculo:id,placa',
+                'estadoAsignacion:id,nombre',
+                'transportista.usuario:id,id_persona',
+                'transportista.usuario.persona:id,ci,telefono,nombre,apellido',
+                'tipoTransporte:id,nombre',
+                'cargas:id,id_catalogo_carga,cantidad,peso,id_unidad_medida',
+                'cargas.catalogoCarga:id,tipo,variedad,empaque,descripcion',
+                'cargas.unidadMedida:id,nombre',
+                'recogidaEntrega:id,fecha_recogida,hora_recogida,hora_entrega,instrucciones_recogida,instrucciones_entrega'
+            ])->where('codigo_acceso', $request->codigo)->first();
+
+            if (!$asignacion) {
+                return response()->json(['error' => 'Código de acceso no válido o no encontrado'], 404);
+            }
+
+            // Retornar información de la asignación sin modificar estado ni marcar nada
+            return response()->json([
+                'mensaje' => 'Código válido',
+                'valido' => true,
+                'asignacion' => [
+                    'id_asignacion' => $asignacion->id,
+                    'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
+                    'cliente' => [
+                        'nombre' => $asignacion->envio->usuario?->persona?->nombre,
+                        'apellido' => $asignacion->envio->usuario?->persona?->apellido,
+                    ],
+                    'origen' => $asignacion->envio->direccion?->nombreorigen,
+                    'destino' => $asignacion->envio->direccion?->nombredestino,
+                    'vehiculo' => [
+                        'placa' => $asignacion->vehiculo?->placa,
+                        'tipo' => $asignacion->vehiculo?->tipoVehiculo?->nombre,
+                    ],
+                    'tipo_transporte' => $asignacion->tipoTransporte?->nombre,
+                    'transportista' => [
+                        'ci' => $asignacion->transportista?->usuario?->persona?->ci,
+                        'telefono' => $asignacion->transportista?->usuario?->persona?->telefono,
+                        'nombre' => $asignacion->transportista?->usuario?->persona?->nombre,
+                        'apellido' => $asignacion->transportista?->usuario?->persona?->apellido,
+                    ],
+                    'recogida_entrega' => [
+                        'fecha_recogida' => $asignacion->recogidaEntrega?->fecha_recogida,
+                        'hora_recogida' => $asignacion->recogidaEntrega?->hora_recogida,
+                        'hora_entrega' => $asignacion->recogidaEntrega?->hora_entrega,
+                        'instrucciones_recogida' => $asignacion->recogidaEntrega?->instrucciones_recogida,
+                        'instrucciones_entrega' => $asignacion->recogidaEntrega?->instrucciones_entrega,
+                    ],
+                    'cargas' => $asignacion->cargas->map(function ($c) {
+                        return [
+                            'id' => $c->id,
+                            'cantidad' => $c->cantidad,
+                            'peso' => $c->peso,
+                            'unidad' => $c->unidadMedida?->nombre,
+                            'catalogo' => [
+                                'tipo' => $c->catalogoCarga?->tipo,
+                                'variedad' => $c->catalogoCarga?->variedad,
+                                'empaque' => $c->catalogoCarga?->empaque,
+                                'descripcion' => $c->catalogoCarga?->descripcion,
+                            ],
+                        ];
+                    })->all(),
+                ],
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Datos de validación incorrectos', 'detalles' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error al validar codigo de acceso: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error interno al validar codigo'], 500);
         }
     }
 
@@ -254,7 +354,7 @@ class QrController extends Controller
                 'asignacion.vehiculo.tipoVehiculo:id,nombre',
                 'asignacion.vehiculo:id,placa',
                 'asignacion.estadoAsignacion:id,nombre',
-                'asignacion.transportista:id,ci,telefono',
+                'asignacion.transportista.usuario.persona:id,ci,telefono',
                 'estadoQrToken:id,nombre'
             ])
             ->whereIn('id_asignacion', $asignaciones)
@@ -278,8 +378,8 @@ class QrController extends Controller
                             'tipo' => $qrToken->asignacion?->vehiculo?->tipoVehiculo?->nombre,
                         ],
                         'transportista' => [
-                            'ci' => $qrToken->asignacion?->transportista?->ci,
-                            'telefono' => $qrToken->asignacion?->transportista?->telefono,
+                            'ci' => $qrToken->asignacion?->transportista?->usuario?->persona?->ci,
+                            'telefono' => $qrToken->asignacion?->transportista?->usuario?->persona?->telefono,
                         ],
                     ],
                 ];

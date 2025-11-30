@@ -233,7 +233,13 @@ if (!window.__envioShowAdminInitialized) {
             const colRight = document.createElement('div');
             colRight.className = 'col-lg-6';
             const mapId = `map-${idx}`;
-            colRight.innerHTML = `<div id="${mapId}" style="height: 420px;" class="rounded border"></div>`;
+            colRight.innerHTML = `
+                <div id="${mapId}" style="height: 420px;" class="rounded border"></div>
+                <div class="mt-3 p-3 bg-light rounded border">
+                    <h6 class="mb-2 font-weight-bold">Código de Acceso</h6>
+                    <p class="mb-0 h4 font-monospace text-primary">${p.codigo_acceso || 'No asignado'}</p>
+                </div>
+            `;
 
             row.appendChild(colLeft);
             row.appendChild(colRight);

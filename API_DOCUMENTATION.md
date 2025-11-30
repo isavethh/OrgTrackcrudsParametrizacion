@@ -2294,6 +2294,77 @@ Content-Type: application/json
 
 ---
 
+### POST `/api/qr/codigoacceso`
+**Descripción:** Validar públicamente un `codigo` de acceso. La API busca la asignación por `codigo_acceso` (no requiere `token`) y devuelve la información asociada. No modifica el estado del `qrtoken`.
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "codigo": "8H4K2P7Q"
+}
+```
+
+**Respuesta Exitosa (200):**
+```json
+{
+  "mensaje": "Código válido",
+  "valido": true,
+  "asignacion": {
+    "id_asignacion": 1,
+    "estado": "En curso",
+    "fecha_asignacion": "2024-01-15T10:30:00Z",
+    "fecha_inicio": "2024-01-20T08:00:00Z",
+    "cliente": {
+      "nombre": "Juan",
+      "apellido": "Pérez"
+    },
+    "nombre_origen": "Almacén Central",
+    "nombre_destino": "Tienda Norte",
+    "vehiculo": {
+      "placa": "ABC-123",
+      "tipo": "Pesado - Refrigerado"
+    },
+    "tipoTransporte": {
+      "nombre": "Refrigerado",
+      "descripcion": "Transporte con temperatura controlada"
+    },
+    "recogidaEntrega": {
+      "fecha_recogida": "2024-01-20",
+      "hora_recogida": "08:00:00",
+      "hora_entrega": "16:00:00",
+      "instrucciones_recogida": "Llamar antes de llegar",
+      "instrucciones_entrega": "Entregar en recepción"
+    },
+    "cargas": [
+      {
+        "id": 1,
+        "tipo": "Frutas",
+        "variedad": "Manzanas",
+        "empaquetado": "Cajas",
+        "cantidad": 100,
+        "peso": 500.50
+      }
+    ]
+  }
+}
+```
+
+**Errores:**
+- `404`: Código de acceso no válido o no encontrado
+
+**Ejemplo CURL:**
+```bash
+curl -X POST "https://tu-dominio.test/api/qr/codigoacceso" \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"8H4K2P7Q"}'
+```
+
+
 ### GET `/api/qr/cliente/tokens`
 **Descripción:** Obtener QR tokens por cliente
 
@@ -2653,15 +2724,42 @@ Las cargas ahora usan `CatalogoCarga`:
 Estructura nueva:
 ```json
 {
+  "id_asignacion": 5,
+  "fecha": "2025-11-30T10:00:00Z",
   "condiciones": [
     {
       "id_condicion": 1,  // ID de condiciones_transporte
       "valor": true,      // true/false
-      "comentario": "Todo en orden"
+      "comentario": "Todo en orden",
+      "condicion": {
+        "id": 1,
+        "codigo": "PUERTAS",
+        "titulo": "Puertas cerradas",
+        "descripcion": "Verificar que las puertas cierren correctamente"
+      }
     }
   ],
   "observaciones": "Observaciones generales"
 }
+```
+
+### Catálogo `condiciones_transporte`
+Ejemplo (GET `/api/condiciones-transporte`):
+```json
+[
+  {
+    "id": 1,
+    "codigo": "PUERTAS",
+    "titulo": "Puertas cerradas",
+    "descripcion": "Verificar que las puertas cierren correctamente"
+  },
+  {
+    "id": 2,
+    "codigo": "TEMPERATURA",
+    "titulo": "Temperatura",
+    "descripcion": "Rango de temperatura dentro de limites establecidos"
+  }
+]
 ```
 
 ### Checklist de Incidentes

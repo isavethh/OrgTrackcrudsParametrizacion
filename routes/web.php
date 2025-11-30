@@ -176,3 +176,8 @@ Route::prefix('admin')->group(function () {
         return view('admin.tipos_transporte.index');
     })->name('admin.tipos_transporte.index');
 });
+
+// Ruta pública para validar QR (token en URL opcional)
+Route::get('/validar-qr/{token?}', function ($token = null) {
+    return view('validar-qr', ['token' => $token]);
+})->name('validar-qr');

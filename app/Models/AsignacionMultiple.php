@@ -16,6 +16,7 @@ class AsignacionMultiple extends Model
         'id_recogida_entrega',
         'id_tipo_transporte',
         'id_estado_asignacion',
+        'codigo_acceso',
         'fecha_asignacion',
         'fecha_inicio',
         'fecha_fin',

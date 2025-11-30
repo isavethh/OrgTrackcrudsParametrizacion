@@ -184,9 +184,12 @@
 
 @push('js')
 <script>
-    const token = localStorage.getItem('authToken');
-    if (!token) {
+(function() {
+    // Obtener token del localStorage
+    const dashboardToken = localStorage.getItem('authToken');
+    if (!dashboardToken) {
         window.location.href = '/login';
+        return;
     }
 
     // Cargar estadísticas
@@ -194,7 +197,7 @@
         try {
             // Cargar envíos
             const resEnvios = await fetch(`${window.location.origin}/api/envios`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${dashboardToken}` }
             });
             if (resEnvios.ok) {
                 const envios = await resEnvios.json();
@@ -219,7 +222,7 @@
 
             // Cargar usuarios
             const resUsuarios = await fetch(`${window.location.origin}/api/usuarios`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${dashboardToken}` }
             });
             if (resUsuarios.ok) {
                 const usuarios = await resUsuarios.json();
@@ -228,7 +231,7 @@
 
             // Cargar transportistas
             const resTransportistas = await fetch(`${window.location.origin}/api/transportistas`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${dashboardToken}` }
             });
             if (resTransportistas.ok) {
                 const transportistas = await resTransportistas.json();
@@ -237,7 +240,7 @@
 
             // Cargar vehículos
             const resVehiculos = await fetch(`${window.location.origin}/api/vehiculos`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${dashboardToken}` }
             });
             if (resVehiculos.ok) {
                 const vehiculos = await resVehiculos.json();
@@ -247,25 +250,25 @@
             // --- NUEVOS CONTADORES ---
             
             // Direcciones
-            fetch(`${window.location.origin}/api/ubicaciones`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${window.location.origin}/api/ubicaciones`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
                 .then(r => r.json())
                 .then(d => document.getElementById('total-direcciones').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
                 .catch(e => console.error(e));
 
             // Tipos Vehículo
-            fetch(`${window.location.origin}/api/tipos-vehiculo`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${window.location.origin}/api/tipos-vehiculo`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
                 .then(r => r.json())
                 .then(d => document.getElementById('total-tipos-vehiculo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
                 .catch(e => console.error(e));
 
             // Catálogo Carga
-            fetch(`${window.location.origin}/api/catalogo-carga`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${window.location.origin}/api/catalogo-carga`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
                 .then(r => r.json())
                 .then(d => document.getElementById('total-catalogo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
                 .catch(e => console.error(e));
 
             // Incidentes
-            fetch(`${window.location.origin}/api/tipos-incidente-transporte`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${window.location.origin}/api/tipos-incidente-transporte`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
                 .then(r => r.json())
                 .then(d => document.getElementById('total-incidentes').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
                 .catch(e => console.error(e));
@@ -276,5 +279,6 @@
     }
 
     cargarEstadisticas();
+})();
 </script>
 @endpush

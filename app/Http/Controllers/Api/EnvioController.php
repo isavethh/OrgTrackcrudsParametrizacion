@@ -14,6 +14,8 @@ use App\Models\Transportista;
 use App\Models\Vehiculo;
 use App\Models\ChecklistCondicion;
 use App\Models\ChecklistCondicionDetalle;
+use App\Models\ChecklistIncidente;
+use App\Models\ChecklistIncidenteDetalle;
 use App\Models\IncidentesTransporte;
 use App\Models\CatalogoCarga;
 use App\Models\EstadosAsignacionMultiple;
@@ -27,6 +29,7 @@ use App\Models\FirmaEnvio;
 use App\Models\FirmaTransportista;
 use App\Models\QrToken;
 use App\Models\Usuario;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -421,6 +424,7 @@ class EnvioController extends Controller
 
                 return [
                     'id_asignacion' => $asignacion->id,
+                    'codigo_acceso' => $asignacion->codigo_acceso,
                     'id_transportista' => $asignacion->id_transportista,
                     'id_vehiculo' => $asignacion->id_vehiculo,
                     'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
@@ -622,6 +626,7 @@ class EnvioController extends Controller
 
                     return [
                         'id_asignacion' => $asignacion->id,
+                        'codigo_acceso' => $asignacion->codigo_acceso,
                         'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                         'fecha_asignacion' => $asignacion->fecha_asignacion,
                         'fecha_inicio' => $asignacion->fecha_inicio,
@@ -712,6 +717,7 @@ class EnvioController extends Controller
 
                     return [
                         'id_asignacion' => $asignacion->id,
+                        'codigo_acceso' => $asignacion->codigo_acceso,
                         'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                         'fecha_asignacion' => $asignacion->fecha_asignacion,
                         'fecha_inicio' => $asignacion->fecha_inicio,
@@ -866,14 +872,36 @@ class EnvioController extends Controller
                 // Actualizar estado global del envío
                 EstadoHelper::actualizarEstadoGlobalEnvio($asignacion->id_envio);
 
+                // Generar y guardar código de acceso para la asignación si no existe
+                try {
+                    if (empty($asignacion->codigo_acceso)) {
+                        $attempts = 0;
+                        do {
+                            $codigo = strtoupper(substr(Str::random(8), 0, 8));
+                            $exists = AsignacionMultiple::where('codigo_acceso', $codigo)->exists();
+                            $attempts++;
+                        } while ($exists && $attempts < 5);
+
+                        if (!$exists) {
+                            $asignacion->update(['codigo_acceso' => $codigo]);
+                        } else {
+                            \Log::warning('No se pudo generar un código de acceso único para la asignación ' . $asignacion->id);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error al generar codigo de acceso para asignacion: ' . $e->getMessage());
+                }
+
                 // Generar QR automáticamente (si no existe)
                 $qrToken = QrToken::where('id_asignacion', $id_asignacion)->first();
 
                 if (!$qrToken) {
                     $nuevoToken = \Str::uuid();
+                    // Construir frontend base desde la configuración y asegurar sin slash final
+                    $frontend = rtrim(config('app.frontend_url', config('app.url', 'http://localhost')), '/');
                     // URL específica para validar el QR con el token
-                    $tokenUrl = config('app.frontend_url', 'https://orgtrackprueba.netlify.app') . '/validar-qr/' . $nuevoToken;
-                    
+                    $tokenUrl = $frontend . '/validar-qr/' . $nuevoToken;
+
                     // Generar imagen QR real usando API
                     $qrBase64 = $this->generarQRReal($tokenUrl);
 
@@ -893,6 +921,7 @@ class EnvioController extends Controller
                         'token' => $nuevoToken,
                         'imagenQR' => $qrBase64,
                         'fecha_creacion' => $qrToken->fecha_creacion,
+                        'codigo_acceso' => $asignacion->codigo_acceso ?? null,
                     ]);
                 } else {
                     return response()->json([
@@ -901,6 +930,7 @@ class EnvioController extends Controller
                         'token' => $qrToken->token,
                         'imagenQR' => $qrToken->imagenqr,
                         'fecha_creacion' => $qrToken->fecha_creacion,
+                        'codigo_acceso' => $asignacion->codigo_acceso ?? null,
                     ]);
                 }
             });
@@ -958,6 +988,7 @@ class EnvioController extends Controller
 
                 return [
                     'id_asignacion' => $asignacion->id,
+                    'codigo_acceso' => $asignacion->codigo_acceso,
                     'estado' => $asignacion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_inicio' => $asignacion->fecha_inicio,
                     'fecha_fin' => $asignacion->fecha_fin,
@@ -1032,8 +1063,10 @@ class EnvioController extends Controller
                 }
 
                 // Validar que exista checklist de incidentes
-                $checklist = IncidentesTransporte::where('id_asignacion', $id_asignacion)->first();
-                if (!$checklist) {
+                $checklist = ChecklistIncidente::where('id_asignacion', $id_asignacion)->first();
+                $oldChecklist = IncidentesTransporte::where('id_asignacion', $id_asignacion)->first();
+
+                if (!$checklist && !$oldChecklist) {
                     return response()->json(['error' => 'Debes completar el checklist de incidentes antes de finalizar el viaje.'], 400);
                 }
 
@@ -1163,7 +1196,7 @@ class EnvioController extends Controller
             $id_usuario = $usuario['id'];
 
             $request->validate([
-                'incidentes' => 'required|array|min:1',
+                'incidentes' => 'required|array',
                 'incidentes.*.id_tipo_incidente' => 'required|integer|exists:tipos_incidente_transporte,id',
                 'incidentes.*.descripcion_incidente' => 'nullable|string|max:255',
             ]);
@@ -1192,13 +1225,25 @@ class EnvioController extends Controller
                     return response()->json(['error' => 'Solo puedes registrar el checklist si el viaje está en curso'], 400);
                 }
 
+                // Verificar si ya existe un checklist
+                $yaExiste = ChecklistIncidente::where('id_asignacion', $id_asignacion)->first();
+                if ($yaExiste) {
+                    return response()->json(['error' => 'Este checklist ya fue registrado'], 400);
+                }
+
+                // Crear checklist principal
+                $checklist = ChecklistIncidente::create([
+                    'id_asignacion' => $id_asignacion,
+                    'fecha' => now(),
+                ]);
+
                 // Insertar incidentes (puede haber múltiples)
                 foreach ($request->incidentes as $incidente) {
-                    IncidentesTransporte::create([
-                        'id_asignacion' => $id_asignacion,
+                    ChecklistIncidenteDetalle::create([
+                        'id_checklist' => $checklist->id,
                         'id_tipo_incidente' => $incidente['id_tipo_incidente'],
-                        'descripcion_incidente' => $incidente['descripcion_incidente'] ?? null,
-                        'fecha' => now(),
+                        'ocurrio' => true,
+                        'descripcion' => $incidente['descripcion_incidente'] ?? null,
                     ]);
                 }
 
@@ -1591,6 +1636,7 @@ class EnvioController extends Controller
 
                 return [
                     'id_asignacion' => $particion->id,
+                    'codigo_acceso' => $particion->codigo_acceso,
                     'estado' => $particion->estadoAsignacion?->nombre ?? 'Pendiente',
                     'fecha_asignacion' => $particion->fecha_asignacion,
                     'fecha_inicio' => $particion->fecha_inicio,

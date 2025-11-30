@@ -224,6 +224,7 @@ CREATE TABLE asignacionmultiple (
     id_recogida_entrega  INTEGER     NOT NULL,
     id_tipo_transporte   INTEGER     NOT NULL,
     id_estado_asignacion INTEGER     NOT NULL,
+    codigo_acceso        VARCHAR(50) UNIQUE,
     fecha_asignacion     TIMESTAMPTZ NOT NULL DEFAULT now(),
     fecha_inicio         TIMESTAMPTZ,
     fecha_fin            TIMESTAMPTZ,

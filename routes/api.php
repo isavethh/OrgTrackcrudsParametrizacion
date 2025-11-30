@@ -140,10 +140,18 @@ Route::middleware([])->group(function () {
     });
 
     // Routes QR Tokens
+    // Public QR validation (no JWT) - used by scanned QR page
+    Route::post('/qr/validar-public', [QrController::class, 'validarQrToken']);
+    // Public endpoint that validates token + codigo_acceso and returns asignacion (does not modify QR state)
+    Route::post('/qr/codigoacceso', [QrController::class, 'validarCodigoAcceso']);
+    // Public endpoint to save signature from QR page (no JWT required)
+    Route::post('/firmas/envio/{id_asignacion}', [FirmaController::class, 'guardarFirmaEnvio']);
+
     Route::middleware('jwt')->prefix('qr')->group(function () {
         Route::get('/generar/{id_asignacion}', [QrController::class, 'generarQrToken']);
         Route::get('/{id_asignacion}', [QrController::class, 'obtenerQrToken']);
         Route::get('/transportista/{id_asignacion}', [QrController::class, 'obtenerQR']);
+        // legacy/secured validar (kept) - jwt required
         Route::post('/validar', [QrController::class, 'validarQrToken']);
         Route::get('/cliente/tokens', [QrController::class, 'obtenerQrTokensCliente']);
         Route::delete('/{id_asignacion}', [QrController::class, 'eliminarQrToken']);
