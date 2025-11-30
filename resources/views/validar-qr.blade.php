@@ -1,58 +1,131 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-    <div class="relative py-3 sm:max-w-xl sm:mx-auto w-full px-4 sm:px-0">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación de Envío - OrgTrack</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <style>
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .validation-card {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .code-input {
+            font-size: 1.25rem;
+            text-align: center;
+            letter-spacing: 0.15em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .signature-canvas {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+        }
         
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .code-input {
+                font-size: 1rem;
+                letter-spacing: 0.1em;
+            }
+            .validation-card .card-body {
+                padding: 2rem 1.5rem !important;
+            }
+            .card-title {
+                font-size: 1.5rem !important;
+            }
+            .icon-circle {
+                width: 60px !important;
+                height: 60px !important;
+            }
+            .icon-circle i {
+                font-size: 2rem !important;
+            }
+            .info-box-number, .small-box h4 {
+                font-size: 1rem !important;
+            }
+            .table {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
         <!-- Sección de Ingreso de Código -->
-        <div id="seccion-codigo" class="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-            <div class="max-w-md mx-auto">
-                <div class="divide-y divide-gray-200">
-                    <div class="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                        <div class="text-center mb-8">
-                            <h2 class="text-3xl font-extrabold text-gray-900">Validación de Envío</h2>
-                            <p class="text-gray-500 mt-2">Ingrese el código de seguridad para acceder al documento.</p>
+        <div id="seccion-codigo" class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                <div class="card card-primary card-outline validation-card">
+                    <div class="card-body text-center p-4 p-md-5">
+                        <div class="mb-4">
+                            <div class="icon-circle d-inline-flex align-items-center justify-content-center bg-primary rounded-circle" style="width: 80px; height: 80px;">
+                                <i class="fas fa-lock text-white" style="font-size: 2.5rem;"></i>
+                            </div>
                         </div>
-                        <div class="relative">
-                            <input autocomplete="off" id="inputCodigo" name="codigo" type="text" class="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-blue-600 text-center text-2xl tracking-widest" placeholder="Código" />
-                            <label for="codigo" class="absolute left-0 -top-3.5 text-gray-600 text-sm peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-440 peer-placeholder-shown:top-2 transition-all peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm">Código de Acceso</label>
+                        <div class="w-100">
+                            <h2 class="mb-3" style="font-size: 1.8rem; font-weight: 700;">Validación de Envío</h2>
+                            <p class="text-muted mb-4">Ingrese el código de acceso proporcionado para ver el documento</p>
                         </div>
-                        <div class="pt-6 text-base leading-6 font-bold sm:text-lg sm:leading-7">
-                            <button id="btnValidarCodigo" class="w-full bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-1">
-                                Validar Documento
-                            </button>
+                        
+                        <div class="form-group">
+                            <input type="text" id="inputCodigo" class="form-control form-control-lg code-input" placeholder="CÓDIGO" maxlength="10">
                         </div>
-                        <p id="mensajeError" class="text-red-500 text-sm mt-2 text-center hidden"></p>
+                        
+                        <button id="btnValidarCodigo" class="btn btn-primary btn-lg btn-block">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Validar Código
+                        </button>
+                        
+                        <div id="mensajeError" class="alert alert-danger mt-3" style="display: none;">
+                            <i class="icon fas fa-ban"></i>
+                            <span id="textoError"></span>
+                        </div>
                     </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Conexión segura - OrgTrack
+                    </small>
                 </div>
             </div>
         </div>
 
-        <!-- Contenedor del Documento (Oculto inicialmente) -->
-        <div id="contenedor-particion" class="hidden relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-10 print:shadow-none print:p-0">
+        <!-- Contenedor del Documento -->
+        <div id="contenedor-particion" style="display: none;">
             <!-- Content injected by JS -->
         </div>
-
     </div>
-</div>
-@endsection
 
-@section('scripts')
-<script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    
+    <script>
 document.addEventListener("DOMContentLoaded", async () => {
     const seccionCodigo = document.getElementById("seccion-codigo");
     const inputCodigo = document.getElementById("inputCodigo");
     const btnValidarCodigo = document.getElementById("btnValidarCodigo");
     const mensajeError = document.getElementById("mensajeError");
+    const textoError = document.getElementById("textoError");
     const contenedorParticion = document.getElementById("contenedor-particion");
     
-    // Variables globales para el estado
     let idAsignacionActual = null;
-    const token = localStorage.getItem("token");
 
-    // Función para validar código
     async function validarCodigo() {
-        const codigo = inputCodigo.value.trim();
+        const codigo = inputCodigo.value.trim().toUpperCase();
         if (!codigo) {
             mostrarError("Por favor ingrese un código.");
             return;
@@ -60,7 +133,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         mostrarError("", false);
         btnValidarCodigo.disabled = true;
-        btnValidarCodigo.textContent = "Validando...";
+        btnValidarCodigo.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Validando...';
 
         try {
             const response = await fetch('/api/qr/codigoacceso', {
@@ -75,11 +148,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const data = await response.json();
 
             if (response.ok && data.valido) {
-                // Éxito
                 idAsignacionActual = data.asignacion.id_asignacion;
                 renderizarDocumento(data.asignacion);
-                seccionCodigo.classList.add("hidden");
-                contenedorParticion.classList.remove("hidden");
+                seccionCodigo.style.display = 'none';
+                contenedorParticion.style.display = 'block';
             } else {
                 mostrarError(data.error || "Código inválido. Intente nuevamente.");
             }
@@ -88,294 +160,341 @@ document.addEventListener("DOMContentLoaded", async () => {
             mostrarError("Error de conexión. Verifique su internet.");
         } finally {
             btnValidarCodigo.disabled = false;
-            btnValidarCodigo.textContent = "Validar Documento";
+            btnValidarCodigo.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Validar Código';
         }
     }
 
     function mostrarError(msg, show = true) {
-        mensajeError.textContent = msg;
-        if (show) mensajeError.classList.remove("hidden");
-        else mensajeError.classList.add("hidden");
+        if(textoError) textoError.textContent = msg;
+        mensajeError.style.display = show ? 'block' : 'none';
     }
 
-    // Event Listeners para el código
     btnValidarCodigo.addEventListener("click", validarCodigo);
     inputCodigo.addEventListener("keypress", (e) => {
         if (e.key === "Enter") validarCodigo();
     });
 
-    function getStatusColor(status) {
+    function getBadgeClass(status) {
         switch(status?.toLowerCase()) {
-            case 'entregado': return 'bg-green-100 text-green-800';
-            case 'en curso': return 'bg-blue-100 text-blue-800';
-            case 'pendiente': return 'bg-yellow-100 text-yellow-800';
-            case 'cancelado': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'entregado': return 'badge-success';
+            case 'en curso': return 'badge-primary';
+            case 'pendiente': return 'badge-warning';
+            case 'cancelado': return 'badge-danger';
+            default: return 'badge-secondary';
         }
     }
 
-    // Función para renderizar el documento
     function renderizarDocumento(asignacion) {
         const fechaRecogida = asignacion.recogida_entrega?.fecha_recogida 
-            ? new Date(asignacion.recogida_entrega.fecha_recogida).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
+            ? new Date(asignacion.recogida_entrega.fecha_recogida).toLocaleDateString("es-ES")
             : new Date().toLocaleDateString("es-ES");
 
-        const horaRecogida = asignacion.recogida_entrega?.hora_recogida 
-            ? (asignacion.recogida_entrega.hora_recogida.length > 5 ? asignacion.recogida_entrega.hora_recogida.slice(0, 5) : asignacion.recogida_entrega.hora_recogida)
-            : 'Sin rellenar';
-            
-        const horaEntrega = asignacion.recogida_entrega?.hora_entrega
-            ? (asignacion.recogida_entrega.hora_entrega.length > 5 ? asignacion.recogida_entrega.hora_entrega.slice(0, 5) : asignacion.recogida_entrega.hora_entrega)
-            : 'Sin rellenar';
+        const horaRecogida = asignacion.recogida_entrega?.hora_recogida?.slice(0, 5) || 'N/A';
+        const horaEntrega = asignacion.recogida_entrega?.hora_entrega?.slice(0, 5) || 'N/A';
 
         contenedorParticion.innerHTML = `
-            <div class="space-y-6">
-                <!-- Header -->
-                <div class="flex justify-between items-start border-b pb-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">ORDEN DE ENVÍO</h1>
-                        <p class="text-sm text-gray-500">#${asignacion.id_asignacion}</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(asignacion.estado)}">
-                            ${asignacion.estado}
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="card-title mb-0" style="font-size: 1.5rem; font-weight: 700;">
+                                        <i class="fas fa-file-invoice mr-2"></i>
+                                        ORDEN DE ENVÍO
+                                    </h3>
+                                    <small class="text-muted">ID: #${asignacion.id_asignacion}</small>
+                                </div>
+                                <div class="text-right">
+                                    <span class="badge ${getBadgeClass(asignacion.estado)} badge-lg" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        ${asignacion.estado}
+                                    </span>
+                                    <div class="text-muted mt-1"><small>${fechaRecogida}</small></div>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">${fechaRecogida}</p>
-                    </div>
-                </div>
+                        
+                        <div class="card-body">
+                            <!-- Información de Personas -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="info-box bg-light">
+                                        <span class="info-box-icon bg-primary"><i class="fas fa-user"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Cliente</span>
+                                            <span class="info-box-number">${asignacion.cliente?.nombre || ''} ${asignacion.cliente?.apellido || ''}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-box bg-light">
+                                        <span class="info-box-icon bg-success"><i class="fas fa-user-tie"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Transportista</span>
+                                            <span class="info-box-number">${asignacion.transportista?.nombre || ''} ${asignacion.transportista?.apellido || ''}</span>
+                                            <small>CI: ${asignacion.transportista?.ci || 'N/A'} | Tel: ${asignacion.transportista?.telefono || 'N/A'}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Personas -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Cliente</h3>
-                        <p class="font-medium text-gray-900">${asignacion.cliente?.nombre || ''} ${asignacion.cliente?.apellido || ''}</p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Transportista</h3>
-                        <p class="font-medium text-gray-900">${asignacion.transportista?.nombre || ''} ${asignacion.transportista?.apellido || ''}</p>
-                        <p class="text-sm text-gray-600">CI: ${asignacion.transportista?.ci || 'N/A'}</p>
-                        <p class="text-sm text-gray-600">Tel: ${asignacion.transportista?.telefono || 'N/A'}</p>
-                    </div>
-                </div>
+                            <!-- Ruta -->
+                            <div class="card card-outline card-info mb-4">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-route mr-2"></i>Detalles de Ruta</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="timeline">
+                                        <div class="time-label">
+                                            <span class="bg-success">Recogida</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-map-marker-alt bg-success"></i>
+                                            <div class="timeline-item">
+                                                <h3 class="timeline-header"><strong>${asignacion.origen}</strong></h3>
+                                                <div class="timeline-body">
+                                                    <p class="mb-1"><i class="far fa-clock mr-1"></i> ${horaRecogida}</p>
+                                                    ${asignacion.recogida_entrega?.instrucciones_recogida ? `<div class="alert alert-info mb-0"><small><strong>Instrucciones:</strong> ${asignacion.recogida_entrega.instrucciones_recogida}</small></div>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="time-label">
+                                            <span class="bg-danger">Entrega</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-map-marker-alt bg-danger"></i>
+                                            <div class="timeline-item">
+                                                <h3 class="timeline-header"><strong>${asignacion.destino}</strong></h3>
+                                                <div class="timeline-body">
+                                                    <p class="mb-1"><i class="far fa-clock mr-1"></i> ${horaEntrega}</p>
+                                                    ${asignacion.recogida_entrega?.instrucciones_entrega ? `<div class="alert alert-info mb-0"><small><strong>Instrucciones:</strong> ${asignacion.recogida_entrega.instrucciones_entrega}</small></div>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-clock bg-gray"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Ruta -->
-                <div class="border-t border-b border-gray-200 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Origen</h3>
-                            <p class="text-gray-900">${asignacion.origen}</p>
-                            <p class="text-sm text-gray-500 mt-1">Recogida: ${horaRecogida}</p>
-                            ${asignacion.recogida_entrega?.instrucciones_recogida ? `<p class="text-xs text-gray-500 mt-1 italic">"${asignacion.recogida_entrega.instrucciones_recogida}"</p>` : ''}
-                        </div>
-                        <div>
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Destino</h3>
-                            <p class="text-gray-900">${asignacion.destino}</p>
-                            <p class="text-sm text-gray-500 mt-1">Entrega: ${horaEntrega}</p>
-                            ${asignacion.recogida_entrega?.instrucciones_entrega ? `<p class="text-xs text-gray-500 mt-1 italic">"${asignacion.recogida_entrega.instrucciones_entrega}"</p>` : ''}
-                        </div>
-                    </div>
-                </div>
+                            <!-- Vehículo y Transporte -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="small-box bg-light">
+                                        <div class="inner">
+                                            <h4>${asignacion.vehiculo?.tipo || 'N/A'}</h4>
+                                            <p>Placa: <strong>${asignacion.vehiculo?.placa || 'N/A'}</strong></p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small-box bg-light">
+                                        <div class="inner">
+                                            <h4>${asignacion.tipo_transporte || 'N/A'}</h4>
+                                            <p>Tipo de Transporte</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-dolly"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Vehiculo y Transporte -->
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-gray-500">Vehículo:</span>
-                        <span class="font-medium ml-2">${asignacion.vehiculo?.tipo || 'N/A'} - ${asignacion.vehiculo?.placa || 'N/A'}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-500">Tipo Transporte:</span>
-                        <span class="font-medium ml-2">${asignacion.tipo_transporte || 'N/A'}</span>
-                    </div>
-                </div>
+                            <!-- Carga -->
+                            <div class="card card-outline card-warning mb-4">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-boxes mr-2"></i>Detalles de Carga</h3>
+                                </div>
+                                <div class="card-body p-0">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Tipo</th>
+                                                <th>Variedad</th>
+                                                <th>Empaque</th>
+                                                <th class="text-right">Cantidad</th>
+                                                <th class="text-right">Peso (kg)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${asignacion.cargas?.map(c => `
+                                                <tr>
+                                                    <td><strong>${c.catalogo?.tipo || ''}</strong></td>
+                                                    <td>${c.catalogo?.variedad || ''}</td>
+                                                    <td><span class="badge badge-secondary">${c.catalogo?.empaque || ''}</span></td>
+                                                    <td class="text-right">${c.cantidad}</td>
+                                                    <td class="text-right"><strong>${c.peso}</strong></td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
 
-                <!-- Carga -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Detalles de Carga</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalle</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cant.</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Peso</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${asignacion.cargas?.map(c => `
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${c.catalogo?.tipo || ''}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                                            ${c.catalogo?.variedad || ''} 
-                                            <span class="text-xs text-gray-400">(${c.catalogo?.empaque || ''})</span>
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">${c.cantidad}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">${c.peso} kg</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Botón Firmar -->
-                <div id="zona-firma-wrapper" class="mt-8 pt-6 border-t border-gray-200">
-                    <button id="btnMostrarFirma" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Firmar de Conformidad
-                    </button>
-
-                    <!-- Área de Firma (Inline, oculta inicialmente) -->
-                    <div id="areaFirma" class="hidden mt-4 bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-300">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-semibold text-gray-700">Su Firma:</h3>
-                            <button id="btnCancelarFirma" class="text-sm text-red-500 hover:text-red-700">Cancelar</button>
-                        </div>
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <canvas id="canvas" class="w-full h-48 touch-none cursor-crosshair"></canvas>
-                        </div>
-                        <div class="flex gap-3 mt-4">
-                            <button id="limpiarBtn" class="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition">Limpiar</button>
-                            <button id="guardarBtn" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition">Guardar Firma</button>
+                            <!-- Botón Firmar -->
+                            <div id="zona-firma-wrapper">
+                                <button id="btnMostrarFirma" class="btn btn-success btn-lg btn-block">
+                                    <i class="fas fa-pen-fancy mr-2"></i>
+                                    Firmar de Conformidad
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        // Configurar eventos de firma
         setupFirmaEvents();
     }
 
     function setupFirmaEvents() {
         const btnMostrarFirma = document.getElementById("btnMostrarFirma");
-        const areaFirma = document.getElementById("areaFirma");
-        const btnCancelarFirma = document.getElementById("btnCancelarFirma");
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-        let dibujando = false;
+        const zonaFirmaWrapper = document.getElementById("zona-firma-wrapper");
 
-        // Mostrar área de firma
         btnMostrarFirma.addEventListener("click", () => {
-            btnMostrarFirma.classList.add("hidden");
-            areaFirma.classList.remove("hidden");
-            ajustarTamañoCanvas();
-        });
+            zonaFirmaWrapper.innerHTML = `
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-signature mr-2"></i>Captura de Firma</h3>
+                        <div class="card-tools">
+                            <button type="button" id="btnCancelarFirma" class="btn btn-tool">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Por favor firme en el recuadro de abajo</p>
+                        <canvas id="canvas" class="signature-canvas" width="700" height="200" style="width: 100%; background: white;"></canvas>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-6">
+                                <button id="limpiarBtn" class="btn btn-default btn-block">
+                                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button id="guardarBtn" class="btn btn-success btn-block">
+                                    <i class="fas fa-save mr-2"></i>Guardar Firma
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-        // Cancelar firma
-        btnCancelarFirma.addEventListener("click", () => {
-            areaFirma.classList.add("hidden");
-            btnMostrarFirma.classList.remove("hidden");
-            limpiarCanvas();
-        });
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            let dibujando = false;
 
-        function ajustarTamañoCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = 192; // h-48 = 12rem = 192px
-            
+            const btnCancelarFirma = document.getElementById("btnCancelarFirma");
+            btnCancelarFirma.addEventListener("click", () => {
+                zonaFirmaWrapper.innerHTML = `
+                    <button id="btnMostrarFirma" class="btn btn-success btn-lg btn-block">
+                        <i class="fas fa-pen-fancy mr-2"></i>Firmar de Conformidad
+                    </button>
+                `;
+                setupFirmaEvents();
+            });
+
             ctx.lineWidth = 3;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
             ctx.strokeStyle = "#000000";
-            limpiarCanvas();
-        }
 
-        function limpiarCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function obtenerCoordenadas(event) {
-            const rect = canvas.getBoundingClientRect();
-            let x, y;
-
-            if (event.touches && event.touches.length > 0) {
-                const touch = event.touches[0];
-                x = (touch.clientX - rect.left);
-                y = (touch.clientY - rect.top);
-            } else {
-                x = (event.clientX - rect.left);
-                y = (event.clientY - rect.top);
+            function limpiarCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
-            return { x, y };
-        }
 
-        // Eventos de dibujo
-        const startDraw = (e) => {
-            dibujando = true;
-            const { x, y } = obtenerCoordenadas(e);
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            if(e.type === 'touchstart') e.preventDefault();
-        };
-
-        const moveDraw = (e) => {
-            if (!dibujando) return;
-            const { x, y } = obtenerCoordenadas(e);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            if(e.type === 'touchmove') e.preventDefault();
-        };
-
-        const endDraw = () => { dibujando = false; };
-
-        canvas.addEventListener("mousedown", startDraw);
-        canvas.addEventListener("mousemove", moveDraw);
-        canvas.addEventListener("mouseup", endDraw);
-        canvas.addEventListener("mouseleave", endDraw);
-
-        canvas.addEventListener("touchstart", startDraw, { passive: false });
-        canvas.addEventListener("touchmove", moveDraw, { passive: false });
-        canvas.addEventListener("touchend", endDraw);
-
-        // Botones de acción
-        document.getElementById("limpiarBtn").addEventListener("click", limpiarCanvas);
-
-        document.getElementById("guardarBtn").addEventListener("click", async () => {
-            if (!idAsignacionActual) return;
-
-            const btnGuardar = document.getElementById("guardarBtn");
-            const originalText = btnGuardar.textContent;
-            btnGuardar.disabled = true;
-            btnGuardar.textContent = "Guardando...";
-
-            const dataURL = canvas.toDataURL("image/png");
-
-            try {
-                const response = await fetch(`/api/firmas/envio/${idAsignacionActual}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ imagenFirma: dataURL })
-                });
-
-                const resultado = await response.json();
-                if (response.ok) {
-                    alert("✅ Firma guardada correctamente.");
-                    areaFirma.innerHTML = `
-                        <div class="text-center py-8 text-green-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-lg font-semibold">Documento firmado exitosamente</p>
-                        </div>
-                    `;
+            function obtenerCoordenadas(event) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                let x, y;
+                if (event.touches && event.touches.length > 0) {
+                    const touch = event.touches[0];
+                    x = (touch.clientX - rect.left) * scaleX;
+                    y = (touch.clientY - rect.top) * scaleY;
                 } else {
-                    alert(`Error al guardar firma: ${resultado.error || "Inténtalo de nuevo."}`);
-                    btnGuardar.disabled = false;
-                    btnGuardar.textContent = originalText;
+                    x = (event.clientX - rect.left) * scaleX;
+                    y = (event.clientY - rect.top) * scaleY;
                 }
-            } catch (error) {
-                console.error("Error al guardar firma:", error);
-                alert("Error al conectar con el servidor.");
-                btnGuardar.disabled = false;
-                btnGuardar.textContent = originalText;
+                return { x, y };
             }
+
+            const startDraw = (e) => {
+                dibujando = true;
+                const { x, y } = obtenerCoordenadas(e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                if(e.type === 'touchstart') e.preventDefault();
+            };
+
+            const moveDraw = (e) => {
+                if (!dibujando) return;
+                const { x, y } = obtenerCoordenadas(e);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                if(e.type === 'touchmove') e.preventDefault();
+            };
+
+            const endDraw = () => { dibujando = false; };
+
+            canvas.addEventListener("mousedown", startDraw);
+            canvas.addEventListener("mousemove", moveDraw);
+            canvas.addEventListener("mouseup", endDraw);
+            canvas.addEventListener("mouseleave", endDraw);
+            canvas.addEventListener("touchstart", startDraw, { passive: false });
+            canvas.addEventListener("touchmove", moveDraw, { passive: false });
+            canvas.addEventListener("touchend", endDraw);
+
+            document.getElementById("limpiarBtn").addEventListener("click", limpiarCanvas);
+
+            document.getElementById("guardarBtn").addEventListener("click", async () => {
+                if (!idAsignacionActual) return;
+
+                const btnGuardar = document.getElementById("guardarBtn");
+                const originalText = btnGuardar.innerHTML;
+                btnGuardar.disabled = true;
+                btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+
+                const dataURL = canvas.toDataURL("image/png");
+
+                try {
+                    const response = await fetch(`/api/firmas/envio/${idAsignacionActual}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ imagenFirma: dataURL })
+                    });
+
+                    const resultado = await response.json();
+                    if (response.ok) {
+                        zonaFirmaWrapper.innerHTML = `
+                            <div class="alert alert-success">
+                                <h5><i class="icon fas fa-check"></i> ¡Firma guardada correctamente!</h5>
+                                El documento ha sido firmado exitosamente.
+                            </div>
+                        `;
+                    } else {
+                        alert(`Error: ${resultado.error || "Inténtalo de nuevo."}`);
+                        btnGuardar.disabled = false;
+                        btnGuardar.innerHTML = originalText;
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error al conectar con el servidor.");
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = originalText;
+                }
+            });
         });
     }
 });
 </script>
-@endsection
+</body>
+</html>
