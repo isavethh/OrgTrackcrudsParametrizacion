@@ -29,6 +29,104 @@ Verifica que la API esté funcionando correctamente.
 
 ---
 
+## Catálogos
+
+### 1. Listar tipos de empaque
+
+**Endpoint**: `GET /tipos-empaque`
+
+**Descripción**: Obtiene todos los tipos de empaque disponibles desde OrgTrack. Los sistemas externos (como AgroNexus) deben usar estos valores al crear envíos.
+
+**Respuesta de ejemplo**:
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "nombre": "Caja de Cartón",
+            "descripcion": "Caja de cartón corrugado",
+            "created_at": "2025-11-29T05:30:00.000000Z",
+            "updated_at": "2025-11-29T05:30:00.000000Z"
+        },
+        {
+            "id": 2,
+            "nombre": "Bolsa Plástica",
+            "descripcion": "Bolsa de plástico resistente",
+            "created_at": "2025-11-29T05:30:00.000000Z",
+            "updated_at": "2025-11-29T05:30:00.000000Z"
+        }
+    ]
+}
+```
+
+### 2. Ver un tipo de empaque específico
+
+**Endpoint**: `GET /tipos-empaque/{id}`
+
+**Respuesta de ejemplo**:
+```json
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "nombre": "Caja de Cartón",
+        "descripcion": "Caja de cartón corrugado",
+        "created_at": "2025-11-29T05:30:00.000000Z",
+        "updated_at": "2025-11-29T05:30:00.000000Z"
+    }
+}
+```
+
+### 3. Listar unidades de medida
+
+**Endpoint**: `GET /unidades-medida`
+
+**Descripción**: Obtiene todas las unidades de medida disponibles desde OrgTrack. Los sistemas externos (como AgroNexus) deben usar estos valores al crear envíos.
+
+**Respuesta de ejemplo**:
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "nombre": "Kilogramo",
+            "abreviatura": "kg",
+            "created_at": "2025-11-29T05:30:00.000000Z",
+            "updated_at": "2025-11-29T05:30:00.000000Z"
+        },
+        {
+            "id": 2,
+            "nombre": "Gramo",
+            "abreviatura": "g",
+            "created_at": "2025-11-29T05:30:00.000000Z",
+            "updated_at": "2025-11-29T05:30:00.000000Z"
+        }
+    ]
+}
+```
+
+### 4. Ver una unidad de medida específica
+
+**Endpoint**: `GET /unidades-medida/{id}`
+
+**Respuesta de ejemplo**:
+```json
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "nombre": "Kilogramo",
+        "abreviatura": "kg",
+        "created_at": "2025-11-29T05:30:00.000000Z",
+        "updated_at": "2025-11-29T05:30:00.000000Z"
+    }
+}
+```
+
+---
+
 ## Direcciones
 
 ### 1. Listar todas las direcciones
@@ -485,6 +583,10 @@ Los envíos pueden tener los siguientes estados:
 ```php
 use Illuminate\Support\Facades\Http;
 
+// Obtener catálogos desde OrgTrack
+$tiposEmpaque = Http::get('http://localhost:8001/api/tipos-empaque');
+$unidadesMedida = Http::get('http://localhost:8001/api/unidades-medida');
+
 // Crear dirección
 $direccion = Http::post('http://localhost:8001/api/direcciones', [
     'nombreorigen' => 'Origen',
@@ -495,22 +597,22 @@ $direccion = Http::post('http://localhost:8001/api/direcciones', [
     'destino_lng' => -68.15,
 ]);
 
-// Crear envío
+// Crear envío (usando IDs de los catálogos obtenidos)
 $envio = Http::post('http://localhost:8001/api/envios', [
     'usuario_nombre' => 'Juan Pérez',
-    'sistema_origen' => 'agronexus',
-    'direccion_id' => 1,
+    'usuario_correo' => 'juan@example.com',
+    'id_direccion' => 1,
     'fecha_entrega_aproximada' => '2025-12-01',
     'hora_entrega_aproximada' => '14:30',
-    'insumos' => [
+    'productos' => [
         [
-            'nombre_insumo' => 'Fertilizante',
-            'tipo_insumo' => 'Fertilizantes',
+            'categoria' => 'Insumos',
+            'producto' => 'Fertilizante Orgánico',
             'cantidad' => 10,
             'peso_por_unidad' => 5.0,
             'costo_unitario' => 15.0,
-            'tipo_empaque' => 'Bolsa',
-            'unidad_medida' => 'Kg',
+            'id_tipo_empaque' => 1, // ID obtenido del catálogo
+            'id_unidad_medida' => 1, // ID obtenido del catálogo
         ]
     ],
 ]);
@@ -520,14 +622,12 @@ if ($envio->successful()) {
     // Procesar datos
 }
 
-// Listar envíos de un sistema
-$envios = Http::get('http://localhost:8001/api/envios', [
-    'sistema_origen' => 'agronexus'
-]);
+// Listar envíos
+$envios = Http::get('http://localhost:8001/api/envios');
 
-// Actualizar estado
+// Actualizar envío
 $actualizar = Http::put('http://localhost:8001/api/envios/1', [
-    'estado' => 'en_transito'
+    'fecha_entrega_aproximada' => '2025-12-02'
 ]);
 ```
 
@@ -537,17 +637,19 @@ $actualizar = Http::put('http://localhost:8001/api/envios/1', [
 
 1. **Sincronización**: Los sistemas AgroNexus y OrgTrack envían datos a esta API y también mantienen una copia local para funcionalidades específicas (como tracking en OrgTrack).
 
-2. **Formato de datos**: 
+2. **Catálogos centralizados**: Los tipos de empaque y unidades de medida se gestionan desde OrgTrack. Los sistemas externos (como AgroNexus) **DEBEN** consumir estos catálogos desde la API antes de crear envíos para usar los IDs correctos.
+
+3. **Formato de datos**: 
    - Las fechas deben estar en formato ISO 8601: `YYYY-MM-DD`
    - Las horas en formato 24h: `HH:mm`
    - Los decimales pueden usar punto como separador
    - El nombre del usuario debe enviarse completo desde el sistema origen
 
-3. **Tolerancia a fallos**: Los sistemas cliente deben implementar manejo de errores en caso de que la API no esté disponible.
+4. **Tolerancia a fallos**: Los sistemas cliente deben implementar manejo de errores en caso de que la API no esté disponible.
 
-4. **Validación**: La API valida todos los campos requeridos y retorna errores detallados en caso de datos inválidos.
+5. **Validación**: La API valida todos los campos requeridos y retorna errores detallados en caso de datos inválidos.
 
-5. **Base de datos**: La API usa PostgreSQL y está configurada para correr en el puerto 8001 por defecto.
+6. **Base de datos**: La API usa PostgreSQL y está configurada para correr en el puerto 8001 por defecto.
 
 ---
 

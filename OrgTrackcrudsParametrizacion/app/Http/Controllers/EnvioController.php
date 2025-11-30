@@ -17,7 +17,7 @@ class EnvioController extends Controller
 {
     public function index()
     {
-        $envios = Envio::with(['usuario', 'direccion', 'historialEstados.estadoEnvio'])
+        $envios = Envio::with(['usuario', 'direccion', 'productos', 'tipoVehiculo', 'transportistaAsignado', 'historialEstados.estadoEnvio'])
             ->orderBy('fecha_creacion', 'desc')
             ->get();
         return view('envios.index', compact('envios'));
@@ -112,7 +112,16 @@ class EnvioController extends Controller
 
     public function show(Envio $envio)
     {
-        $envio->load(['usuario', 'direccion', 'historialEstados.estadoEnvio', 'asignaciones']);
+        $envio->load([
+            'usuario', 
+            'direccion', 
+            'productos.tipoEmpaque', 
+            'productos.unidadMedida',
+            'tipoVehiculo',
+            'transportistaAsignado',
+            'historialEstados.estadoEnvio', 
+            'asignaciones'
+        ]);
         return view('envios.show', compact('envio'));
     }
 
@@ -198,5 +207,98 @@ class EnvioController extends Controller
 
         return redirect()->route('envios.index')
             ->with('success', 'Envío eliminado exitosamente.');
+    }
+
+    public function aprobar(Request $request, Envio $envio)
+    {
+        try {
+            $validated = $request->validate([
+                'transportista_id' => 'required|exists:usuarios,id',
+            ]);
+
+            \Log::info("Intentando aprobar envío", [
+                'envio_id' => $envio->id,
+                'transportista_id' => $validated['transportista_id']
+            ]);
+
+            // Actualizar en la base de datos local
+            $envio->update([
+                'estado_aprobacion' => 'aprobado',
+                'id_transportista_asignado' => $validated['transportista_id'],
+            ]);
+
+            \Log::info("Envío actualizado localmente", ['envio_id' => $envio->id]);
+
+            // Actualizar en la API
+            $response = \Illuminate\Support\Facades\Http::post("http://localhost:8001/api/envios/{$envio->id}/aprobar", [
+                'id_transportista_asignado' => $validated['transportista_id'],
+            ]);
+
+            if (!$response->successful()) {
+                \Log::warning("No se pudo actualizar el envío en la API", [
+                    'envio_id' => $envio->id,
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+            } else {
+                \Log::info("Envío actualizado en la API exitosamente", ['envio_id' => $envio->id]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Envío aprobado y transportista asignado exitosamente'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error("Error de validación al aprobar envío", ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error("Error al aprobar envío", [
+                'envio_id' => $envio->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al aprobar envío: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function rechazar(Request $request, Envio $envio)
+    {
+        $validated = $request->validate([
+            'motivo_rechazo' => 'required|string|min:10',
+        ]);
+
+        try {
+            // Actualizar en la base de datos local
+            $envio->update([
+                'estado_aprobacion' => 'rechazado',
+                'motivo_rechazo' => $validated['motivo_rechazo'],
+            ]);
+
+            // Actualizar en la API
+            $response = \Illuminate\Support\Facades\Http::post("http://localhost:8001/api/envios/{$envio->id}/rechazar", [
+                'motivo_rechazo' => $validated['motivo_rechazo'],
+            ]);
+
+            if (!$response->successful()) {
+                \Log::warning("No se pudo actualizar el envío en la API", ['envio_id' => $envio->id]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Envío rechazado exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al rechazar envío: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

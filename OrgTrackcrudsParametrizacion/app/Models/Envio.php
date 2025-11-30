@@ -21,10 +21,14 @@ class Envio extends Model
         'fecha_entrega_aproximada',
         'hora_entrega_aproximada',
         'id_direccion',
+        'id_tipo_vehiculo',
+        'id_transportista_asignado',
         'peso_total_envio',
         'costo_total_envio',
         'codigo_qr',
         'estado_tracking',
+        'estado_aprobacion',
+        'motivo_rechazo',
         'fecha_inicio_tracking',
         'fecha_fin_tracking',
         'ubicacion_actual_lat',
@@ -65,6 +69,16 @@ class Envio extends Model
     public function productos()
     {
         return $this->hasMany(EnvioProducto::class, 'id_envio');
+    }
+
+    public function tipoVehiculo()
+    {
+        return $this->belongsTo(TipoVehiculo::class, 'id_tipo_vehiculo');
+    }
+
+    public function transportistaAsignado()
+    {
+        return $this->belongsTo(Usuario::class, 'id_transportista_asignado');
     }
     
     protected static function boot()

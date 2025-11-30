@@ -38,6 +38,8 @@ Route::resource('direcciones', DireccionController::class);
 
 // CRUD de Envíos
 Route::resource('envios', EnvioController::class);
+Route::post('envios/{envio}/aprobar', [EnvioController::class, 'aprobar'])->name('envios.aprobar');
+Route::post('envios/{envio}/rechazar', [EnvioController::class, 'rechazar'])->name('envios.rechazar');
 
 // Rutas en Tiempo Real
 Route::get('rutas-tiempo-real', [RutaTiempoRealController::class, 'index'])->name('rutas-tiempo-real.index');

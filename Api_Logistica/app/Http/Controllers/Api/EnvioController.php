@@ -19,7 +19,7 @@ class EnvioController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Envio::with(['usuario', 'direccion', 'productos', 'historialEstados.estadoEnvio']);
+        $query = Envio::with(['usuario', 'direccion', 'productos', 'tipoVehiculo', 'transportistaAsignado', 'historialEstados.estadoEnvio']);
 
         $envios = $query->orderBy('fecha_creacion', 'desc')->get();
 
@@ -48,6 +48,7 @@ class EnvioController extends Controller
                 'usuario_nombre' => 'required_without:id_usuario|string',
                 'usuario_correo' => 'required_without:id_usuario|email',
                 'id_direccion' => 'required|exists:direccion,id',
+                'id_tipo_vehiculo' => 'nullable|exists:tipos_vehiculo,id',
                 'fecha_entrega_aproximada' => 'nullable|date',
                 'hora_entrega_aproximada' => 'nullable|date_format:H:i',
                 'productos' => 'required|array|min:1',
@@ -106,10 +107,12 @@ class EnvioController extends Controller
             $envio = Envio::create([
                 'id_usuario' => $validated['id_usuario'],
                 'id_direccion' => $validated['id_direccion'],
+                'id_tipo_vehiculo' => $validated['id_tipo_vehiculo'] ?? null,
                 'fecha_entrega_aproximada' => $validated['fecha_entrega_aproximada'] ?? null,
                 'hora_entrega_aproximada' => $validated['hora_entrega_aproximada'] ?? null,
                 'peso_total_envio' => $pesoTotal,
                 'costo_total_envio' => $costoTotal,
+                'estado_aprobacion' => 'pendiente',
             ]);
 
             // Crear productos del envío
@@ -166,7 +169,7 @@ class EnvioController extends Controller
      */
     public function show(Envio $envio)
     {
-        $envio->load(['usuario', 'direccion', 'productos', 'historialEstados.estadoEnvio']);
+        $envio->load(['usuario', 'direccion', 'productos', 'tipoVehiculo', 'transportistaAsignado', 'historialEstados.estadoEnvio']);
         
         $response = $envio->toArray();
         $response['usuario_nombre'] = $envio->usuario->nombre . ' ' . $envio->usuario->apellido;
@@ -269,5 +272,86 @@ class EnvioController extends Controller
             'success' => true,
             'message' => 'Envío eliminado exitosamente'
         ]);
+    }
+
+    /**
+     * Aprobar un envío y asignar transportista
+     */
+    public function aprobar(Request $request, Envio $envio)
+    {
+        try {
+            \Log::info("API - Recibiendo solicitud de aprobación", [
+                'envio_id' => $envio->id,
+                'request_data' => $request->all()
+            ]);
+
+            $validated = $request->validate([
+                'id_transportista_asignado' => 'required|integer',
+            ]);
+
+            \Log::info("API - Validación exitosa", ['validated' => $validated]);
+
+            $envio->update([
+                'estado_aprobacion' => 'aprobado',
+                'id_transportista_asignado' => $validated['id_transportista_asignado'],
+            ]);
+
+            \Log::info("API - Envío actualizado exitosamente", [
+                'envio_id' => $envio->id,
+                'estado_aprobacion' => $envio->estado_aprobacion
+            ]);
+
+            $envio->load(['transportistaAsignado']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Envío aprobado y transportista asignado exitosamente',
+                'data' => $envio
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error("API - Error de validación al aprobar", ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error("API - Error al aprobar envío", [
+                'envio_id' => $envio->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al aprobar envío: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Rechazar un envío
+     */
+    public function rechazar(Request $request, Envio $envio)
+    {
+        $validated = $request->validate([
+            'motivo_rechazo' => 'required|string|min:10',
+        ]);
+
+        try {
+            $envio->update([
+                'estado_aprobacion' => 'rechazado',
+                'motivo_rechazo' => $validated['motivo_rechazo'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Envío rechazado exitosamente',
+                'data' => $envio
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al rechazar envío: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
