@@ -374,9 +374,16 @@ if (!window.__envioShowAdminInitialized) {
         const transportistas = await transportistasRes.json();
         const vehiculosRaw = await vehiculosRes.json();
 
+        console.log('🚗 Vehículos raw recibidos:', vehiculosRaw);
+        console.log('📊 Total vehículos:', vehiculosRaw.length);
+        console.log('📋 Estados de cada vehículo:', vehiculosRaw.map(v => ({ placa: v.placa, estado: v.estado })));
+
         const vehiculos = Array.isArray(vehiculosRaw)
             ? vehiculosRaw.filter(v => (v.estado || '').toLowerCase() === 'disponible')
             : [];
+
+        console.log('✅ Vehículos después del filtro:', vehiculos);
+        console.log('📈 Total filtrados:', vehiculos.length);
 
         return {
             transportistas: Array.isArray(transportistas) ? transportistas : [],

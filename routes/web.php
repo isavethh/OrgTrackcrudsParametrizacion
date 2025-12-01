@@ -123,14 +123,6 @@ Route::prefix('admin')->group(function () {
         return view('admin.documentos.create');
     })->name('admin.documentos.create');
 
-    Route::get('/documentos/{id}/particiones', function ($id) {
-        return view('admin.documentos.particiones', ['id' => $id]);
-    })->name('admin.documentos.particiones');
-
-    Route::get('/documentos/{id}/ver', function ($id) {
-        return view('admin.documentos.ver', ['id' => $id]);
-    })->name('admin.documentos.ver');
-
     // Rutas de transportistas admin
     Route::get('/transportistas', function () {
         return view('admin.transportistas.index');

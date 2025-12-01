@@ -16,6 +16,7 @@ use App\Models\ChecklistCondicion;
 use App\Models\ChecklistCondicionDetalle;
 use App\Models\ChecklistIncidente;
 use App\Models\ChecklistIncidenteDetalle;
+use App\Models\TiposIncidenteTransporte;
 use App\Models\IncidentesTransporte;
 use App\Models\CatalogoCarga;
 use App\Models\EstadosAsignacionMultiple;
@@ -1187,6 +1188,7 @@ class EnvioController extends Controller
             $request->validate([
                 'incidentes' => 'required|array',
                 'incidentes.*.id_tipo_incidente' => 'required|integer|exists:tipos_incidente_transporte,id',
+                'incidentes.*.ocurrio' => 'required|boolean',
                 'incidentes.*.descripcion_incidente' => 'nullable|string|max:255',
             ]);
 
@@ -1226,12 +1228,12 @@ class EnvioController extends Controller
                     'fecha' => now(),
                 ]);
 
-                // Insertar incidentes (puede haber múltiples)
+                // Crear un detalle por cada incidente recibido
                 foreach ($request->incidentes as $incidente) {
                     ChecklistIncidenteDetalle::create([
                         'id_checklist' => $checklist->id,
                         'id_tipo_incidente' => $incidente['id_tipo_incidente'],
-                        'ocurrio' => true,
+                        'ocurrio' => $incidente['ocurrio'],
                         'descripcion' => $incidente['descripcion_incidente'] ?? null,
                     ]);
                 }
@@ -1380,7 +1382,7 @@ class EnvioController extends Controller
                 'asignaciones.recogidaEntrega',
                 'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
                 'asignaciones.checklistCondicion.detalles.condicion:id,titulo',
-                'asignaciones.incidentes.tipoIncidente:id,titulo',
+                'asignaciones.checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'asignaciones.firmaEnvio',
                 'asignaciones.firmaTransportista',
                 'direccion:id,nombreorigen,nombredestino',
@@ -1450,7 +1452,26 @@ class EnvioController extends Controller
                 // Incluir checklists solo si es admin
                 if (UsuarioHelper::tieneRol($usuario, 'admin')) {
                     $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
-                    $particion['checklistIncidentes'] = $asignacion->incidentes ?? [];
+                    $particion['observaciones_condiciones'] = $asignacion->checklistCondicion?->observaciones;
+                    
+                    // Para incidentes, mostrar TODOS (no solo los que ocurrieron)
+                    $checklistIncidentes = [];
+                    if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
+                        $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
+                            return [
+                                'id' => $det->id,
+                                'tipo_incidente' => [
+                                    'id' => $det->tipoIncidente?->id,
+                                    'titulo' => $det->tipoIncidente?->titulo,
+                                ],
+                                'ocurrio' => $det->ocurrio,
+                                'descripcion' => $det->descripcion,
+                            ];
+                        })->toArray();
+                    }
+                    
+                    $particion['checklistIncidentes'] = $checklistIncidentes;
+                    $particion['observaciones_incidentes'] = $asignacion->checklistIncidente?->observaciones;
                 }
 
                 return $particion;
@@ -1565,6 +1586,8 @@ class EnvioController extends Controller
                 // Para incidentes, mostrar TODOS (no solo los que ocurrieron)
                 $checklistIncidentes = [];
                 if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
+                    \Log::info('Total detalles cargados: ' . $asignacion->checklistIncidente->detalles->count());
+                    
                     $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
                         return [
                             'id' => $det->id,
@@ -1576,6 +1599,8 @@ class EnvioController extends Controller
                             'descripcion' => $det->descripcion,
                         ];
                     })->toArray();
+                    
+                    \Log::info('Total incidentes mapeados: ' . count($checklistIncidentes));
                     
                     // Agregar observaciones generales del checklist
                     $particion['observaciones_incidentes'] = $asignacion->checklistIncidente->observaciones;

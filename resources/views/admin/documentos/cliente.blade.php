@@ -228,7 +228,7 @@ function renderEnvios(envios) {
                     </div>
                     <div class="col-md-3 text-right">
                         <small class="text-muted d-block mb-1">Fecha de registro</small>
-                        <strong>${new Date(envio.fecha_registro).toLocaleDateString('es-BO')}</strong>
+                        <strong>${envio.fecha_creacion ? new Date(envio.fecha_creacion).toLocaleDateString('es-BO') : 'Sin fecha'}</strong>
                         <div class="mt-3">
                             <button class="btn btn-sm btn-outline-primary btn-block" onclick="event.stopPropagation(); seleccionarEnvio(${envio.id})">
                                 <i class="fas fa-file-alt mr-1"></i>Ver Documentos
