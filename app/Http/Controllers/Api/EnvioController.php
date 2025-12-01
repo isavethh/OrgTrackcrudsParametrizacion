@@ -1497,6 +1497,7 @@ class EnvioController extends Controller
                 'recogidaEntrega',
                 'cargas.catalogoCarga:id,tipo,variedad,empaque',
                 'checklistCondicion.detalles.condicion:id,titulo',
+                'checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'incidentes.tipoIncidente:id,titulo',
                 'firmaEnvio',
                 'firmaTransportista'
@@ -1559,7 +1560,32 @@ class EnvioController extends Controller
             // Incluir checklists solo si es admin
             if (UsuarioHelper::tieneRol($usuario, 'admin')) {
                 $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
-                $particion['checklistIncidentes'] = $asignacion->incidentes ?? [];
+                $particion['observaciones_condiciones'] = $asignacion->checklistCondicion?->observaciones;
+                
+                // Para incidentes, mostrar TODOS (no solo los que ocurrieron)
+                $checklistIncidentes = [];
+                if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
+                    $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
+                        return [
+                            'id' => $det->id,
+                            'tipo_incidente' => [
+                                'id' => $det->tipoIncidente?->id,
+                                'titulo' => $det->tipoIncidente?->titulo,
+                            ],
+                            'ocurrio' => $det->ocurrio,
+                            'descripcion' => $det->descripcion,
+                        ];
+                    })->toArray();
+                    
+                    // Agregar observaciones generales del checklist
+                    $particion['observaciones_incidentes'] = $asignacion->checklistIncidente->observaciones;
+                }
+                
+                $particion['checklistIncidentes'] = $checklistIncidentes;
+                
+                // Log para debug
+                \Log::info('ID Asignación: ' . $asignacion->id);
+                \Log::info('Total incidentes en checklist: ' . count($checklistIncidentes));
             }
 
             return response()->json([

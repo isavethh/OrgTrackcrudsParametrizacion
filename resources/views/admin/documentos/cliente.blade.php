@@ -11,16 +11,16 @@
         .no-print { display: none !important; }
     }
     .document-card { background: white; padding: 40px; max-width: 900px; margin: 0 auto; }
-    .document-header { text-align: center; margin-bottom: 30px; padding-bottom: 15px; }
+    .document-header { text-align: center; margin-bottom: 20px; padding-bottom: 10px; }
     .document-header h2 { font-size: 32px; margin-bottom: 5px; color: #333; }
     .document-header p { font-size: 14px; color: #666; font-style: italic; }
-    .document-table { width: 100%; border-collapse: collapse; margin-bottom: 0; font-size: 13px; }
+    .document-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 13px; }
     .document-table th, .document-table td { border: 1px solid #000; padding: 10px; }
     .document-table th { background-color: #f8f9fa; font-weight: bold; text-align: left; }
     .document-table td { text-align: left; }
-    .table-section { margin-bottom: 15px; }
-    .section-title { font-weight: bold; font-size: 14px; margin-top: 20px; margin-bottom: 10px; text-align: center; background-color: #f8f9fa; padding: 8px; border: 1px solid #000; }
-    .checklist-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+    .table-section { margin: 0; }
+    .section-title { font-weight: bold; font-size: 14px; margin: 0; text-align: center; background-color: #f8f9fa; padding: 8px; border: 1px solid #000; border-top: 0; }
+    .checklist-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 12px; }
     .checklist-table th, .checklist-table td { border: 1px solid #000; padding: 8px; }
     .checklist-table th { background-color: #f8f9fa; text-align: center; font-weight: bold; }
     .signature-container { display: flex; justify-content: space-around; margin-top: 40px; margin-bottom: 20px; }
@@ -310,6 +310,10 @@ async function verDocumentoCompleto(idAsignacion) {
 
 function renderDocumentoCompleto(data) {
     const particion = data.particion;
+    console.log('Datos del documento:', data);
+    console.log('Checklist Condiciones:', particion?.checklistCondiciones);
+    console.log('Checklist Incidentes:', particion?.checklistIncidentes);
+    
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-BO') : '—';
     const formatTime = (t) => t || '—';
 
@@ -326,181 +330,178 @@ function renderDocumentoCompleto(data) {
                 <p>Registro de envío y condiciones de transporte</p>
             </div>
 
-            <div class="section-title">Información del Envío</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 50%;">ID de Envío</th>
-                        <th style="width: 50%;">ID de Asignación</th>
-                    </tr>
-                    <tr>
-                        <td>${data.id_envio || '—'}</td>
-                        <td>${particion.id_asignacion || '—'}</td>
-                    </tr>
-                    <tr>
-                        <th>Nombre del Cliente</th>
-                        <th>Estado del Envío</th>
-                    </tr>
-                    <tr>
-                        <td>${data.nombre_cliente || '—'}</td>
-                        <td>${data.estado_envio || '—'}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th colspan="2" style="text-align: center; background-color: #f8f9fa;">Información del Envío</th>
+                </tr>
+                <tr>
+                    <th style="width: 50%; text-align: center;">ID de Envío</th>
+                    <th style="width: 50%; text-align: center;">ID de Asignación</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${data.id_envio || '—'}</td>
+                    <td style="text-align: center;">${particion.id_asignacion || '—'}</td>
+                </tr>
+                <tr>
+                    <th style="text-align: center;">Nombre del Cliente</th>
+                    <th style="text-align: center;">Estado del Envío</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${data.nombre_cliente || '—'}</td>
+                    <td style="text-align: center;">${data.estado_envio || '—'}</td>
+                </tr>
+                <tr>
+                    <th style="width: 50%; text-align: center;">Punto de recogida</th>
+                    <th style="width: 50%; text-align: center;">Punto de Entrega</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${data.nombre_origen || '—'}</td>
+                    <td style="text-align: center;">${data.nombre_destino || '—'}</td>
+                </tr>
+            </table>
 
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 50%;">Punto de recogida</th>
-                        <th style="width: 50%;">Punto de Entrega</th>
-                    </tr>
-                    <tr>
-                        <td>${data.nombre_origen || '—'}</td>
-                        <td>${data.nombre_destino || '—'}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th colspan="3" style="text-align: center; background-color: #f8f9fa;">Detalles de Bloque de Envío</th>
+                </tr>
+                <tr>
+                    <th style="width: 33.33%; text-align: center;">Día</th>
+                    <th style="width: 33.33%; text-align: center;">Hora de Recogida</th>
+                    <th style="width: 33.33%; text-align: center;">Hora de Entrega</th>
+                </tr>
+                <tr>
+                    <td style="width: 33.33%; text-align: center;">${formatDate(particion.recogidaEntrega?.fecha_recogida)}</td>
+                    <td style="width: 33.33%; text-align: center;">${formatTime(particion.recogidaEntrega?.hora_recogida)}</td>
+                    <td style="width: 33.33%; text-align: center;">${formatTime(particion.recogidaEntrega?.hora_entrega)}</td>
+                </tr>
+            </table>
 
-            <div class="section-title">Detalles de Bloque de Envío</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 33.33%;">Día</th>
-                        <th style="width: 33.33%;">Hora de Recogida</th>
-                        <th style="width: 33.33%;">Hora de Entrega</th>
-                    </tr>
-                    <tr>
-                        <td>${formatDate(particion.recogidaEntrega?.fecha_recogida)}</td>
-                        <td>${formatTime(particion.recogidaEntrega?.hora_recogida)}</td>
-                        <td>${formatTime(particion.recogidaEntrega?.hora_entrega)}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th style="width: 50%; text-align: center;">Instrucciones en punto de recogida</th>
+                    <th style="width: 50%; text-align: center;">Instrucciones en punto de entrega</th>
+                </tr>
+                <tr>
+                    <td style="width: 50%; text-align: center;">${particion.recogidaEntrega?.instrucciones_recogida || 'Sin instrucciones'}</td>
+                    <td style="width: 50%; text-align: center;">${particion.recogidaEntrega?.instrucciones_entrega || 'Sin instrucciones'}</td>
+                </tr>
+            </table>
 
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 50%;">Instrucciones en punto de recogida</th>
-                        <th style="width: 50%;">Instrucciones en punto de entrega</th>
-                    </tr>
-                    <tr>
-                        <td>${particion.recogidaEntrega?.instrucciones_recogida || 'Sin instrucciones'}</td>
-                        <td>${particion.recogidaEntrega?.instrucciones_entrega || 'Sin instrucciones'}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th colspan="3" style="text-align: center; background-color: #f8f9fa;">Transportista</th>
+                </tr>
+                <tr>
+                    <th style="width: 40%; text-align: center;">Nombre y Apellido</th>
+                    <th style="width: 30%; text-align: center;">Teléfono</th>
+                    <th style="width: 30%; text-align: center;">CI</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${particion.transportista?.nombre || '—'} ${particion.transportista?.apellido || ''}</td>
+                    <td style="text-align: center;">${particion.transportista?.telefono || '—'}</td>
+                    <td style="text-align: center;">${particion.transportista?.ci || '—'}</td>
+                </tr>
+            </table>
 
-            <div class="section-title">Transportista</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 50%;">Nombre y Apellido</th>
-                        <th style="width: 25%;">Teléfono</th>
-                        <th style="width: 25%;">CI</th>
-                    </tr>
-                    <tr>
-                        <td>${particion.transportista?.nombre || '—'} ${particion.transportista?.apellido || ''}</td>
-                        <td>${particion.transportista?.telefono || '—'}</td>
-                        <td>${particion.transportista?.ci || '—'}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th colspan="2" style="text-align: center; background-color: #f8f9fa;">Vehículo</th>
+                </tr>
+                <tr>
+                    <th style="width: 50%; text-align: center;">Tipo</th>
+                    <th style="width: 50%; text-align: center;">Placa</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${particion.vehiculo?.tipo || '—'}</td>
+                    <td style="text-align: center;">${particion.vehiculo?.placa || '—'}</td>
+                </tr>
+            </table>
 
-            <div class="section-title">Vehículo</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 50%;">Tipo</th>
-                        <th style="width: 50%;">Placa</th>
-                    </tr>
-                    <tr>
-                        <td>${particion.vehiculo?.tipo || '—'}</td>
-                        <td>${particion.vehiculo?.placa || '—'}</td>
-                    </tr>
-                </table>
-            </div>
+            <table class="document-table">
+                <tr>
+                    <th colspan="2" style="text-align: center; background-color: #f8f9fa;">Transporte</th>
+                </tr>
+                <tr>
+                    <th style="width: 50%; text-align: center;">Tipo</th>
+                    <th style="width: 50%; text-align: center;">Descripción</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">${particion.tipo_transporte?.nombre || '—'}</td>
+                    <td style="text-align: center;">${particion.tipo_transporte?.descripcion || '—'}</td>
+                </tr>
+            </table>
 
-            <div class="section-title">Transporte</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <tr>
-                        <th style="width: 30%;">Tipo</th>
-                        <th style="width: 70%;">Descripción</th>
-                    </tr>
-                    <tr>
-                        <td>${particion.tipo_transporte?.nombre || '—'}</td>
-                        <td>${particion.tipo_transporte?.descripcion || '—'}</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="section-title">Detalles de cargamento</div>
-            <div class="table-section">
-                <table class="document-table">
-                    <thead>
+            <table class="document-table">
+                <tr>
+                    <th colspan="5" style="text-align: center; background-color: #f8f9fa;">Detalles de cargamento</th>
+                </tr>
+                <tr>
+                    <th style="width: 20%; text-align: center;">Tipo</th>
+                    <th style="width: 20%; text-align: center;">Variedad</th>
+                    <th style="width: 20%; text-align: center;">Empaquetado</th>
+                    <th style="width: 20%; text-align: center;">Cantidad</th>
+                    <th style="width: 20%; text-align: center;">Peso Kg</th>
+                </tr>
+                    ${particion.cargas?.map(c => `
                         <tr>
-                            <th style="width: 20%;">Tipo</th>
-                            <th style="width: 20%;">Variedad</th>
-                            <th style="width: 20%;">Empaquetado</th>
-                            <th style="width: 20%;">Cantidad</th>
-                            <th style="width: 20%;">Peso Kg</th>
+                            <td style="text-align: center;">${c.tipo || '—'}</td>
+                            <td style="text-align: center;">${c.variedad || '—'}</td>
+                            <td style="text-align: center;">${c.empaquetado || '—'}</td>
+                            <td style="text-align: center;">${c.cantidad || 0}</td>
+                            <td style="text-align: center;">${c.peso || 0}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${particion.cargas?.map(c => `
-                            <tr>
-                                <td>${c.tipo || '—'}</td>
-                                <td>${c.variedad || '—'}</td>
-                                <td>${c.empaquetado || '—'}</td>
-                                <td>${c.cantidad || 0}</td>
-                                <td>${c.peso || 0}</td>
-                            </tr>
-                        `).join('') || '<tr><td colspan="5" class="text-center">Sin cargas registradas</td></tr>'}
-                    </tbody>
-                </table>
-            </div>
+                    `).join('') || '<tr><td colspan="5" class="text-center">Sin cargas registradas</td></tr>'}
+            </table>
 
             ${particion.checklistCondiciones && particion.checklistCondiciones.length > 0 ? `
-                <div class="section-title">Checklist de condiciones de transporte</div>
-                <table class="checklist-table">
-                    <thead>
+                <div style="margin-top: 15px;"></div>
+                <table class="document-table">
+                    <tr>
+                        <th colspan="3" style="text-align: center; background-color: #f8f9fa;">Registro de condiciones de transporte</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 60%;">Condiciones de Transporte</th>
+                        <th style="width: 20%; text-align: center;">Sí</th>
+                        <th style="width: 20%; text-align: center;">No</th>
+                    </tr>
+                    ${particion.checklistCondiciones.map((c, index) => `
                         <tr>
-                            <th style="width: 50%;">Condición</th>
-                            <th style="width: 20%;">¿Cumple?</th>
-                            <th style="width: 30%;">Observaciones</th>
+                            <td>${index + 1}. ${c.condicion?.titulo || '—'}</td>
+                            <td style="text-align: center;">${c.valor ? 'Sí' : ''}</td>
+                            <td style="text-align: center;">${!c.valor ? 'No' : ''}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${particion.checklistCondiciones.map(c => `
-                            <tr>
-                                <td>${c.condicion?.titulo || '—'}</td>
-                                <td class="text-center">${c.cumple ? 'Sí' : 'No'}</td>
-                                <td>${c.observaciones || 'Sin observaciones'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
+                    `).join('')}
+                    ${particion.observaciones_condiciones ? `
+                        <tr>
+                            <td colspan="3"><strong>Observación:</strong> ${particion.observaciones_condiciones}</td>
+                        </tr>
+                    ` : ''}
                 </table>
             ` : ''}
 
             ${particion.checklistIncidentes && particion.checklistIncidentes.length > 0 ? `
-                <div class="section-title">Incidentes durante el transporte</div>
-                <table class="checklist-table">
-                    <thead>
+                <div style="margin-top: 15px;"></div>
+                <table class="document-table">
+                    <tr>
+                        <th colspan="3" style="text-align: center; background-color: #f8f9fa;">Registro de Incidentes de transporte</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 60%;">Incidentes de transporte</th>
+                        <th style="width: 20%; text-align: center;">Sí</th>
+                        <th style="width: 20%; text-align: center;">No</th>
+                    </tr>
+                    ${particion.checklistIncidentes.map((inc, index) => `
                         <tr>
-                            <th style="width: 25%;">Tipo de incidente</th>
-                            <th style="width: 50%;">Descripción</th>
-                            <th style="width: 25%;">Fecha y hora</th>
+                            <td>${(index + 1)}. ${inc.tipo_incidente?.titulo || 'Incidente'}</td>
+                            <td style="text-align: center;">${inc.ocurrio ? 'Sí' : ''}</td>
+                            <td style="text-align: center;">${!inc.ocurrio ? 'No' : ''}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${particion.checklistIncidentes.map(i => `
-                            <tr>
-                                <td>${i.tipoIncidente?.titulo || '—'}</td>
-                                <td>${i.descripcion || '—'}</td>
-                                <td>${i.fecha_hora ? new Date(i.fecha_hora).toLocaleString('es-BO') : '—'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
+                    `).join('')}
+                    ${particion.observaciones_incidentes ? `
+                        <tr>
+                            <td colspan="3"><strong>Observación:</strong> ${particion.observaciones_incidentes}</td>
+                        </tr>
+                    ` : ''}
                 </table>
             ` : ''}
 
