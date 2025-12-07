@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Envío - Productor</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Wizard Progress */
+        .wizard-progress {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 16.66%;
+            right: 16.66%;
+            height: 3px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #999;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-circle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .step-subtitle {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .step.active .step-title {
+            color: #667eea;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Wizard Content */
+        .wizard-content {
+            min-height: 400px;
+        }
+
+        .wizard-step {
+            display: none;
+        }
+
+        .wizard-step.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr 2fr;
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group label .required {
+            color: #dc3545;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input.is-invalid,
+        .form-group select.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .form-group.readonly input {
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        /* Map */
+        #map {
+            height: 500px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px dashed #667eea;
+            color: #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #f0f4ff;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-icon {
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Navigation */
+        .wizard-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* Partición Card */
+        .particion-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .particion-card.collapsed .particion-body {
+            display: none;
+        }
+
+        .particion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .particion-number {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .particion-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+        }
+
+        table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+
+        table td input,
+        table td select {
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .info-box.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .info-box.danger {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .info-box-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-box-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Summary */
+        .summary-section {
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .summary-value {
+            color: #333;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2,
+            .grid-3,
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .step-circle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .step-subtitle {
+                display: none;
+            }
+        }
+
+        /* Clickable wrapper */
+        .clickable-input-wrapper {
+            position: relative;
+        }
+
+        .clickable-input-wrapper:hover input {
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-truck"></i> Sistema de Envíos - Productores</h1>
+            <p>Crea tu solicitud de envío en 3 simples pasos</p>
+        </div>
+
+        <!-- Wizard Progress -->
+        <div class="wizard-progress">
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-title">Ubicación</div>
+                    <div class="step-subtitle">Origen y Destino</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-title">Detalles</div>
+                    <div class="step-subtitle">Cargas y Transporte</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">Confirmación</div>
+                    <div class="step-subtitle">Resumen y Envío</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="wizard-content">
+            
+            <!-- STEP 1: UBICACIÓN -->
+            <div class="wizard-step active" data-step="1">
+                <div class="grid grid-2">
+                    <!-- Left Panel -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Datos del Envío
+                            </h3>
+                        </div>
+
+                        <form id="step1Form">
+                            <div class="form-group">
+                                <label>Nombre Completo <span class="required">*</span></label>
+                                <input type="text" id="nombre_remitente" required placeholder="Ej: Juan Pérez">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Teléfono <span class="required">*</span></label>
+                                <input type="tel" id="telefono_remitente" required placeholder="Ej: 77123456">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email (opcional)</label>
+                                <input type="email" id="email_remitente" placeholder="Ej: juan@example.com">
+                            </div>
+
+                            <hr style="margin: 25px 0; border: none; border-top: 2px solid #f0f0f0;">
+
+                            <div class="form-group readonly">
+                                <label class="text-success">
+                                    <i class="fas fa-map-marker-alt"></i> Origen
+                                </label>
+                                <input type="text" id="txtNombreOrigen" readonly placeholder="Marca el origen en el mapa...">
+                                <small id="txtOrigen" style="color: #999;"></small>
+                            </div>
+
+                            <div class="form-group readonly">
+                                <label class="text-danger">
+                                    <i class="fas fa-map-marker-alt"></i> Destino
+                                </label>
+                                <input type="text" id="txtNombreDestino" readonly placeholder="Marca el destino en el mapa...">
+                                <small id="txtDestino" style="color: #999;"></small>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Haz clic en el mapa para marcar primero el <strong>Origen</strong> y luego el <strong>Destino</strong>.
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right Panel - Map -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-map"></i>
+                                Mapa Interactivo
+                            </h3>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnResetMap">
+                                <i class="fas fa-eraser"></i> Limpiar
+                            </button>
+                        </div>
+                        <div id="map"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: PARTICIONES -->
+            <div class="wizard-step" data-step="2">
+                <div id="particionesContainer">
+                    <!-- Particiones se agregan dinámicamente -->
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button type="button" class="btn btn-outline btn-lg" id="btnAgregarParticion">
+                        <i class="fas fa-plus-circle"></i> Agregar otro camión / partición
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: CONFIRMACIÓN -->
+            <div class="wizard-step" data-step="3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-check-circle"></i>
+                            Resumen de la Solicitud
+                        </h3>
+                    </div>
+
+                    <div id="alertContainer"></div>
+
+                    <!-- Resumen Ubicación -->
+                    <div class="summary-section">
+                        <div class="summary-title">Datos del Remitente</div>
+                        <div class="grid grid-3">
+                            <div class="info-box">
+                                <div class="info-box-label">Nombre</div>
+                                <div class="info-box-value" id="resNombre">--</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Teléfono</div>
+                                <div class="info-box-value" id="resTelefono">--</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Email</div>
+                                <div class="info-box-value" id="resEmail">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-title">Ruta del Envío</div>
+                        <div class="grid grid-2">
+                            <div class="info-box success">
+                                <div class="info-box-label"><i class="fas fa-map-marker-alt"></i> Origen</div>
+                                <div class="info-box-value" id="resOrigen">--</div>
+                            </div>
+                            <div class="info-box danger">
+                                <div class="info-box-label"><i class="fas fa-map-marker-alt"></i> Destino</div>
+                                <div class="info-box-value" id="resDestino">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen Particiones -->
+                    <div class="summary-section">
+                        <div class="summary-title">Detalle de Envíos / Particiones</div>
+                        <div id="resumenParticiones">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="wizard-navigation">
+            <button type="button" class="btn btn-secondary" id="btnPrev" disabled>
+                <i class="fas fa-arrow-left"></i> Anterior
+            </button>
+            <button type="button" class="btn btn-primary" id="btnNext">
+                Siguiente <i class="fas fa-arrow-right"></i>
+            </button>
+            <button type="button" class="btn btn-success" id="btnFinish" style="display: none;">
+                <i class="fas fa-check"></i> Confirmar y Crear Envío
+            </button>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="tplParticion">
+        <div class="particion-card" data-index="{index}">
+            <div class="particion-header" onclick="toggleParticion(this)">
+                <div class="particion-number">
+                    <i class="fas fa-truck"></i> Envío / Camión #<span class="num">1</span>
+                </div>
+                <div class="particion-actions">
+                    <button type="button" class="btn btn-danger btn-sm btn-remove" onclick="event.stopPropagation(); removeParticion(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="particion-body">
+                <div class="form-group">
+                    <label>Tipo de Transporte <span class="required">*</span></label>
+                    <select class="js-tipo-transporte" required>
+                        <option value="">Seleccione...</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label>Fecha Recogida <span class="required">*</span></label>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker()">
+                            <input type="date" class="js-fecha-recogida" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Recogida <span class="required">*</span></label>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker()">
+                            <input type="time" class="js-hora-recogida" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Entrega <span class="required">*</span></label>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker()">
+                            <input type="time" class="js-hora-entrega" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>Instrucciones de Recogida</label>
+                        <textarea class="js-instr-recogida" rows="2" placeholder="Ej: Puerta trasera, preguntar por..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Instrucciones de Entrega</label>
+                        <textarea class="js-instr-entrega" rows="2" placeholder="Ej: Dejar en recepción..."></textarea>
+                    </div>
+                </div>
+
+                <h4 style="margin: 20px 0 10px; color: #667eea;">
+                    <i class="fas fa-boxes"></i> Cargas / Productos
+                </h4>
+                
+                <table class="cargas-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Variedad</th>
+                            <th>Empaque</th>
+                            <th width="100">Cantidad</th>
+                            <th width="100">Peso (kg)</th>
+                            <th width="50"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="cargas-container">
+                        <!-- Cargas aquí -->
+                    </tbody>
+                </table>
+
+                <button type="button" class="btn btn-success btn-sm btn-add-carga" onclick="addCarga(this)">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tplCarga">
+        <tr class="carga-item">
+            <td>
+                <select class="js-carga-tipo" required>
+                    <option value="">Seleccione...</option>
+                    <option value="Frutas">Frutas</option>
+                    <option value="Verduras">Verduras</option>
+                    <option value="Cereales">Cereales</option>
+                    <option value="Lacteos">Lácteos</option>
+                    <option value="Carnes">Carnes</option>
+                    <option value="Otros">Otros</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="js-carga-variedad" required placeholder="Ej: Manzana">
+            </td>
+            <td>
+                <input type="text" class="js-carga-empaque" required placeholder="Ej: Cajas">
+            </td>
+            <td>
+                <input type="number" class="js-carga-cantidad" required min="1" placeholder="100">
+            </td>
+            <td>
+                <input type="number" class="js-carga-peso" required min="0.01" step="0.01" placeholder="500">
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-icon btn-sm" onclick="removeCarga(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const API_URL = window.location.origin;
+        const ORS_KEY = '5b3ce3597851110001cf6248dbff311ed4d34185911c2eb9e6c50080';
+
+        // State
+        const state = {
+            currentStep: 1,
+            map: null,
+            markers: { origin: null, destination: null },
+            routeLayer: null,
+            originCoords: null,
+            destinationCoords: null,
+            geoJSON: null,
+            tiposTransporte: [],
+            particiones: []
+        };
+
+        let partitionCounter = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            initMap();
+            await loadTiposTransporte(); // Esperar a que cargue primero
+            addPartition(); // Ahora sí agregar la partición con los tipos ya cargados
+            setupEventListeners();
+            setMinDate();
+        });
+
+        function setMinDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.querySelectorAll('.js-fecha-recogida').forEach(input => {
+                input.min = today;
+            });
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('btnNext').addEventListener('click', nextStep);
+            document.getElementById('btnPrev').addEventListener('click', prevStep);
+            document.getElementById('btnFinish').addEventListener('click', submitForm);
+            document.getElementById('btnResetMap').addEventListener('click', resetMap);
+            document.getElementById('btnAgregarParticion').addEventListener('click', addPartition);
+        }
+
+        // Map Functions
+        function initMap() {
+            state.map = L.map('map').setView([-17.3935, -66.1570], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(state.map);
+
+            state.map.on('click', onMapClick);
+        }
+
+        async function onMapClick(e) {
+            const { lat, lng } = e.latlng;
+
+            if (!state.markers.origin) {
+                // Crear marcador origen
+                state.markers.origin = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        html: '<i class="fas fa-map-marker-alt" style="color: #28a745; font-size: 32px;"></i>',
+                        className: 'custom-marker',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    })
+                }).addTo(state.map);
+
+                state.originCoords = { lat, lng };
+                document.getElementById('txtOrigen').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                
+                const address = await reverseGeocode(lat, lng);
+                document.getElementById('txtNombreOrigen').value = address;
+
+            } else if (!state.markers.destination) {
+                // Crear marcador destino
+                state.markers.destination = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        html: '<i class="fas fa-map-marker-alt" style="color: #dc3545; font-size: 32px;"></i>',
+                        className: 'custom-marker',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    })
+                }).addTo(state.map);
+
+                state.destinationCoords = { lat, lng };
+                document.getElementById('txtDestino').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                
+                const address = await reverseGeocode(lat, lng);
+                document.getElementById('txtNombreDestino').value = address;
+
+                // Dibujar ruta
+                await drawRoute();
+            }
+        }
+
+        async function reverseGeocode(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            } catch (e) {
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        }
+
+        async function drawRoute() {
+            const { origin, destination } = state.markers;
+            if (!origin || !destination) return;
+
+            const start = origin.getLatLng();
+            const end = destination.getLatLng();
+
+            try {
+                const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_KEY}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.features && data.features.length > 0) {
+                    const geoJSON = data.features[0];
+                    
+                    if (state.routeLayer) {
+                        state.map.removeLayer(state.routeLayer);
+                    }
+
+                    state.routeLayer = L.geoJSON(geoJSON, {
+                        style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+                    }).addTo(state.map);
+
+                    state.map.fitBounds(state.routeLayer.getBounds(), { padding: [50, 50] });
+
+                    // Guardar GeoJSON
+                    state.geoJSON = JSON.stringify({
+                        type: "FeatureCollection",
+                        features: [geoJSON]
+                    });
+                }
+            } catch (e) {
+                console.warn('Error dibujando ruta:', e);
+                // Fallback: línea recta
+                const line = [[start.lat, start.lng], [end.lat, end.lng]];
+                if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+                state.routeLayer = L.polyline(line, {
+                    color: 'red',
+                    weight: 4,
+                    dashArray: '10, 10'
+                }).addTo(state.map);
+                state.map.fitBounds(state.routeLayer.getBounds(), { padding: [50, 50] });
+
+                state.geoJSON = JSON.stringify({
+                    type: "FeatureCollection",
+                    features: [{
+                        type: "Feature",
+                        geometry: {
+                            type: "LineString",
+                            coordinates: [[start.lng, start.lat], [end.lng, end.lat]]
+                        }
+                    }]
+                });
+            }
+        }
+
+        function resetMap() {
+            if (state.markers.origin) state.map.removeLayer(state.markers.origin);
+            if (state.markers.destination) state.map.removeLayer(state.markers.destination);
+            if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+
+            state.markers = { origin: null, destination: null };
+            state.routeLayer = null;
+            state.originCoords = null;
+            state.destinationCoords = null;
+            state.geoJSON = null;
+
+            document.getElementById('txtOrigen').textContent = '';
+            document.getElementById('txtDestino').textContent = '';
+            document.getElementById('txtNombreOrigen').value = '';
+            document.getElementById('txtNombreDestino').value = '';
+        }
+
+        // Load Data
+        async function loadTiposTransporte() {
+            try {
+                const res = await fetch(`${API_URL}/api/tipo-transporte`);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                state.tiposTransporte = await res.json();
+                console.log('Tipos de transporte cargados:', state.tiposTransporte);
+                
+                if (!state.tiposTransporte || state.tiposTransporte.length === 0) {
+                    console.warn('No hay tipos de transporte disponibles en la base de datos');
+                }
+            } catch (e) {
+                console.error('Error cargando tipos de transporte:', e);
+                alert('Error al cargar tipos de transporte. Verifica la consola del navegador.');
+            }
+        }
+
+        // Particiones
+        function addPartition() {
+            partitionCounter++;
+            const template = document.getElementById('tplParticion');
+            const clone = template.content.cloneNode(true);
+            
+            const card = clone.querySelector('.particion-card');
+            card.dataset.index = partitionCounter;
+            card.querySelector('.num').textContent = partitionCounter;
+
+            // Llenar tipos de transporte
+            const select = clone.querySelector('.js-tipo-transporte');
+            state.tiposTransporte.forEach(tipo => {
+                const option = document.createElement('option');
+                option.value = tipo.id;
+                option.textContent = tipo.nombre;
+                select.appendChild(option);
+            });
+
+            // Set default date
+            const today = new Date().toISOString().split('T')[0];
+            clone.querySelector('.js-fecha-recogida').value = today;
+            clone.querySelector('.js-fecha-recogida').min = today;
+
+            // Agregar primera carga por defecto
+            document.getElementById('particionesContainer').appendChild(clone);
+            
+            const addedCard = document.querySelector(`.particion-card[data-index="${partitionCounter}"]`);
+            const btnAddCarga = addedCard.querySelector('.btn-add-carga');
+            addCarga(btnAddCarga);
+        }
+
+        function removeParticion(btn) {
+            const card = btn.closest('.particion-card');
+            card.remove();
+            renumberParticiones();
+        }
+
+        function renumberParticiones() {
+            const cards = document.querySelectorAll('.particion-card');
+            cards.forEach((card, idx) => {
+                card.querySelector('.num').textContent = idx + 1;
+            });
+        }
+
+        function toggleParticion(header) {
+            const card = header.closest('.particion-card');
+            card.classList.toggle('collapsed');
+        }
+
+        // Cargas
+        function addCarga(btn) {
+            const card = btn.closest('.particion-card');
+            const container = card.querySelector('.cargas-container');
+            const template = document.getElementById('tplCarga');
+            const clone = template.content.cloneNode(true);
+            container.appendChild(clone);
+        }
+
+        function removeCarga(btn) {
+            btn.closest('.carga-item').remove();
+        }
+
+        // Navigation
+        function nextStep() {
+            if (validateCurrentStep()) {
+                goToStep(state.currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            goToStep(state.currentStep - 1);
+        }
+
+        function goToStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.step').forEach(s => {
+                s.classList.remove('active');
+                if (s.dataset.step < step) s.classList.add('completed');
+            });
+
+            // Show current step
+            const stepEl = document.querySelector(`.wizard-step[data-step="${step}"]`);
+            const indicatorEl = document.querySelector(`.step[data-step="${step}"]`);
+            
+            stepEl.classList.add('active');
+            indicatorEl.classList.add('active');
+
+            state.currentStep = step;
+
+            // Update buttons
+            document.getElementById('btnPrev').disabled = step === 1;
+            
+            if (step === 3) {
+                document.getElementById('btnNext').style.display = 'none';
+                document.getElementById('btnFinish').style.display = 'inline-flex';
+                renderSummary();
+            } else {
+                document.getElementById('btnNext').style.display = 'inline-flex';
+                document.getElementById('btnFinish').style.display = 'none';
+            }
+
+            // Fix map
+            if (step === 1 && state.map) {
+                setTimeout(() => state.map.invalidateSize(), 200);
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateCurrentStep() {
+            if (state.currentStep === 1) {
+                // Validar datos personales
+                const nombre = document.getElementById('nombre_remitente').value.trim();
+                const telefono = document.getElementById('telefono_remitente').value.trim();
+
+                if (!nombre || !telefono) {
+                    alert('Por favor completa tu nombre y teléfono.');
+                    return false;
+                }
+
+                // Validar marcadores
+                if (!state.markers.origin || !state.markers.destination) {
+                    alert('Por favor marca el origen y destino en el mapa.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (state.currentStep === 2) {
+                const cards = document.querySelectorAll('.particion-card');
+                
+                if (cards.length === 0) {
+                    alert('Debes agregar al menos un envío/camión.');
+                    return false;
+                }
+
+                let isValid = true;
+                
+                cards.forEach((card, idx) => {
+                    // Validar campos requeridos
+                    const inputs = card.querySelectorAll('input[required], select[required]');
+                    inputs.forEach(input => {
+                        if (!input.value) {
+                            input.classList.add('is-invalid');
+                            isValid = false;
+                        } else {
+                            input.classList.remove('is-invalid');
+                        }
+                    });
+
+                    // Validar que tenga cargas
+                    const cargas = card.querySelectorAll('.carga-item');
+                    if (cargas.length === 0) {
+                        alert(`El envío #${idx + 1} debe tener al menos un producto/carga.`);
+                        isValid = false;
+                    }
+                });
+
+                if (!isValid) {
+                    alert('Por favor completa todos los campos obligatorios.');
+                }
+
+                return isValid;
+            }
+
+            return true;
+        }
+
+        // Summary
+        function renderSummary() {
+            // Datos remitente
+            document.getElementById('resNombre').textContent = document.getElementById('nombre_remitente').value;
+            document.getElementById('resTelefono').textContent = document.getElementById('telefono_remitente').value;
+            document.getElementById('resEmail').textContent = document.getElementById('email_remitente').value || 'No proporcionado';
+
+            // Ubicación
+            document.getElementById('resOrigen').textContent = document.getElementById('txtNombreOrigen').value;
+            document.getElementById('resDestino').textContent = document.getElementById('txtNombreDestino').value;
+
+            // Particiones
+            const container = document.getElementById('resumenParticiones');
+            container.innerHTML = '';
+
+            const cards = document.querySelectorAll('.particion-card');
+            cards.forEach((card, idx) => {
+                const tipoTransporte = card.querySelector('.js-tipo-transporte');
+                const fecha = card.querySelector('.js-fecha-recogida').value;
+                const horaRecogida = card.querySelector('.js-hora-recogida').value;
+                const horaEntrega = card.querySelector('.js-hora-entrega').value;
+
+                const cargas = card.querySelectorAll('.carga-item');
+                let cargasHTML = '';
+                cargas.forEach((carga, cIdx) => {
+                    const tipo = carga.querySelector('.js-carga-tipo').value;
+                    const variedad = carga.querySelector('.js-carga-variedad').value;
+                    const cantidad = carga.querySelector('.js-carga-cantidad').value;
+                    const peso = carga.querySelector('.js-carga-peso').value;
+                    const empaque = carga.querySelector('.js-carga-empaque').value;
+
+                    cargasHTML += `
+                        <div class="summary-row">
+                            <span class="summary-label">Producto ${cIdx + 1}:</span>
+                            <span class="summary-value">${tipo} - ${variedad} (${cantidad} unid, ${peso} kg, ${empaque})</span>
+                        </div>
+                    `;
+                });
+
+                const html = `
+                    <div class="summary-card">
+                        <h4 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="fas fa-truck"></i> Envío #${idx + 1}
+                        </h4>
+                        <div class="summary-row">
+                            <span class="summary-label">Tipo de Transporte:</span>
+                            <span class="summary-value">${tipoTransporte.selectedOptions[0].text}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Fecha Recogida:</span>
+                            <span class="summary-value">${fecha}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Hora Recogida:</span>
+                            <span class="summary-value">${horaRecogida}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Hora Entrega:</span>
+                            <span class="summary-value">${horaEntrega}</span>
+                        </div>
+                        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+                        <h5 style="margin-bottom: 10px; color: #666;">Productos:</h5>
+                        ${cargasHTML}
+                    </div>
+                `;
+
+                container.innerHTML += html;
+            });
+        }
+
+        // Submit
+        async function submitForm() {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Creando envío...</div>';
+
+            try {
+                // Crear dirección primero
+                const direccionData = {
+                    nombreorigen: document.getElementById('txtNombreOrigen').value,
+                    nombredestino: document.getElementById('txtNombreDestino').value,
+                    origen_lat: state.originCoords.lat,
+                    origen_lng: state.originCoords.lng,
+                    destino_lat: state.destinationCoords.lat,
+                    destino_lng: state.destinationCoords.lng,
+                    rutageojson: state.geoJSON
+                };
+
+                const resDireccion = await fetch(`${API_URL}/api/public/direccion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(direccionData)
+                });
+
+                if (!resDireccion.ok) {
+                    throw new Error('Error creando dirección');
+                }
+
+                const { id_direccion } = await resDireccion.json();
+
+                // Construir particiones
+                const particiones = [];
+                const cards = document.querySelectorAll('.particion-card');
+
+                cards.forEach(card => {
+                    const cargas = [];
+                    card.querySelectorAll('.carga-item').forEach(carga => {
+                        cargas.push({
+                            tipo: carga.querySelector('.js-carga-tipo').value,
+                            variedad: carga.querySelector('.js-carga-variedad').value,
+                            cantidad: parseFloat(carga.querySelector('.js-carga-cantidad').value),
+                            peso: parseFloat(carga.querySelector('.js-carga-peso').value),
+                            empaquetado: carga.querySelector('.js-carga-empaque').value
+                        });
+                    });
+
+                    particiones.push({
+                        id_tipo_transporte: parseInt(card.querySelector('.js-tipo-transporte').value),
+                        cargas: cargas,
+                        recogidaEntrega: {
+                            fecha_recogida: card.querySelector('.js-fecha-recogida').value,
+                            hora_recogida: card.querySelector('.js-hora-recogida').value,
+                            hora_entrega: card.querySelector('.js-hora-entrega').value,
+                            instrucciones_recogida: card.querySelector('.js-instr-recogida').value || null,
+                            instrucciones_entrega: card.querySelector('.js-instr-entrega').value || null
+                        }
+                    });
+                });
+
+                // Crear envío
+                const envioData = {
+                    nombre_remitente: document.getElementById('nombre_remitente').value,
+                    telefono_remitente: document.getElementById('telefono_remitente').value,
+                    email_remitente: document.getElementById('email_remitente').value || null,
+                    id_direccion: id_direccion,
+                    particiones: particiones
+                };
+
+                const resEnvio = await fetch(`${API_URL}/api/public/envios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(envioData)
+                });
+
+                // Verificar si la respuesta es JSON
+                const contentType = resEnvio.headers.get('content-type');
+                let result;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    result = await resEnvio.json();
+                } else {
+                    // Si no es JSON, obtener el texto para ver el error
+                    const text = await resEnvio.text();
+                    console.error('Respuesta no JSON del servidor:', text);
+                    throw new Error('El servidor devolvió una respuesta inválida. Revisa la consola del navegador.');
+                }
+
+                if (resEnvio.ok) {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>¡Envío de productor creado exitosamente!</strong><br>
+                                ID del Envío: <strong>#${result.id_envio}</strong><br>
+                                <small>Tu solicitud ha sido registrada y será procesada por nuestro equipo.</small>
+                            </div>
+                        </div>
+                    `;
+
+                    // Disable submit button
+                    document.getElementById('btnFinish').disabled = true;
+                    document.getElementById('btnFinish').innerHTML = '<i class="fas fa-check"></i> Envío Creado';
+
+                    // Scroll to alert
+                    alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    throw new Error(result.error || result.message || 'Error desconocido');
+                }
+
+            } catch (error) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>Error al crear el envío</strong><br>
+                            ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

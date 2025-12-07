@@ -22,6 +22,14 @@ class Envio extends Model
         'id_motivo_cancelacion',
         'fecha_cancelacion',
         'observacion_cancelacion',
+        'nombre_remitente',
+        'telefono_remitente',
+        'email_remitente',
+        'es_publico',
+        'numero_solicitud',
+        'fecha_requerida',
+        'prioridad',
+        'observaciones_solicitud',
     ];
 
     protected $casts = [
@@ -30,6 +38,7 @@ class Envio extends Model
         'fecha_entrega' => 'datetime',
         'fecha_cancelacion' => 'datetime',
         'cancelado' => 'boolean',
+        'es_publico' => 'boolean',
     ];
 
     public function usuario()

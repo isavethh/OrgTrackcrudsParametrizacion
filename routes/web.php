@@ -119,6 +119,10 @@ Route::prefix('admin')->group(function () {
         return view('admin.documentos.cliente', ['id_cliente' => $id_cliente]);
     })->name('admin.documentos.cliente');
 
+    Route::get('/documentos/productor/{id_envio}', function ($id_envio) {
+        return view('admin.documentos.productor', ['id_envio' => $id_envio]);
+    })->name('admin.documentos.productor');
+
     Route::get('/documentos/create', function () {
         return view('admin.documentos.create');
     })->name('admin.documentos.create');

@@ -7,6 +7,16 @@
 .filter-card { cursor: pointer; }
 .card[data-href] { cursor: pointer; transition: all 0.3s; }
 .envio-route { border-left: 3px solid #dee2e6; padding-left: 1rem; }
+.text-truncate-2lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4em;
+    min-height: 2.8em;
+    max-height: 2.8em;
+}
 </style>
 @endpush
 
@@ -46,6 +56,15 @@
             <div class="info-box-content">
                 <span class="info-box-text">En curso</span>
                 <span class="info-box-number" id="statCurso">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-2">
+        <div class="info-box filter-card" data-filter="parcial">
+            <span class="info-box-icon bg-orange elevation-1"><i class="fas fa-shipping-fast"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Parcialmente Entregado</span>
+                <span class="info-box-number" id="statParcial">0</span>
             </div>
         </div>
     </div>
@@ -98,6 +117,7 @@ if (!window.__envioIndexAdminInitialized) {
         const statPendientes = document.getElementById('statPendientes');
         const statAsignados = document.getElementById('statAsignados');
         const statCurso = document.getElementById('statCurso');
+        const statParcial = document.getElementById('statParcial');
         const statCompletados = document.getElementById('statCompletados');
         const filterCards = document.querySelectorAll('.filter-card');
         const pillCounters = document.querySelectorAll('[data-count-pill]');
@@ -106,6 +126,7 @@ if (!window.__envioIndexAdminInitialized) {
             pendientes: (estado) => ['pendiente', 'sin estado', 'sin asignar'].includes(estado),
             asignados: (estado) => ['asignado'].includes(estado),
             curso: (estado) => ['en curso'].includes(estado),
+            parcial: (estado) => ['parcialmente entregado'].includes(estado),
             completados: (estado) => ['entregado', 'finalizado'].includes(estado),
             todos: () => true
         };
@@ -116,6 +137,7 @@ if (!window.__envioIndexAdminInitialized) {
             'sin asignar': { label: 'Pendiente', badge: 'badge-pendiente' },
             'asignado': { label: 'Asignado', badge: 'badge-asignado' },
             'en curso': { label: 'En curso', badge: 'badge-curso' },
+            'parcialmente entregado': { label: 'Parcialmente Entregado', badge: 'badge-warning' },
             'entregado': { label: 'Completado', badge: 'badge-completado' },
             'finalizado': { label: 'Completado', badge: 'badge-completado' },
         };
@@ -198,6 +220,7 @@ if (!window.__envioIndexAdminInitialized) {
             statPendientes.textContent = resumen.pendientes;
             statAsignados.textContent = resumen.asignados;
             statCurso.textContent = resumen.curso;
+            statParcial.textContent = resumen.parcial;
             statCompletados.textContent = resumen.completados;
 
             pillCounters.forEach(pill => {
@@ -207,12 +230,13 @@ if (!window.__envioIndexAdminInitialized) {
         }
 
         function calcularResumen(data) {
-            const counts = { pendientes: 0, asignados: 0, curso: 0, completados: 0, todos: data.length, total: data.length };
+            const counts = { pendientes: 0, asignados: 0, curso: 0, parcial: 0, completados: 0, todos: data.length, total: data.length };
             data.forEach(envio => {
                 const estado = normalizarEstado(envio.estado);
                 if (STATUS_GROUPS.pendientes(estado)) counts.pendientes += 1;
                 if (STATUS_GROUPS.asignados(estado)) counts.asignados += 1;
                 if (STATUS_GROUPS.curso(estado)) counts.curso += 1;
+                if (STATUS_GROUPS.parcial(estado)) counts.parcial += 1;
                 if (STATUS_GROUPS.completados(estado)) counts.completados += 1;
             });
             return counts;
@@ -251,7 +275,17 @@ if (!window.__envioIndexAdminInitialized) {
                                         .replace('badge-curso', 'badge-primary')
                                         .replace('badge-completado', 'badge-success');
             const metricas = envio.metricas || { particiones: 0, items: 0, peso: 0 };
-            const cliente = `${envio.usuario?.nombre || ''} ${envio.usuario?.apellido || ''}`.trim() || 'Cliente sin nombre';
+            
+            // Determinar nombre del cliente (normal o productor)
+            let cliente = 'Cliente sin nombre';
+            let tipoEnvio = '';
+            if (envio.es_publico) {
+                cliente = envio.nombre_remitente || 'Productor sin nombre';
+                tipoEnvio = '<span class="badge badge-success ml-1" title="Envío de productor"><i class="fas fa-seedling"></i> Productor</span>';
+            } else {
+                cliente = `${envio.usuario?.nombre || ''} ${envio.usuario?.apellido || ''}`.trim() || 'Cliente sin nombre';
+            }
+            
             const fecha = formatearFecha(envio.fecha_creacion);
 
             return `
@@ -269,11 +303,11 @@ if (!window.__envioIndexAdminInitialized) {
                             <div class="mb-3 pb-3 envio-route">
                                 <div class="mb-2">
                                     <small class="text-muted text-uppercase">Recogida</small>
-                                    <div class="font-weight-bold">${envio.nombre_origen || 'Sin origen'}</div>
+                                    <div class="font-weight-bold text-truncate-2lines">${envio.nombre_origen || 'Sin origen'}</div>
                                 </div>
                                 <div>
                                     <small class="text-muted text-uppercase">Entrega</small>
-                                    <div class="font-weight-bold">${envio.nombre_destino || 'Sin destino'}</div>
+                                    <div class="font-weight-bold text-truncate-2lines">${envio.nombre_destino || 'Sin destino'}</div>
                                 </div>
                             </div>
 
@@ -301,7 +335,7 @@ if (!window.__envioIndexAdminInitialized) {
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <small class="text-muted text-uppercase">Cliente</small>
-                                    <div class="font-weight-bold">${cliente}</div>
+                                    <div class="font-weight-bold">${cliente}${tipoEnvio}</div>
                                 </div>
                                 <button class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye mr-1"></i>Ver

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Crear Envío desde Solicitud de Materiales</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input, select, textarea {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .material-item {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e8ebff;
+            position: relative;
+        }
+        
+        .material-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .material-number {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+        }
+        
+        .btn-remove {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-remove:hover {
+            background: #e84053;
+            transform: translateY(-2px);
+        }
+        
+        .btn-add {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        
+        .btn-add:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 30px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .response {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .response.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        
+        .response.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .response-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .response pre {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .required::after {
+            content: ' *';
+            color: #ff4757;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 Test - Crear Envío desde Solicitud de Materiales</h1>
+            <p>POST /api/public/envios/from-material-request</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="materialRequestForm">
+                
+                <!-- Sección: Datos de Solicitud -->
+                <div class="section">
+                    <div class="section-title">📋 Datos de la Solicitud</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Número de Solicitud</label>
+                            <input type="text" name="request_number" value="SOL-0001-20250107" placeholder="SOL-0001-20250107">
+                        </div>
+                        <div class="form-group">
+                            <label>ID de Orden</label>
+                            <input type="number" name="order_id" value="1" placeholder="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Fecha Requerida</label>
+                            <input type="date" name="required_date" value="2025-01-20" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prioridad (1-10)</label>
+                            <input type="number" name="priority" value="5" min="1" max="10" placeholder="5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea name="observations" rows="3" placeholder="Observaciones sobre la solicitud...">Material necesario para producción urgente</textarea>
+                    </div>
+                </div>
+                
+                <!-- Sección: Materiales -->
+                <div class="section">
+                    <div class="section-title">📦 Materiales Solicitados</div>
+                    <div id="materialsContainer">
+                        <!-- Material 1 -->
+                        <div class="material-item">
+                            <div class="material-header">
+                                <span class="material-number">Material #1</span>
+                                <button type="button" class="btn-remove" onclick="removeMaterial(this)">✕ Eliminar</button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ID Material</label>
+                                    <input type="number" name="materials[0][material_id]" value="1" placeholder="1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">Nombre Material</label>
+                                    <input type="text" name="materials[0][material_name]" value="Papa" placeholder="Papa" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">Cantidad Solicitada</label>
+                                    <input type="number" name="materials[0][requested_quantity]" value="100.50" step="0.01" placeholder="100.50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">Unidad</label>
+                                    <input type="text" name="materials[0][unit]" value="kg" placeholder="kg" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Material 2 -->
+                        <div class="material-item">
+                            <div class="material-header">
+                                <span class="material-number">Material #2</span>
+                                <button type="button" class="btn-remove" onclick="removeMaterial(this)">✕ Eliminar</button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ID Material</label>
+                                    <input type="number" name="materials[1][material_id]" value="2" placeholder="2">
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">Nombre Material</label>
+                                    <input type="text" name="materials[1][material_name]" value="Zanahoria" placeholder="Zanahoria" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">Cantidad Solicitada</label>
+                                    <input type="number" name="materials[1][requested_quantity]" value="50.25" step="0.01" placeholder="50.25" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">Unidad</label>
+                                    <input type="text" name="materials[1][unit]" value="kg" placeholder="kg" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn-add" onclick="addMaterial()">
+                        ➕ Agregar Material
+                    </button>
+                </div>
+                
+                <!-- Sección: Datos del Productor -->
+                <div class="section">
+                    <div class="section-title">👤 Datos del Productor (Remitente)</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Nombre Remitente</label>
+                            <input type="text" name="nombre_remitente" value="Productor Juan Pérez" placeholder="Productor Juan Pérez" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Teléfono</label>
+                            <input type="tel" name="telefono_remitente" value="+593987654321" placeholder="+593987654321" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email_remitente" value="juan@productor.com" placeholder="juan@productor.com">
+                    </div>
+                </div>
+                
+                <!-- Sección: Direcciones -->
+                <div class="section">
+                    <div class="section-title">📍 Direcciones</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">ID Dirección Origen</label>
+                            <input type="number" name="id_direccion_origen" value="1" placeholder="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">ID Dirección Destino</label>
+                            <input type="number" name="id_direccion_destino" value="2" placeholder="2" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección: Transporte -->
+                <div class="section">
+                    <div class="section-title">🚛 Datos de Transporte</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">ID Tipo de Transporte</label>
+                            <input type="number" name="id_tipo_transporte" value="1" placeholder="1 (Refrigerado)" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Fecha de Recogida</label>
+                            <input type="date" name="fecha_recogida" value="2025-01-15" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Hora de Recogida</label>
+                            <input type="time" name="hora_recogida" value="08:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Hora de Entrega</label>
+                            <input type="time" name="hora_entrega" value="14:00" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Instrucciones de Recogida</label>
+                            <textarea name="instrucciones_recogida" rows="2" placeholder="Instrucciones especiales para recogida...">Tocar el timbre 3 veces</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Instrucciones de Entrega</label>
+                            <textarea name="instrucciones_entrega" rows="2" placeholder="Instrucciones especiales para entrega...">Entregar en bodega principal</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    🚀 Crear Envío
+                </button>
+            </form>
+            
+            <div id="response" class="response"></div>
+        </div>
+    </div>
+    
+    <script>
+        let materialCount = 2;
+        
+        function addMaterial() {
+            const container = document.getElementById('materialsContainer');
+            const newMaterial = document.createElement('div');
+            newMaterial.className = 'material-item';
+            newMaterial.innerHTML = `
+                <div class="material-header">
+                    <span class="material-number">Material #${materialCount + 1}</span>
+                    <button type="button" class="btn-remove" onclick="removeMaterial(this)">✕ Eliminar</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID Material</label>
+                        <input type="number" name="materials[${materialCount}][material_id]" placeholder="${materialCount + 1}">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Nombre Material</label>
+                        <input type="text" name="materials[${materialCount}][material_name]" placeholder="Nombre del material" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Cantidad Solicitada</label>
+                        <input type="number" name="materials[${materialCount}][requested_quantity]" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Unidad</label>
+                        <input type="text" name="materials[${materialCount}][unit]" placeholder="kg" required>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newMaterial);
+            materialCount++;
+        }
+        
+        function removeMaterial(btn) {
+            const materials = document.querySelectorAll('.material-item');
+            if (materials.length > 1) {
+                btn.closest('.material-item').remove();
+            } else {
+                alert('Debe haber al menos 1 material');
+            }
+        }
+        
+        document.getElementById('materialRequestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const responseDiv = document.getElementById('response');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Creando envío...';
+            responseDiv.style.display = 'none';
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(e.target);
+            const data = {
+                order_id: formData.get('order_id') ? parseInt(formData.get('order_id')) : null,
+                request_number: formData.get('request_number') || null,
+                required_date: formData.get('required_date') || null,
+                priority: formData.get('priority') ? parseInt(formData.get('priority')) : null,
+                observations: formData.get('observations') || null,
+                materials: [],
+                nombre_remitente: formData.get('nombre_remitente'),
+                telefono_remitente: formData.get('telefono_remitente'),
+                email_remitente: formData.get('email_remitente') || null,
+                id_direccion_origen: parseInt(formData.get('id_direccion_origen')),
+                id_direccion_destino: parseInt(formData.get('id_direccion_destino')),
+                id_tipo_transporte: parseInt(formData.get('id_tipo_transporte')),
+                fecha_recogida: formData.get('fecha_recogida'),
+                hora_recogida: formData.get('hora_recogida'),
+                hora_entrega: formData.get('hora_entrega'),
+                instrucciones_recogida: formData.get('instrucciones_recogida') || null,
+                instrucciones_entrega: formData.get('instrucciones_entrega') || null
+            };
+            
+            // Recopilar materiales
+            const materials = document.querySelectorAll('.material-item');
+            materials.forEach((item, index) => {
+                const materialId = formData.get(`materials[${index}][material_id]`);
+                const materialName = formData.get(`materials[${index}][material_name]`);
+                const quantity = formData.get(`materials[${index}][requested_quantity]`);
+                const unit = formData.get(`materials[${index}][unit]`);
+                
+                if (materialName && quantity && unit) {
+                    data.materials.push({
+                        material_id: materialId ? parseInt(materialId) : null,
+                        material_name: materialName,
+                        requested_quantity: parseFloat(quantity),
+                        unit: unit
+                    });
+                }
+            });
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/public/envios/from-material-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                responseDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `
+                        <div class="response-title">✅ Envío Creado Exitosamente</div>
+                        <p><strong>ID Envío:</strong> ${result.id_envio}</p>
+                        <p><strong>Número Solicitud:</strong> ${result.numero_solicitud || 'N/A'}</p>
+                        <p><strong>Código de Acceso:</strong> ${result.codigo_acceso}</p>
+                        <p><strong>Descripción Carga:</strong> ${result.descripcion_carga}</p>
+                        <br>
+                        <strong>Respuesta completa:</strong>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.innerHTML = `
+                        <div class="response-title">❌ Error al Crear Envío</div>
+                        <p><strong>Código:</strong> ${response.status}</p>
+                        ${result.error ? `<p><strong>Error:</strong> ${result.error}</p>` : ''}
+                        ${result.mensaje ? `<p><strong>Mensaje:</strong> ${result.mensaje}</p>` : ''}
+                        <br>
+                        <strong>Detalles:</strong>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = `
+                    <div class="response-title">❌ Error de Conexión</div>
+                    <p>${error.message}</p>
+                    <p>Asegúrate de que el servidor esté corriendo en <code>http://localhost:8000</code></p>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Crear Envío';
+            }
+        });
+    </script>
+</body>
+</html>

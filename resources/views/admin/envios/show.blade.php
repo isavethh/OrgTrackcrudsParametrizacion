@@ -199,11 +199,11 @@ if (!window.__envioShowAdminInitialized) {
                 <p class="mb-3">CI: ${p.transportista?.ci || '—'}</p>
 
                 <h6>Vehículo</h6>
-                <p class="mb-1">Placa: ${p.vehiculo?.placa || '—'}</p>
-                <p class="mb-3">Tipo: ${p.vehiculo?.tipo || '—'}</p>
+                <p class="mb-3">Placa: ${p.vehiculo?.placa || '—'}</p>
 
                 <h6>Transporte</h6>
-                <p class="mb-3">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}<br>Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
+                <p class="mb-1">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}</p>
+                <p class="mb-3">Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
 
                 <div class="timeline-item mb-3">
                     <span class="text-success">●</span>

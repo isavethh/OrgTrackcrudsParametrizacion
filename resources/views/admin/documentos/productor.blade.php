@@ -1,6 +1,6 @@
 @extends('layouts.adminlte')
 
-@section('page-title', 'Documentos de Envíos')
+@section('page-title', 'Documentos de Envío - Productor')
 
 @section('page-content')
 <style>
@@ -32,18 +32,21 @@
 
 <div class="row">
     <div class="col-12">
-        <!-- Información del cliente -->
+        <!-- Información del productor -->
         <div class="card card-primary card-outline mb-3 no-print">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1" id="clienteNombre">
-                            <i class="fas fa-user mr-2"></i>Cargando información del cliente...
+                        <h5 class="mb-1" id="productorNombre">
+                            <i class="fas fa-seedling mr-2"></i><span id="nombreProductor">Cargando información del envío...</span>
                         </h5>
-                        <p class="text-muted mb-0 small" id="clienteCorreo"></p>
+                        <p class="text-muted mb-0 small">
+                            <i class="fas fa-envelope mr-1"></i><span id="emailProductor"></span> | 
+                            <i class="fas fa-phone ml-2 mr-1"></i><span id="telefonoProductor"></span>
+                        </p>
                     </div>
                     <a href="{{ route('admin.documentos.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left mr-1"></i>Volver a Lista de Clientes
+                        <i class="fas fa-arrow-left mr-1"></i>Volver a Documentos
                     </a>
                 </div>
             </div>
@@ -54,65 +57,40 @@
             <div class="card-header p-0 pt-1">
                 <ul class="nav nav-tabs" id="custom-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="tab-historial" data-toggle="pill" href="#historial" role="tab">
-                            <i class="fas fa-clipboard-list"></i> Historial de Envíos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" id="tab-particiones" data-toggle="pill" href="#particiones" role="tab">
+                        <a class="nav-link active" id="tab-particiones" data-toggle="pill" href="#particiones" role="tab">
                             <i class="fas fa-th-list"></i> Particiones del Envío
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link disabled" id="tab-documento" data-toggle="pill" href="#documento" role="tab">
-                            <i class="fas fa-file-pdf"></i> Documento Completo
+                            <i class="fas fa-file-pdf"></i> Documento de Partición
                         </a>
                     </li>
                 </ul>
             </div>
             <div class="card-body">
                 <div class="tab-content" id="custom-tabs-content">
-                    <!-- TAB 1: Historial de Envíos -->
-                    <div class="tab-pane fade show active" id="historial" role="tabpanel">
-                        <div class="mb-3">
-                            <div class="input-group" style="max-width: 350px;">
-                                <input type="text" id="searchInput" class="form-control" placeholder="Buscar por ID de envío...">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-default"><i class="fas fa-search"></i></button>
-                                </div>
-                            </div>
-                        </div>
-
+                    <!-- TAB 1: Particiones -->
+                    <div class="tab-pane fade show active" id="particiones" role="tabpanel">
                         <div id="loadingSpinner" class="text-center py-5">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="sr-only">Cargando...</span>
                             </div>
-                            <p class="mt-2 text-muted">Cargando envíos entregados...</p>
+                            <p class="mt-2 text-muted">Cargando particiones del envío...</p>
                         </div>
                         
-                        <div id="enviosContainer" style="display: none;"></div>
+                        <div id="particionesContainer" style="display: none;"></div>
                         
-                        <div id="noEnvios" style="display: none;" class="text-center py-5 text-muted">
+                        <div id="noParticiones" style="display: none;" class="text-center py-5 text-muted">
                             <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>Este cliente no tiene envíos entregados disponibles.</p>
+                            <p>Este envío no tiene particiones disponibles.</p>
                         </div>
                     </div>
 
-                    <!-- TAB 2: Particiones -->
-                    <div class="tab-pane fade" id="particiones" role="tabpanel">
-                        <div class="mb-3">
-                            <button class="btn btn-secondary" onclick="volverAHistorial()">
-                                <i class="fas fa-arrow-left"></i> Volver
-                            </button>
-                        </div>
-                        <h4 class="mb-3">Lista de Particiones</h4>
-                        <div id="particionesContainer"></div>
-                    </div>
-
-                    <!-- TAB 3: Documento Completo -->
+                    <!-- TAB 2: Documento Completo -->
                     <div class="tab-pane fade" id="documento" role="tabpanel">
                         <div class="mb-3 no-print">
-                            <button class="btn btn-secondary mr-2" onclick="volverAHistorial()">
+                            <button class="btn btn-secondary mr-2" onclick="volverAParticiones()">
                                 <i class="fas fa-arrow-left"></i> Volver
                             </button>
                             <button class="btn btn-primary" onclick="window.print()">
@@ -132,133 +110,56 @@
 
 @push('js')
 <script>
-const idCliente = {{ $id_cliente }};
-const token = localStorage.getItem('authToken')?.replace(/^"+|"+$/g, '') || null;
-if (!token) { window.location.href = '/login'; }
+(function() {
+    const idEnvio = {{ $id_envio }};
 
-const headers = { 
-    'Authorization': `Bearer ${token}`,
-    'Accept': 'application/json'
-};
-
-let enviosData = [];
-let envioSeleccionado = null;
-let particionSeleccionada = null;
+    let envioData = null;
+    let particionSeleccionada = null;
 
 // Elementos del DOM
-const searchInput = document.getElementById('searchInput');
 const loadingSpinner = document.getElementById('loadingSpinner');
-const enviosContainer = document.getElementById('enviosContainer');
-const noEnvios = document.getElementById('noEnvios');
 const particionesContainer = document.getElementById('particionesContainer');
+const noParticiones = document.getElementById('noParticiones');
 const documentoCompletoContainer = document.getElementById('documentoCompletoContainer');
 
-const tabHistorial = document.getElementById('tab-historial');
 const tabParticiones = document.getElementById('tab-particiones');
 const tabDocumento = document.getElementById('tab-documento');
 
-// Cargar información del cliente
-async function cargarInfoCliente() {
+// Cargar datos del envío
+async function cargarEnvio() {
     try {
-        const res = await fetch(`${window.location.origin}/api/usuarios/${idCliente}`, { headers });
-        if (!res.ok) throw new Error('No se pudo cargar la información del cliente');
+        const res = await fetch(`${window.location.origin}/api/public/envios/${idEnvio}/documento`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
         
-        const cliente = await res.json();
-        document.getElementById('clienteNombre').innerHTML = `
-            <i class="fas fa-user mr-2"></i>${cliente.nombre || ''} ${cliente.apellido || ''}
-        `;
-        document.getElementById('clienteCorreo').textContent = cliente.correo || '';
-    } catch (error) {
-        console.error('Error al cargar cliente:', error);
-    }
-}
+        if (!res.ok) throw new Error('No se pudo cargar el envío');
 
-// Cargar envíos del cliente
-async function cargarEnvios() {
-    try {
-        const res = await fetch(`${window.location.origin}/api/envios/usuario/${idCliente}`, { headers });
+        envioData = await res.json();
         
-        if (res.status === 401) {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
-            return;
-        }
+        // Actualizar información del productor
+        document.getElementById('nombreProductor').textContent = envioData.nombre_cliente || 'Productor';
+        document.getElementById('emailProductor').textContent = 'Email no disponible';
+        document.getElementById('telefonoProductor').textContent = 'Teléfono no disponible';
 
-        if (!res.ok) throw new Error('No se pudieron cargar los envíos');
-
-        const data = await res.json();
-        enviosData = data.filter(e => e.estado_nombre === 'Entregado' || e.estado_nombre === 'Parcialmente entregado');
-
-        renderEnvios(enviosData);
+        renderParticiones(envioData.particiones);
     } catch (error) {
         console.error('Error:', error);
         loadingSpinner.style.display = 'none';
-        noEnvios.style.display = 'block';
+        noParticiones.style.display = 'block';
     }
 }
 
-function renderEnvios(envios) {
+function renderParticiones(particiones) {
     loadingSpinner.style.display = 'none';
     
-    if (!envios || envios.length === 0) {
-        noEnvios.style.display = 'block';
-        enviosContainer.style.display = 'none';
+    if (!particiones || particiones.length === 0) {
+        noParticiones.style.display = 'block';
+        particionesContainer.style.display = 'none';
         return;
     }
 
-    enviosContainer.innerHTML = envios.map(envio => `
-        <div class="card mb-3 envio-card" onclick="seleccionarEnvio(${envio.id})">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <div class="d-flex align-items-start">
-                            <div class="mr-3">
-                                <span class="badge badge-lg badge-success">ID: ${envio.id}</span>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h5 class="mb-2">${envio.nombre_origen || 'Origen'} → ${envio.nombre_destino || 'Destino'}</h5>
-                                <p class="text-muted mb-1 small"><i class="fas fa-map-marker-alt mr-1"></i><strong>Origen:</strong> ${envio.nombre_origen || '—'}</p>
-                                <p class="text-muted mb-1 small"><i class="fas fa-map-marker-alt mr-1"></i><strong>Destino:</strong> ${envio.nombre_destino || '—'}</p>
-                                <div class="mt-2">
-                                    <span class="badge badge-success">${envio.estado_nombre || 'Entregado'}</span>
-                                    <span class="badge badge-info ml-1">${envio.particiones?.length || 0} partición(es)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-right">
-                        <small class="text-muted d-block mb-1">Fecha de registro</small>
-                        <strong>${envio.fecha_creacion ? new Date(envio.fecha_creacion).toLocaleDateString('es-BO') : 'Sin fecha'}</strong>
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary btn-block" onclick="event.stopPropagation(); seleccionarEnvio(${envio.id})">
-                                <i class="fas fa-file-alt mr-1"></i>Ver Documentos
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    noEnvios.style.display = 'none';
-    enviosContainer.style.display = 'block';
-}
-
-function seleccionarEnvio(idEnvio) {
-    envioSeleccionado = enviosData.find(e => e.id === idEnvio);
-    if (!envioSeleccionado) return;
-
-    renderParticiones();
-    
-    // Activar tab de particiones
-    tabParticiones.classList.remove('disabled');
-    $(tabParticiones).tab('show');
-}
-
-function renderParticiones() {
-    if (!envioSeleccionado || !envioSeleccionado.particiones) return;
-
-    particionesContainer.innerHTML = envioSeleccionado.particiones.map((p, idx) => {
+    particionesContainer.innerHTML = particiones.map((p, idx) => {
         const esEntregado = p.estado === 'Entregado';
         const estadoBadge = esEntregado ? 'success' : (p.estado === 'En curso' ? 'info' : 'secondary');
         const estadoTexto = p.estado || 'Pendiente';
@@ -274,7 +175,7 @@ function renderParticiones() {
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Tipo de transporte:</strong> ${p.tipoTransporte?.nombre || '—'}</p>
+                        <p><strong>Tipo de transporte:</strong> ${p.tipo_transporte?.nombre || '—'}</p>
                         <p><strong>Transportista:</strong> ${p.transportista?.nombre || '—'} ${p.transportista?.apellido || ''}</p>
                         <p><strong>Vehículo:</strong> ${p.vehiculo?.placa || '—'}</p>
                     </div>
@@ -286,7 +187,7 @@ function renderParticiones() {
                     </div>
                 </div>
                 <div class="mt-3">
-                    <button class="btn btn-primary" onclick="verDocumentoCompleto(${p.id_asignacion})" ${!esEntregado ? 'disabled title="El documento solo está disponible para particiones completadas"' : ''}>
+                    <button class="btn btn-primary" onclick="verDocumentoParticion(${idx})" ${!esEntregado ? 'disabled title="El documento solo está disponible para particiones completadas"' : ''}>
                         <i class="fas fa-file-pdf mr-1"></i>Ver Documento de Envío
                     </button>
                     ${!esEntregado ? '<small class="text-muted ml-2"><i class="fas fa-info-circle"></i> Documento disponible al completar la entrega</small>' : ''}
@@ -295,39 +196,33 @@ function renderParticiones() {
         </div>
     `;
     }).join('');
+
+    noParticiones.style.display = 'none';
+    particionesContainer.style.display = 'block';
 }
 
-async function verDocumentoCompleto(idAsignacion) {
-    try {
-        const res = await fetch(`${window.location.origin}/api/envios/documentos/asignacion/${idAsignacion}`, { headers });
-        
-        if (!res.ok) throw new Error('No se pudo cargar el documento');
+window.verDocumentoParticion = function(idxParticion) {
+    const particion = envioData.particiones[idxParticion];
+    if (!particion) return;
 
-        const data = await res.json();
-        particionSeleccionada = data;
-        
-        renderDocumentoCompleto(data);
-        
-        // Activar tab de documento
-        tabDocumento.classList.remove('disabled');
-        $(tabDocumento).tab('show');
-    } catch (error) {
-        console.error('Error:', error);
-        alert('No se pudo cargar el documento: ' + error.message);
-    }
+    particionSeleccionada = particion;
+    renderDocumentoCompleto();
+    
+    // Activar tab de documento
+    tabDocumento.classList.remove('disabled');
+    $(tabDocumento).tab('show');
 }
 
-function renderDocumentoCompleto(data) {
-    const particion = data.particion;
-    console.log('Datos del documento:', data);
-    console.log('Checklist Condiciones:', particion?.checklistCondiciones);
-    console.log('Checklist Incidentes:', particion?.checklistIncidentes);
+function renderDocumentoCompleto() {
+    if (!envioData || !particionSeleccionada) return;
+
+    const particion = particionSeleccionada;
     
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-BO') : '—';
     const formatTime = (t) => t || '—';
 
-    const firmaCliente = particion?.firma || '';
-    const firmaTransportista = particion?.firma_transportista || '';
+    const firmaCliente = particion.firma || '';
+    const firmaTransportista = particion.firmaTransportista || '';
 
     const mostrarFirmaCliente = firmaCliente.trim().length > 100;
     const mostrarFirmaTransportista = firmaTransportista.trim().length > 100;
@@ -348,7 +243,7 @@ function renderDocumentoCompleto(data) {
                     <th style="width: 50%; text-align: center;">ID de Asignación</th>
                 </tr>
                 <tr>
-                    <td style="text-align: center;">${data.id_envio || '—'}</td>
+                    <td style="text-align: center;">${envioData.id_envio || '—'}</td>
                     <td style="text-align: center;">${particion.id_asignacion || '—'}</td>
                 </tr>
                 <tr>
@@ -356,16 +251,16 @@ function renderDocumentoCompleto(data) {
                     <th style="text-align: center;">Estado del Envío</th>
                 </tr>
                 <tr>
-                    <td style="text-align: center;">${data.nombre_cliente || '—'}</td>
-                    <td style="text-align: center;">${data.estado_envio || '—'}</td>
+                    <td style="text-align: center;">${envioData.nombre_cliente || '—'}</td>
+                    <td style="text-align: center;">${envioData.estado || '—'}</td>
                 </tr>
                 <tr>
                     <th style="width: 50%; text-align: center;">Punto de recogida</th>
                     <th style="width: 50%; text-align: center;">Punto de Entrega</th>
                 </tr>
                 <tr>
-                    <td style="text-align: center;">${data.nombre_origen || '—'}</td>
-                    <td style="text-align: center;">${data.nombre_destino || '—'}</td>
+                    <td style="text-align: center;">${envioData.nombre_origen || '—'}</td>
+                    <td style="text-align: center;">${envioData.nombre_destino || '—'}</td>
                 </tr>
             </table>
 
@@ -476,8 +371,8 @@ function renderDocumentoCompleto(data) {
                     ${particion.checklistCondiciones.map((c, index) => `
                         <tr>
                             <td>${index + 1}. ${c.condicion?.titulo || '—'}</td>
-                            <td style="text-align: center;">${c.valor ? 'Sí' : ''}</td>
-                            <td style="text-align: center;">${!c.valor ? 'No' : ''}</td>
+                            <td style="text-align: center;">${c.cumple ? 'Sí' : ''}</td>
+                            <td style="text-align: center;">${!c.cumple ? 'No' : ''}</td>
                         </tr>
                     `).join('')}
                     ${particion.observaciones_condiciones ? `
@@ -517,11 +412,11 @@ function renderDocumentoCompleto(data) {
             <div class="signature-container">
                 <div class="signature-item">
                     ${mostrarFirmaCliente ? `
-                        <img src="${firmaCliente}" alt="Firma Cliente" 
+                        <img src="${firmaCliente}" alt="Firma Productor" 
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div style="display:none; color: #999;">Firma no disponible</div>
                     ` : '<div style="color: #999;">Firma no disponible</div>'}
-                    <div class="signature-line">Firma del Cliente</div>
+                    <div class="signature-line">Firma de Planta</div>
                 </div>
                 <div class="signature-item">
                     ${mostrarFirmaTransportista ? `
@@ -536,34 +431,13 @@ function renderDocumentoCompleto(data) {
     `;
 }
 
-function volverAHistorial() {
-    envioSeleccionado = null;
-    particionSeleccionada = null;
-    
-    tabParticiones.classList.add('disabled');
+window.volverAParticiones = function() {
+    $(tabParticiones).tab('show');
     tabDocumento.classList.add('disabled');
-    $(tabHistorial).tab('show');
 }
 
-// Búsqueda
-searchInput.addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
-    if (!query) {
-        renderEnvios(enviosData);
-        return;
-    }
-    
-    const filtrados = enviosData.filter(e => 
-        String(e.id).includes(query) ||
-        (e.nombre_origen || '').toLowerCase().includes(query) ||
-        (e.nombre_destino || '').toLowerCase().includes(query)
-    );
-    
-    renderEnvios(filtrados);
-});
-
 // Inicializar
-cargarInfoCliente();
-cargarEnvios();
+cargarEnvio();
+})();
 </script>
 @endpush

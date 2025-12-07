@@ -187,16 +187,24 @@ CREATE TABLE carga (
 );
 
 CREATE TABLE envios (
-    id                    SERIAL PRIMARY KEY,
-    id_usuario            INTEGER     NOT NULL,
-    fecha_creacion        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    fecha_inicio          TIMESTAMPTZ,
-    fecha_entrega         TIMESTAMPTZ,
-    id_direccion          INTEGER     NOT NULL,
-    cancelado             BOOLEAN     DEFAULT false,
-    id_motivo_cancelacion INTEGER,
-    fecha_cancelacion     TIMESTAMPTZ,
+    id                      SERIAL PRIMARY KEY,
+    id_usuario              INTEGER,
+    fecha_creacion          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_inicio            TIMESTAMPTZ,
+    fecha_entrega           TIMESTAMPTZ,
+    id_direccion            INTEGER     NOT NULL,
+    cancelado               BOOLEAN     DEFAULT false,
+    id_motivo_cancelacion   INTEGER,
+    fecha_cancelacion       TIMESTAMPTZ,
     observacion_cancelacion VARCHAR(500),
+    nombre_remitente        VARCHAR(100),
+    telefono_remitente      VARCHAR(20),
+    email_remitente         VARCHAR(100),
+    es_publico              BOOLEAN     DEFAULT false,
+    numero_solicitud        VARCHAR(50),
+    fecha_requerida         DATE,
+    prioridad               INTEGER     DEFAULT 1,
+    observaciones_solicitud TEXT,
     CONSTRAINT fk_envios_usuario
         FOREIGN KEY (id_usuario)   REFERENCES usuarios(id),
     CONSTRAINT fk_envios_direccion
@@ -376,6 +384,9 @@ CREATE INDEX ix_envios_id_direccion
 
 CREATE INDEX ix_envios_id_usuario 
     ON envios(id_usuario);
+
+CREATE INDEX ix_envios_es_publico
+    ON envios(es_publico);
 
 CREATE INDEX ix_historial_envio 
     ON historialestados(id_envio, fecha);

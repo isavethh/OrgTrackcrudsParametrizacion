@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\VehiculoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CondicionTransporteController;
 use App\Http\Controllers\Api\EnvioController;
+use App\Http\Controllers\Api\EnvioPublicoController;
 use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\TipotransporteController;
 use App\Http\Controllers\Api\TipoIncidenteTransporteController;
@@ -22,6 +23,18 @@ Route::middleware([])->group(function () {
     // Routes Auth
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+
+    // Routes Envios Productores (sin autenticación JWT)
+    Route::post('/public/direccion', [EnvioPublicoController::class, 'crearDireccionProductor']);
+    Route::post('/public/envios', [EnvioPublicoController::class, 'crearEnvioProductor']);
+    Route::post('/public/envios/from-material-request', [EnvioPublicoController::class, 'crearEnvioDesdeMateriaPrima']);
+    Route::get('/public/envios/all', [EnvioPublicoController::class, 'listarTodosEnviosPublicos']);
+    Route::get('/public/envios/{id}/seguimiento', [EnvioPublicoController::class, 'obtenerEnvioPublicoPorId']);
+    Route::get('/public/envios', [EnvioPublicoController::class, 'listarEnviosProductores']);
+    Route::get('/public/envios/{id_envio}/documento', [EnvioPublicoController::class, 'obtenerDocumentoProductor']);
+    
+    // Endpoints públicos necesarios para crear envíos
+    Route::get('/tipo-transporte', [TipotransporteController::class, 'index']);
 
     // Routes Vehiculos
     Route::middleware('jwt')->group(function () {

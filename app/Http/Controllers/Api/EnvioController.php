@@ -330,6 +330,9 @@ class EnvioController extends Controller
             if (!UsuarioHelper::tieneRol($usuario, 'admin')) {
                 $query->where('id_usuario', $usuario['id']);
                 \Log::info('Filtrando por usuario: ' . $usuario['id']);
+            } else {
+                // Si es admin, mostrar todos los envíos (normales + públicos)
+                \Log::info('Admin: mostrando todos los envíos incluyendo públicos');
             }
 
             $envios = $query->get();
@@ -346,6 +349,9 @@ class EnvioController extends Controller
                 return [
                     'id' => $envio->id,
                     'id_usuario' => $envio->id_usuario,
+                    'es_publico' => $envio->es_publico ?? false,
+                    'nombre_remitente' => $envio->nombre_remitente,
+                    'telefono_remitente' => $envio->telefono_remitente,
                     'estado' => $estadoActual ?? 'Pendiente',
                     'fecha_creacion' => $envio->fecha_creacion,
                     'fecha_inicio' => $envio->fecha_inicio,
@@ -1794,5 +1800,3 @@ class EnvioController extends Controller
         }
     }
 }
-
-
