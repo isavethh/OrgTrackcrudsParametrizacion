@@ -2317,39 +2317,21 @@ Content-Type: application/json
   "asignacion": {
     "id_asignacion": 1,
     "estado": "En curso",
-    "fecha_asignacion": "2024-01-15T10:30:00Z",
-    "fecha_inicio": "2024-01-20T08:00:00Z",
     "cliente": {
       "nombre": "Juan",
       "apellido": "Pérez"
     },
-    "nombre_origen": "Almacén Central",
-    "nombre_destino": "Tienda Norte",
+    "origen": "Almacén Central",
+    "destino": "Tienda Norte",
     "vehiculo": {
       "placa": "ABC-123",
       "tipo": "Pesado - Refrigerado"
     },
-    "tipoTransporte": {
-      "nombre": "Refrigerado",
-      "descripcion": "Transporte con temperatura controlada"
+    "transportista": {
+      "ci": "12345678",
+      "telefono": "555-1234"
     },
-    "recogidaEntrega": {
-      "fecha_recogida": "2024-01-20",
-      "hora_recogida": "08:00:00",
-      "hora_entrega": "16:00:00",
-      "instrucciones_recogida": "Llamar antes de llegar",
-      "instrucciones_entrega": "Entregar en recepción"
-    },
-    "cargas": [
-      {
-        "id": 1,
-        "tipo": "Frutas",
-        "variedad": "Manzanas",
-        "empaquetado": "Cajas",
-        "cantidad": 100,
-        "peso": 500.50
-      }
-    ]
+    "id_asignacion_multiple": 5
   }
 }
 ```
