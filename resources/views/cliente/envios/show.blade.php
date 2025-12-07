@@ -33,7 +33,14 @@ if (!window.__envioShowClienteInitialized) {
     const cont = document.getElementById('detalleEnvio');
 
     function badgeFor(estado){
-        const map = { 'En curso':'badge-info', 'Pendiente':'badge-warning', 'Asignado':'badge-primary', 'Entregado':'badge-success', 'Finalizado':'badge-secondary' };
+        const map = { 
+            'En curso':'badge-info', 
+            'Pendiente':'badge-warning', 
+            'Asignado':'badge-primary', 
+            'Entregado':'badge-success', 
+            'Finalizado':'badge-secondary',
+            'Cancelado':'badge-danger'
+        };
         const cls = map[estado] || 'badge-light';
         return `<span class="badge ${cls} ml-1">${estado}</span>`;
     }
@@ -44,7 +51,29 @@ if (!window.__envioShowClienteInitialized) {
             cont.innerHTML = '<div class="text-muted">Este envío no tiene particiones.</div>';
             return;
         }
+        
+        // Verificar si el envío está cancelado
+        const estaCancelado = particiones.some(p => p.estado === 'Cancelado');
+        
         const wrapper = document.createElement('div');
+        
+        // Mostrar alerta si está cancelado
+        if (estaCancelado) {
+            const alertaCancelado = document.createElement('div');
+            alertaCancelado.className = 'alert alert-danger mb-4';
+            alertaCancelado.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-times-circle fa-3x mr-3"></i>
+                    <div>
+                        <h4 class="alert-heading mb-2"><strong>Envío Cancelado</strong></h4>
+                        <p class="mb-0">Este envío fue rechazado por el administrador y no será procesado.</p>
+                        <p class="mb-0 small">Si tienes dudas sobre esta cancelación, por favor contacta con nuestro equipo de soporte.</p>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(alertaCancelado);
+        }
+        
         particiones.forEach((p, idx) => {
             const card = document.createElement('div');
             card.className = 'card mb-4';

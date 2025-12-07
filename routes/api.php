@@ -59,6 +59,7 @@ Route::middleware([])->group(function () {
     Route::middleware('jwt')->get('/envios', [EnvioController::class, 'obtenerTodos']);
     Route::middleware('jwt')->get('/envios/{id}', [EnvioController::class, 'obtenerPorId']);
     Route::middleware('jwt')->put('/envios/{id_envio}/asignar', [EnvioController::class, 'asignarTransportistaYVehiculo']);
+    Route::middleware('jwt')->delete('/envios/{id_envio}/cancelar', [EnvioController::class, 'cancelarEnvio']);
     Route::middleware('jwt')->get('/envios/{id_envio}/documento', [EnvioController::class, 'generarDocumentoEnvio']);
     Route::middleware('jwt')->put('/envios/{id_envio}/estado-global', [EnvioController::class, 'actualizarEstadoGlobalEnvio']);
 

@@ -178,19 +178,25 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>Fecha Recogida <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control js-fecha-recogida" required>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker();" style="cursor: pointer;">
+                            <input type="date" class="form-control js-fecha-recogida" required>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>Hora Recogida <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control js-hora-recogida" required>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker();" style="cursor: pointer;">
+                            <input type="time" class="form-control js-hora-recogida" required>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>Hora Entrega Estimada <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control js-hora-entrega" required>
+                        <div class="clickable-input-wrapper" onclick="this.querySelector('input').showPicker();" style="cursor: pointer;">
+                            <input type="time" class="form-control js-hora-entrega" required>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -795,13 +801,13 @@ document.addEventListener('DOMContentLoaded', function() {
             particiones: particiones,
             // Datos extra para crear dirección al vuelo si no existe ID
             temp_direccion: {
-                nombreorigen: document.getElementById('txtNombreOrigen').value || 'Origen Seleccionado',
-                nombredestino: document.getElementById('txtNombreDestino').value || 'Destino Seleccionado',
+                nombreOrigen: document.getElementById('txtNombreOrigen').value || 'Origen Seleccionado',
+                nombreDestino: document.getElementById('txtNombreDestino').value || 'Destino Seleccionado',
                 origen_lat: state.markers.origin?.getLatLng().lat,
                 origen_lng: state.markers.origin?.getLatLng().lng,
                 destino_lat: state.markers.destination?.getLatLng().lat,
                 destino_lng: state.markers.destination?.getLatLng().lng,
-                rutageojson: state.lastGeoJSON
+                rutaGeoJSON: state.lastGeoJSON
             }
         };
     }

@@ -1708,6 +1708,91 @@ class EnvioController extends Controller
             return response()->json(['error' => 'Error interno al obtener particiones en curso'], 500);
         }
     }
+
+    /**
+     * Cancelar/Rechazar un envío completo (solo admin)
+     * Cambia el estado a "Cancelado" y libera recursos asignados
+     */
+    public function cancelarEnvio(Request $request, int $id_envio)
+    {
+        try {
+            $request->validate([
+                'motivo_cancelacion' => 'nullable|string|max:500'
+            ]);
+
+            $envio = Envio::with(['asignaciones.transportista', 'asignaciones.vehiculo'])
+                ->find($id_envio);
+
+            if (!$envio) {
+                return response()->json(['error' => 'Envío no encontrado'], 404);
+            }
+
+            \Log::info("Intentando cancelar envío ID: {$id_envio}");
+            \Log::info("Número de asignaciones: " . $envio->asignaciones->count());
+            
+            // Verificar que TODAS las particiones estén en estado Pendiente
+            $estadosNoPermitidos = [];
+            foreach ($envio->asignaciones as $asignacion) {
+                \Log::info("Asignación ID {$asignacion->id} - Estado: '{$asignacion->estado}'");
+                
+                if ($asignacion->estado !== 'Pendiente') {
+                    $estadosNoPermitidos[] = "Partición ID {$asignacion->id}: {$asignacion->estado}";
+                }
+            }
+            
+            if (!empty($estadosNoPermitidos)) {
+                \Log::warning("No se puede cancelar - Estados no permitidos: " . json_encode($estadosNoPermitidos));
+                return response()->json([
+                    'error' => 'Solo se pueden cancelar envíos que estén completamente en estado Pendiente',
+                    'estados_actuales' => $estadosNoPermitidos,
+                    'mensaje' => 'El envío tiene particiones que ya fueron asignadas o están en proceso. Solo se pueden cancelar envíos pendientes.'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            // Liberar recursos asignados (transportistas y vehículos) si los hay
+            foreach ($envio->asignaciones as $asignacion) {
+                if ($asignacion->id_transportista) {
+                    EstadoHelper::actualizarEstadoTransportista(
+                        $asignacion->id_transportista,
+                        'Disponible'
+                    );
+                }
+
+                if ($asignacion->id_vehiculo) {
+                    EstadoHelper::actualizarEstadoVehiculo(
+                        $asignacion->id_vehiculo,
+                        'Disponible'
+                    );
+                }
+
+                // Actualizar estado de cada partición a Cancelado
+                EstadoHelper::actualizarEstadoAsignacion($asignacion->id, 'Cancelado');
+            }
+
+            // Actualizar estado general del envío a Cancelado
+            EstadoHelper::actualizarEstadoEnvio($id_envio, 'Cancelado');
+
+            DB::commit();
+            
+            \Log::info("Envío {$id_envio} cancelado exitosamente");
+
+            return response()->json([
+                'message' => 'Envío cancelado exitosamente',
+                'id_envio' => $id_envio,
+                'motivo' => $request->motivo_cancelacion ?? 'Sin motivo especificado'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error al cancelar envío: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Error al cancelar el envío: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
 

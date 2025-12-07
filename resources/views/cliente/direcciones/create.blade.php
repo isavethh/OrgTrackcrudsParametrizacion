@@ -295,6 +295,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Función para obtener el nombre del lugar mediante geocodificación inversa
+    async function obtenerNombreLugar(lat, lng) {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                {
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'OrgTrack/1.0'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Error en geocodificación inversa');
+            }
+
+            const data = await response.json();
+            
+            // Construir nombre descriptivo del lugar
+            let nombreLugar = '';
+            
+            if (data.address) {
+                const parts = [];
+                
+                // Priorizar en este orden
+                if (data.address.road) parts.push(data.address.road);
+                else if (data.address.suburb) parts.push(data.address.suburb);
+                else if (data.address.neighbourhood) parts.push(data.address.neighbourhood);
+                
+                if (data.address.city) parts.push(data.address.city);
+                else if (data.address.town) parts.push(data.address.town);
+                else if (data.address.village) parts.push(data.address.village);
+                
+                if (data.address.state) parts.push(data.address.state);
+                
+                nombreLugar = parts.join(', ') || data.display_name;
+            } else {
+                nombreLugar = data.display_name || `Ubicación ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+            
+            return nombreLugar;
+        } catch (error) {
+            console.error('Error al obtener nombre del lugar:', error);
+            return `Ubicación ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        }
+    }
+
     mapD.on('click', async (e) => {
         // Solo permitir clicks en el mapa si NO está en modo edición o si aún no hay marcadores
         if (isEditMode && mO && mD) {
@@ -322,6 +370,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 origenLat = pos.lat;
                 origenLng = pos.lng;
                 coordsOrigen.textContent = `${origenLat.toFixed(6)}, ${origenLng.toFixed(6)}`;
+                
+                // Obtener nombre del nuevo lugar
+                hintDir.value = 'Obteniendo nombre del lugar...';
+                const nombreLugar = await obtenerNombreLugar(origenLat, origenLng);
+                dirOrigen.value = nombreLugar;
+                
                 if (mD) {
                     hintDir.value = 'Recalculando ruta...';
                     await trazarRuta(origenLat, origenLng, destinoLat, destinoLng);
@@ -329,6 +383,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             coordsOrigen.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            
+            // Obtener nombre del lugar automáticamente
+            hintDir.value = 'Obteniendo nombre del lugar de origen...';
+            const nombreOrigen = await obtenerNombreLugar(lat, lng);
+            dirOrigen.value = nombreOrigen;
+            
             hintDir.value = 'Ahora selecciona el destino en el mapa';
         } else if (!mD) {
             destinoLat = lat;
@@ -348,11 +408,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 destinoLat = pos.lat;
                 destinoLng = pos.lng;
                 coordsDestino.textContent = `${destinoLat.toFixed(6)}, ${destinoLng.toFixed(6)}`;
+                
+                // Obtener nombre del nuevo lugar
+                hintDir.value = 'Obteniendo nombre del lugar...';
+                const nombreLugar = await obtenerNombreLugar(destinoLat, destinoLng);
+                dirDestino.value = nombreLugar;
+                
                 hintDir.value = 'Recalculando ruta...';
                 await trazarRuta(origenLat, origenLng, destinoLat, destinoLng);
             });
             
             coordsDestino.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            
+            // Obtener nombre del lugar automáticamente
+            hintDir.value = 'Obteniendo nombre del lugar de destino...';
+            const nombreDestino = await obtenerNombreLugar(lat, lng);
+            dirDestino.value = nombreDestino;
+            
             hintDir.value = 'Calculando ruta...';
             
             await trazarRuta(origenLat, origenLng, destinoLat, destinoLng);

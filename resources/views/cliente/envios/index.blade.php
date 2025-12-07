@@ -9,8 +9,9 @@
             <div class="card-header p-0 border-bottom-0">
                 <ul class="nav nav-pills p-2">
                     <li class="nav-item"><a class="nav-link active" href="#tab-curso" data-toggle="tab">Envíos en Curso</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#tab-anteriores" data-toggle="tab">Envíos anteriores</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#tab-pendientes" data-toggle="tab">Envíos pendientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tab-pendientes" data-toggle="tab">Envíos Pendientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tab-anteriores" data-toggle="tab">Completados</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tab-cancelados" data-toggle="tab">Cancelados</a></li>
                     <li class="nav-item ml-auto pr-2"><a href="{{ route('envios.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Nuevo Envío</a></li>
                 </ul>
             </div>
@@ -18,8 +19,9 @@
             <div class="card-body">
                 <div class="tab-content">
                     <div class="tab-pane active" id="tab-curso"></div>
-                    <div class="tab-pane" id="tab-anteriores"></div>
                     <div class="tab-pane" id="tab-pendientes"></div>
+                    <div class="tab-pane" id="tab-anteriores"></div>
+                    <div class="tab-pane" id="tab-cancelados"></div>
                 </div>
             </div>
         </div>
@@ -40,10 +42,14 @@ if (!window.__envioIndexClienteInitialized) {
     const tabCurso = document.getElementById('tab-curso');
     const tabAnteriores = document.getElementById('tab-anteriores');
     const tabPendientes = document.getElementById('tab-pendientes');
+    const tabCancelados = document.getElementById('tab-cancelados');
 
-    function renderLista(container, envios){
+    function renderLista(container, envios, esCancelado = false){
         if (!envios || envios.length === 0){
-            container.innerHTML = '<div class="text-muted text-center py-4"><i class="fas fa-inbox fa-2x mb-2"></i><br>Sin envíos</div>';
+            const mensaje = esCancelado 
+                ? '<div class="text-muted text-center py-4"><i class="fas fa-check-circle fa-2x mb-2"></i><br>No tienes envíos cancelados</div>'
+                : '<div class="text-muted text-center py-4"><i class="fas fa-inbox fa-2x mb-2"></i><br>Sin envíos</div>';
+            container.innerHTML = mensaje;
             return;
         }
         const ul = document.createElement('ul');
@@ -60,9 +66,21 @@ if (!window.__envioIndexClienteInitialized) {
                 'Pendiente': 'badge-warning',
                 'Asignado': 'badge-info',
                 'Entregado': 'badge-success',
-                'Finalizado': 'badge-secondary'
+                'Finalizado': 'badge-secondary',
+                'Cancelado': 'badge-danger'
             };
             const badgeClass = badgeMap[e.estado] || 'badge-light';
+            
+            let contenidoExtra = '';
+            if (e.estado === 'Cancelado') {
+                contenidoExtra = `
+                    <div class="alert alert-danger mt-2 mb-0 py-2 px-3">
+                        <i class="fas fa-times-circle mr-1"></i>
+                        <strong>Envío rechazado por el administrador</strong>
+                        <p class="mb-0 small">Este envío fue cancelado y no será procesado. Si tienes dudas, contacta con soporte.</p>
+                    </div>
+                `;
+            }
             
             li.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">
@@ -75,6 +93,7 @@ if (!window.__envioIndexClienteInitialized) {
                             <div class="mb-1"><i class="fas fa-map-marker-alt text-success mr-1"></i><strong>Origen:</strong> ${e.nombre_origen || '—'}</div>
                             <div><i class="fas fa-map-marker-alt text-danger mr-1"></i><strong>Destino:</strong> ${e.nombre_destino || '—'}</div>
                         </div>
+                        ${contenidoExtra}
                     </div>
                     <div class="text-right text-muted small">
                         <div><i class="far fa-calendar mr-1"></i>${e.fecha_creacion || '—'}</div>
@@ -99,9 +118,12 @@ if (!window.__envioIndexClienteInitialized) {
             const enCurso = todos.filter(e => e.estado === 'En curso');
             const pendientes = todos.filter(e => e.estado === 'Pendiente' || e.estado === 'Asignado');
             const anteriores = todos.filter(e => e.estado === 'Entregado' || e.estado === 'Finalizado');
+            const cancelados = todos.filter(e => e.estado === 'Cancelado');
+            
             renderLista(tabCurso, enCurso);
             renderLista(tabPendientes, pendientes);
             renderLista(tabAnteriores, anteriores);
+            renderLista(tabCancelados, cancelados, true);
         } catch(e){
             tabCurso.innerHTML = `<div class="text-danger">${e.message}</div>`;
         }

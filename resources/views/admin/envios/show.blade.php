@@ -320,16 +320,82 @@ if (!window.__envioShowAdminInitialized) {
                 const d = [envio.coordenadas_destino?.lat, envio.coordenadas_destino?.lng];
                 if (o[0] && o[1]) L.marker(o).addTo(map).bindPopup('Origen');
                 if (d[0] && d[1]) L.marker(d).addTo(map).bindPopup('Destino');
+                
+                let routeCoordinates = [];
+                
                 try {
                     if (envio.rutaGeoJSON){
                         const gj = JSON.parse(envio.rutaGeoJSON);
                         const layer = L.geoJSON(gj, { style: { color: '#007bff', weight: 4 } }).addTo(map);
                         map.fitBounds(layer.getBounds(), { padding: [20,20] });
+                        
+                        // Extraer coordenadas de la ruta para la animación
+                        if (gj.type === 'LineString' && Array.isArray(gj.coordinates)) {
+                            routeCoordinates = gj.coordinates.map(coord => [coord[1], coord[0]]);
+                        } else if (gj.type === 'FeatureCollection' && Array.isArray(gj.features)) {
+                            gj.features.forEach(feature => {
+                                if (feature.geometry?.type === 'LineString' && Array.isArray(feature.geometry.coordinates)) {
+                                    feature.geometry.coordinates.forEach(coord => {
+                                        routeCoordinates.push([coord[1], coord[0]]);
+                                    });
+                                }
+                            });
+                        }
                     } else if (o[0] && d[0]){
                         const line = L.polyline([o, d], { color:'#007bff', weight:4 }).addTo(map);
                         map.fitBounds(line.getBounds(), { padding: [20,20] });
+                        routeCoordinates = [o, d];
                     }
                 } catch {}
+                
+                // Animar punto verde solo si la partición está "En curso"
+                if (p.estado === 'En curso' && routeCoordinates.length > 0) {
+                    // Función para interpolar puntos entre dos coordenadas
+                    function interpolatePoints(coord1, coord2, steps = 20) {
+                        const points = [];
+                        for (let i = 0; i <= steps; i++) {
+                            const ratio = i / steps;
+                            const lat = coord1[0] + (coord2[0] - coord1[0]) * ratio;
+                            const lng = coord1[1] + (coord2[1] - coord1[1]) * ratio;
+                            points.push([lat, lng]);
+                        }
+                        return points;
+                    }
+                    
+                    // Crear ruta suavizada con puntos intermedios
+                    const smoothRoute = [];
+                    for (let i = 0; i < routeCoordinates.length - 1; i++) {
+                        const interpolated = interpolatePoints(routeCoordinates[i], routeCoordinates[i + 1], 20);
+                        smoothRoute.push(...interpolated);
+                    }
+                    
+                    // Crear icono de punto verde personalizado
+                    const greenDotIcon = L.divIcon({
+                        className: 'animated-marker',
+                        html: '<div style="width: 16px; height: 16px; background-color: #28a745; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(40, 167, 69, 0.8);"></div>',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    });
+                    
+                    // Crear marcador animado
+                    const animatedMarker = L.marker(smoothRoute[0], { icon: greenDotIcon }).addTo(map);
+                    animatedMarker.bindPopup('Vehículo en tránsito');
+                    
+                    // Animar el marcador a lo largo de la ruta suavizada
+                    let currentIndex = 0;
+                    const animationSpeed = 150; // ms entre cada punto interpolado
+                    
+                    const animateMarker = setInterval(() => {
+                        currentIndex++;
+                        if (currentIndex >= smoothRoute.length) {
+                            currentIndex = 0; // Reiniciar al inicio
+                        }
+                        animatedMarker.setLatLng(smoothRoute[currentIndex]);
+                    }, animationSpeed);
+                    
+                    // Guardar referencia para poder detener la animación si es necesario
+                    map._animationInterval = animateMarker;
+                }
             }, 0);
         });
         cont.innerHTML = '';
