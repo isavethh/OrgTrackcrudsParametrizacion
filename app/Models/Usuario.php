@@ -4,13 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
 
 class Usuario extends Model
 {
-    use HasFactory;
+    use HasFactory, HasRoles;
 
     protected $table = 'usuarios';
     public $timestamps = false;
+    
+    // Especificar el guard para Spatie
+    protected $guard_name = 'web';
 
     protected $fillable = [
         'correo',

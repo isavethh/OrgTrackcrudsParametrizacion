@@ -6,22 +6,17 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Rutas de autenticación (solo vistas)
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// Rutas de autenticación (usando AuthWebController que ya usa Spatie)
+use App\Http\Controllers\Web\AuthWebController;
 
-Route::post('/login', function () {
-    return redirect()->route('dashboard');
-})->name('login.post');
+Route::get('/login', [AuthWebController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthWebController::class, 'login'])->name('login.post');
 
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
+Route::get('/register', [AuthWebController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthWebController::class, 'register'])->name('register.post');
 
-Route::post('/register', function () {
-    return redirect()->route('dashboard');
-})->name('register.post');
+// Ruta de logout (usa Spatie para sincronizar al cerrar sesión)
+Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
 
 Route::get('/password/reset', function () {
     return view('auth.passwords.email');
@@ -39,44 +34,46 @@ Route::post('/password/reset', function () {
     return redirect()->route('login')->with('status', 'Tu contraseña ha sido restablecida.');
 })->name('password.update');
 
-// Rutas del dashboard 
-Route::get('/dashboard', function () {
-    return view('cliente.dashboard');
-})->name('dashboard');
+// Rutas del dashboard (anteriormente protegidas con Spatie - middleware deshabilitado temporalmente)
+Route::group([], function () {
+    Route::get('/dashboard', function () {
+        return view('cliente.dashboard');
+    })->name('dashboard');
 
-// Rutas de envíos
-Route::get('/envios', function () {
-    return view('cliente.envios.index');
-})->name('envios.index');
+    // Rutas de envíos
+    Route::get('/envios', function () {
+        return view('cliente.envios.index');
+    })->name('envios.index');
 
-Route::get('/envios/create', function () {
-    return view('cliente.envios.create');
-})->name('envios.create');
+    Route::get('/envios/create', function () {
+        return view('cliente.envios.create');
+    })->name('envios.create');
 
-Route::get('/envios/{id}', function ($id) {
-    return view('cliente.envios.show', ['id' => $id]);
-})->name('envios.show');
+    Route::get('/envios/{id}', function ($id) {
+        return view('cliente.envios.show', ['id' => $id]);
+    })->name('envios.show');
 
-// Rutas de direcciones
-Route::get('/direcciones', function () {
-    return view('cliente.direcciones.index');
-})->name('direcciones.index');
+    // Rutas de direcciones
+    Route::get('/direcciones', function () {
+        return view('cliente.direcciones.index');
+    })->name('direcciones.index');
 
-Route::get('/direcciones/create', function () {
-    return view('cliente.direcciones.create');
-})->name('direcciones.create');
+    Route::get('/direcciones/create', function () {
+        return view('cliente.direcciones.create');
+    })->name('direcciones.create');
 
-Route::get('/direcciones/{id}/edit', function ($id) {
-    return view('cliente.direcciones.create', ['editId' => $id]);
-})->name('direcciones.edit');
+    Route::get('/direcciones/{id}/edit', function ($id) {
+        return view('cliente.direcciones.create', ['editId' => $id]);
+    })->name('direcciones.edit');
 
-// Rutas de documentos
-Route::get('/documentos', function () {
-    return view('cliente.documentos.index');
-})->name('documentos.index');
+    // Rutas de documentos
+    Route::get('/documentos', function () {
+        return view('cliente.documentos.index');
+    })->name('documentos.index');
+});
 
 // ============================================
-// RUTAS ADMIN (prefijo /admin)
+// RUTAS ADMIN (prefijo /admin) - middleware de roles deshabilitado
 // ============================================
 Route::prefix('admin')->group(function () {
     // Dashboard Admin
@@ -171,6 +168,11 @@ Route::prefix('admin')->group(function () {
     Route::get('/tipos-transporte', function () {
         return view('admin.tipos_transporte.index');
     })->name('admin.tipos_transporte.index');
+
+    // Gestión de Roles usando Spatie (nuevo controlador)
+    Route::get('/roles', [\App\Http\Controllers\Web\RolesWebController::class, 'index'])->name('admin.roles.index');
+    Route::post('/roles/{id}/asignar', [\App\Http\Controllers\Web\RolesWebController::class, 'asignarRol'])->name('admin.roles.asignar');
+    Route::get('/roles/{id}/verificar', [\App\Http\Controllers\Web\RolesWebController::class, 'verificarRoles'])->name('admin.roles.verificar');
 });
 
 // Ruta pública para validar QR (token en URL opcional)
