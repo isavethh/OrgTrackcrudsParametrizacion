@@ -32,8 +32,7 @@ class InitialDataSeeder extends Seeder
         // 6. Estados de QR Token
         $this->seedEstadosQrToken();
 
-        // 7. Unidades de medida
-        $this->seedUnidadesMedida();
+
 
         // 8. Motivos de cancelación
         $this->seedMotivosCancelacion();
@@ -146,28 +145,7 @@ class InitialDataSeeder extends Seeder
         $this->command->info('  ✓ Estados de QR Token');
     }
 
-    private function seedUnidadesMedida()
-    {
-        $unidades = [
-            ['codigo' => 'KG', 'nombre' => 'Kilogramo', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso'],
-            ['codigo' => 'TON', 'nombre' => 'Tonelada', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso equivalente a 1000 kg'],
-            ['codigo' => 'GR', 'nombre' => 'Gramo', 'tipo' => 'peso', 'descripcion' => 'Unidad de peso'],
-            ['codigo' => 'UND', 'nombre' => 'Unidad', 'tipo' => 'cantidad', 'descripcion' => 'Unidad individual'],
-            ['codigo' => 'CAJA', 'nombre' => 'Caja', 'tipo' => 'cantidad', 'descripcion' => 'Caja de empaque'],
-            ['codigo' => 'SACO', 'nombre' => 'Saco', 'tipo' => 'cantidad', 'descripcion' => 'Saco de empaque'],
-            ['codigo' => 'LT', 'nombre' => 'Litro', 'tipo' => 'volumen', 'descripcion' => 'Unidad de volumen'],
-            ['codigo' => 'ML', 'nombre' => 'Mililitro', 'tipo' => 'volumen', 'descripcion' => 'Unidad de volumen'],
-        ];
 
-        foreach ($unidades as $unidad) {
-            DB::table('unidades_medida')->updateOrInsert(
-                ['codigo' => $unidad['codigo']],
-                $unidad
-            );
-        }
-
-        $this->command->info('  ✓ Unidades de medida');
-    }
 
     private function seedMotivosCancelacion()
     {

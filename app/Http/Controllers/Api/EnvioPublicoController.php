@@ -8,8 +8,13 @@ use App\Models\Direccion;
 use App\Models\AsignacionMultiple;
 use App\Models\RecogidaEntrega;
 use App\Models\Carga;
-use App\Models\CatalogoCarga;
 use App\Models\AsignacionCarga;
+use App\Models\CatalogoCategoria;
+use App\Models\CatalogoProducto;
+use App\Models\CatalogoTipoEmpaque;
+use App\Models\EspecificacionTamanoConteo;
+use App\Models\EspecificacionMedidasPeso;
+use App\Models\EspecificacionFormaPedido;
 use App\Http\Controllers\Api\Helpers\EstadoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -72,11 +77,29 @@ class EnvioPublicoController extends Controller
                 'particiones' => 'required|array|min:1',
                 'particiones.*.id_tipo_transporte' => 'required|integer|exists:tipotransporte,id',
                 'particiones.*.cargas' => 'required|array|min:1',
-                'particiones.*.cargas.*.tipo' => 'required|string|max:50',
-                'particiones.*.cargas.*.variedad' => 'required|string|max:50',
+                'particiones.*.cargas.*.id_categoria' => 'nullable|integer|exists:catalogo_categorias,id',
+                'particiones.*.cargas.*.id_producto' => 'nullable|integer|exists:catalogo_productos,id',
+                'particiones.*.cargas.*.id_tipo_empaque' => 'nullable|integer|exists:catalogo_tipos_empaque,id',
+                'particiones.*.cargas.*.tipo' => 'nullable|string|max:50',
+                'particiones.*.cargas.*.variedad' => 'nullable|string|max:50',
                 'particiones.*.cargas.*.cantidad' => 'required|numeric|min:0',
                 'particiones.*.cargas.*.peso' => 'required|numeric|min:0',
-                'particiones.*.cargas.*.empaquetado' => 'required|string|max:50',
+                'particiones.*.cargas.*.empaquetado' => 'nullable|string|max:50',
+                // Nuevas validaciones para especificaciones
+                'particiones.*.cargas.*.conteo_por_empaque' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.peso_promedio_unidad' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.capacidad_por_empaque' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.largo_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.ancho_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.alto_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.peso_neto_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.tara_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.peso_bruto_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.forma_pedido' => 'nullable|string|in:empaques,cajas,bolsas,pallets',
+                'particiones.*.cargas.*.cantidad_pedido' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.empaques_calculados' => 'nullable|integer|min:0',
+                'particiones.*.cargas.*.unidades_por_pallet' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.numero_pallets' => 'nullable|integer|min:0',
                 'particiones.*.recogidaEntrega.fecha_recogida' => 'required|date',
                 'particiones.*.recogidaEntrega.hora_recogida' => 'required|string',
                 'particiones.*.recogidaEntrega.hora_entrega' => 'required|string',
@@ -136,26 +159,97 @@ class EnvioPublicoController extends Controller
                     ]);
 
                     foreach ($cargas as $carga) {
-                        // Buscar o crear catalogo de carga
-                        $catalogo = CatalogoCarga::firstOrCreate(
-                            [
-                                'tipo' => $carga['tipo'],
-                                'variedad' => $carga['variedad'],
-                                'empaque' => $carga['empaquetado'],
-                            ],
-                            ['descripcion' => null]
-                        );
+                        $idCategoria = $carga['id_categoria'] ?? null;
+                        $idProducto = $carga['id_producto'] ?? null;
+                        $idTipoEmpaque = $carga['id_tipo_empaque'] ?? null;
+
+                        // Si NO vienen IDs, intentar crearlos con firstOrCreate (Legacy support)
+                        if (!$idCategoria && !empty($carga['tipo'])) {
+                            $cat = CatalogoCategoria::firstOrCreate(
+                                ['nombre' => $carga['tipo']],
+                                ['descripcion' => 'Generado automáticamente por envío público']
+                            );
+                            $idCategoria = $cat->id;
+                        }
+
+                        if (!$idProducto && !empty($carga['variedad'])) {
+                            $prod = CatalogoProducto::firstOrCreate(
+                                [
+                                    'nombre' => $carga['variedad'],
+                                    'id_categoria' => $idCategoria
+                                ],
+                                ['descripcion' => 'Generado automáticamente por envío público']
+                            );
+                            $idProducto = $prod->id;
+                        }
+
+                        if (!$idTipoEmpaque && !empty($carga['empaquetado'])) {
+                            $emp = CatalogoTipoEmpaque::firstOrCreate(
+                                ['nombre' => $carga['empaquetado']],
+                                [
+                                    'descripcion' => 'Generado automáticamente por envío público',
+                                    'largo' => 0,
+                                    'ancho' => 0,
+                                    'alto' => 0,
+                                    'tara' => 0,
+                                    'capacidad' => 0
+                                ]
+                            );
+                            $idTipoEmpaque = $emp->id;
+                        }
 
                         $c = Carga::create([
-                            'id_catalogo_carga' => $catalogo->id,
+                            // 'id_catalogo_carga' => null, // Ya no se usa
+                            'id_categoria' => $idCategoria,
+                            'id_producto' => $idProducto,
+                            'id_tipo_empaque' => $idTipoEmpaque,
                             'cantidad' => $carga['cantidad'],
                             'peso' => $carga['peso'],
                         ]);
-                        
+
                         AsignacionCarga::create([
                             'id_asignacion' => $asignacion->id,
                             'id_carga' => $c->id,
                         ]);
+
+                        // Crear especificaciones en tablas separadas si existen datos
+                        if (isset($carga['conteo_por_empaque']) || isset($carga['peso_promedio_unidad']) || isset($carga['capacidad_por_empaque'])) {
+                            EspecificacionTamanoConteo::create([
+                                'id_carga' => $c->id,
+                                'conteo_por_empaque' => $carga['conteo_por_empaque'] ?? null,
+                                'peso_promedio_unidad' => $carga['peso_promedio_unidad'] ?? null,
+                                'capacidad_por_empaque' => $carga['capacidad_por_empaque'] ?? null,
+                            ]);
+                        }
+
+                        if (
+                            isset($carga['largo_cm']) || isset($carga['ancho_cm']) || isset($carga['alto_cm']) ||
+                            isset($carga['peso_neto_kg']) || isset($carga['tara_kg']) || isset($carga['peso_bruto_kg'])
+                        ) {
+                            EspecificacionMedidasPeso::create([
+                                'id_carga' => $c->id,
+                                'largo_cm' => $carga['largo_cm'] ?? null,
+                                'ancho_cm' => $carga['ancho_cm'] ?? null,
+                                'alto_cm' => $carga['alto_cm'] ?? null,
+                                'peso_neto_kg' => $carga['peso_neto_kg'] ?? null,
+                                'tara_kg' => $carga['tara_kg'] ?? null,
+                                'peso_bruto_kg' => $carga['peso_bruto_kg'] ?? null,
+                            ]);
+                        }
+
+                        if (
+                            isset($carga['forma_pedido']) || isset($carga['cantidad_pedido']) || isset($carga['empaques_calculados']) ||
+                            isset($carga['unidades_por_pallet']) || isset($carga['numero_pallets'])
+                        ) {
+                            EspecificacionFormaPedido::create([
+                                'id_carga' => $c->id,
+                                'forma_pedido' => $carga['forma_pedido'] ?? null,
+                                'cantidad_pedido' => $carga['cantidad_pedido'] ?? null,
+                                'empaques_calculados' => $carga['empaques_calculados'] ?? null,
+                                'unidades_por_pallet' => $carga['unidades_por_pallet'] ?? null,
+                                'numero_pallets' => $carga['numero_pallets'] ?? null,
+                            ]);
+                        }
                     }
                 }
 
@@ -164,7 +258,7 @@ class EnvioPublicoController extends Controller
                     'id_envio' => $envio->id,
                 ], Response::HTTP_CREATED);
             });
-            
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Error de validación',
@@ -173,7 +267,7 @@ class EnvioPublicoController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error creando envío público: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'error' => 'Error al crear el envío',
                 'mensaje' => $e->getMessage(),
@@ -202,16 +296,16 @@ class EnvioPublicoController extends Controller
                 'materials.*.material_name' => 'required|string|max:100',
                 'materials.*.requested_quantity' => 'required|numeric|min:0',
                 'materials.*.unit' => 'required|string|max:20',
-                
+
                 // Datos del productor (remitente)
                 'nombre_remitente' => 'required|string|max:100',
                 'telefono_remitente' => 'required|string|max:20',
                 'email_remitente' => 'nullable|email|max:100',
-                
+
                 // Direcciones
                 'id_direccion_origen' => 'required|integer|exists:direccion,id',
                 'id_direccion_destino' => 'required|integer|exists:direccion,id',
-                
+
                 // Datos de transporte
                 'id_tipo_transporte' => 'required|integer|exists:tipotransporte,id',
                 'fecha_recogida' => 'required|date',
@@ -222,14 +316,14 @@ class EnvioPublicoController extends Controller
             ]);
 
             $materials = $request->input('materials');
-            
+
             // Generar descripción de carga desde los materiales
-            $descripcionCarga = collect($materials)->map(function($material) {
+            $descripcionCarga = collect($materials)->map(function ($material) {
                 return "{$material['requested_quantity']} {$material['unit']} {$material['material_name']}";
             })->join(', ');
 
             return DB::transaction(function () use ($request, $descripcionCarga) {
-                
+
                 // Crear envío de productor
                 $envio = Envio::create([
                     'id_usuario' => null,
@@ -274,22 +368,42 @@ class EnvioPublicoController extends Controller
                 // Crear cargas desde los materiales
                 foreach ($request->materials as $material) {
                     // Buscar o crear catálogo de carga
-                    $catalogo = CatalogoCarga::firstOrCreate(
+                    // Buscar o crear Categoría (tipo)
+                    $categoria = CatalogoCategoria::firstOrCreate(
+                        ['nombre' => $material['material_name']], // Por ahora usaremos nombre material como categoría si es genérico, o ajustamos lógica
+                        ['descripcion' => 'Materia Prima']
+                    );
+
+                    // Nota: Para materia prima "pura", quizás queremos un producto específico o una categoría "Materia Prima".
+                    // Ajustando: Categoría="Materia Prima", Producto=Name
+                    $catMateriaPrima = CatalogoCategoria::firstOrCreate(
+                        ['nombre' => 'Materia Prima'],
+                        ['descripcion' => 'Categoría general para insumos']
+                    );
+
+                    $prodMateria = CatalogoProducto::firstOrCreate(
                         [
-                            'tipo' => $material['material_name'],
-                            'variedad' => 'Materia Prima',
-                            'empaque' => $material['unit'],
+                            'nombre' => $material['material_name'],
+                            'id_categoria' => $catMateriaPrima->id
                         ],
                         ['descripcion' => "Material ID: {$material['material_id']}"]
                     );
 
+                    $tipoEmpaque = CatalogoTipoEmpaque::firstOrCreate(
+                        ['nombre' => $material['unit']],
+                        ['largo' => 0, 'ancho' => 0, 'alto' => 0, 'tara' => 0, 'capacidad' => 0]
+                    );
+
                     // Crear carga
                     $carga = Carga::create([
-                        'id_catalogo_carga' => $catalogo->id,
-                        'cantidad' => 1, // 1 unidad de este material
-                        'peso' => $material['requested_quantity'], // La cantidad solicitada como peso
+                        // 'id_catalogo_carga' => $catalogo->id, // Legacy
+                        'id_categoria' => $catMateriaPrima->id,
+                        'id_producto' => $prodMateria->id,
+                        'id_tipo_empaque' => $tipoEmpaque->id,
+                        'cantidad' => 1,
+                        'peso' => $material['requested_quantity'],
                     ]);
-                    
+
                     // Vincular carga con asignación
                     AsignacionCarga::create([
                         'id_asignacion' => $asignacion->id,
@@ -305,7 +419,7 @@ class EnvioPublicoController extends Controller
                     'codigo_acceso' => $codigoAcceso,
                 ], Response::HTTP_CREATED);
             });
-            
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Error de validación',
@@ -314,7 +428,7 @@ class EnvioPublicoController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error creando envío desde materiales: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'error' => 'Error al crear el envío',
                 'mensaje' => $e->getMessage(),
@@ -388,11 +502,15 @@ class EnvioPublicoController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.recogidaEntrega',
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque', // Legacy fallback
                 'direccion:id,nombreorigen,nombredestino,origen_lng,origen_lat,destino_lng,destino_lat,rutageojson'
             ])
-            ->where('es_publico', true)
-            ->find($id);
+                ->where('es_publico', true)
+                ->find($id);
 
             if (!$envio) {
                 return response()->json(['error' => 'Envío no encontrado'], 404);
@@ -420,7 +538,7 @@ class EnvioPublicoController extends Controller
                 'prioridad' => $envio->prioridad,
                 'observaciones_solicitud' => $envio->observaciones_solicitud,
                 'cancelado' => $envio->cancelado,
-                
+
                 // Coordenadas
                 'coordenadas_origen' => [
                     'lng' => $envio->direccion?->origen_lng,
@@ -440,9 +558,9 @@ class EnvioPublicoController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->producto?->nombre ?? $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? $carga->catalogoCarga?->empaque,
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];
@@ -519,9 +637,9 @@ class EnvioPublicoController extends Controller
 
             // Filtrar directamente en la query solo envíos públicos con último estado = Entregado o Parcialmente entregado
             $enviosEntregados = Envio::select('envios.*')
-                ->join('historialestados', function($join) {
+                ->join('historialestados', function ($join) {
                     $join->on('envios.id', '=', 'historialestados.id_envio')
-                         ->whereRaw('historialestados.fecha = (
+                        ->whereRaw('historialestados.fecha = (
                              SELECT MAX(fecha) 
                              FROM historialestados he2 
                              WHERE he2.id_envio = envios.id
@@ -531,10 +649,10 @@ class EnvioPublicoController extends Controller
                 ->whereIn('historialestados.id_estado_envio', $estadosValidos)
                 ->with([
                     'direccion:id,nombreorigen,nombredestino',
-                    'asignaciones' => function($query) {
+                    'asignaciones' => function ($query) {
                         $query->orderBy('fecha_fin', 'desc')->limit(1);
                     },
-                    'historialEstados' => function($query) {
+                    'historialEstados' => function ($query) {
                         $query->orderBy('fecha', 'desc')->limit(1)->with('estadoEnvio:id,nombre');
                     }
                 ])
@@ -548,10 +666,10 @@ class EnvioPublicoController extends Controller
                 if (!$fechaEntrega && $envio->asignaciones->isNotEmpty()) {
                     $fechaEntrega = $envio->asignaciones->first()->fecha_fin;
                 }
-                
+
                 // Obtener el estado actual del envío desde el historial
                 $estadoActual = $envio->historialEstados->first()?->estadoEnvio?->nombre ?? 'Entregado';
-                
+
                 return [
                     'id' => $envio->id,
                     'nombre_remitente' => $envio->nombre_remitente,
@@ -566,7 +684,7 @@ class EnvioPublicoController extends Controller
             });
 
             return response()->json($resultado);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error en listarEnviosProductores: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());
@@ -592,7 +710,11 @@ class EnvioPublicoController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.recogidaEntrega',
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
+                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque', // Legacy split
                 'asignaciones.checklistCondicion.detalles.condicion:id,titulo',
                 'asignaciones.checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'asignaciones.firmaEnvio',
@@ -600,9 +722,9 @@ class EnvioPublicoController extends Controller
                 'direccion:id,nombreorigen,nombredestino',
                 'historialEstados.estadoEnvio:id,nombre'
             ])
-            ->where('id', $id_envio)
-            ->where('es_publico', true)
-            ->first();
+                ->where('id', $id_envio)
+                ->where('es_publico', true)
+                ->first();
 
             if (!$envio) {
                 return response()->json([
@@ -623,9 +745,9 @@ class EnvioPublicoController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? $carga->catalogoCarga?->tipo,
+                        'variedad' => $carga->producto?->nombre ?? $carga->catalogoCarga?->variedad,
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? $carga->catalogoCarga?->empaque,
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];
@@ -634,7 +756,7 @@ class EnvioPublicoController extends Controller
                 // Checklists de condiciones
                 $checklistCondiciones = [];
                 if ($asignacion->checklistCondicion && $asignacion->checklistCondicion->detalles) {
-                    $checklistCondiciones = $asignacion->checklistCondicion->detalles->map(function($det) {
+                    $checklistCondiciones = $asignacion->checklistCondicion->detalles->map(function ($det) {
                         return [
                             'id' => $det->id,
                             'condicion' => [
@@ -650,7 +772,7 @@ class EnvioPublicoController extends Controller
                 // Checklists de incidentes
                 $checklistIncidentes = [];
                 if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
-                    $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
+                    $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function ($det) {
                         return [
                             'id' => $det->id,
                             'tipo_incidente' => [

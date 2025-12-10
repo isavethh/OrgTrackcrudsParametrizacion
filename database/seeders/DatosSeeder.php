@@ -30,8 +30,8 @@ class DatosSeeder extends Seeder
         // 4. Tipos de incidente
         $this->seedTiposIncidente();
 
-        // 5. Catálogo de carga
-        $this->seedCatalogoCarga();
+        // 5. Catálogo de carga (DEPRECATED - Removed)
+        // $this->seedCatalogoCarga();
 
         // 6. Clientes
         $clientesIds = $this->seedClientes();
@@ -136,34 +136,12 @@ class DatosSeeder extends Seeder
         $this->command->info('  ✓ Tipos de incidente');
     }
 
+    /*
     private function seedCatalogoCarga()
     {
-        $cargas = [
-            // Frutas orgánicas
-            ['tipo' => 'Frutas', 'variedad' => 'Manzanas', 'empaque' => 'Cajas de cartón 10kg', 'descripcion' => 'Manzanas orgánicas certificadas'],
-            ['tipo' => 'Frutas', 'variedad' => 'Naranjas', 'empaque' => 'Cajas de cartón 15kg', 'descripcion' => 'Naranjas orgánicas frescas'],
-            ['tipo' => 'Frutas', 'variedad' => 'Plátanos', 'empaque' => 'Cajas ventiladas 12kg', 'descripcion' => 'Plátanos orgánicos maduración controlada'],
-            
-            // Verduras orgánicas
-            ['tipo' => 'Verduras', 'variedad' => 'Lechugas', 'empaque' => 'Cajas refrigeradas 5kg', 'descripcion' => 'Lechugas orgánicas hidropónicas'],
-            ['tipo' => 'Verduras', 'variedad' => 'Tomates', 'empaque' => 'Cajas de cartón 8kg', 'descripcion' => 'Tomates orgánicos cherry y ensalada'],
-            ['tipo' => 'Verduras', 'variedad' => 'Zanahorias', 'empaque' => 'Sacos de malla 20kg', 'descripcion' => 'Zanahorias orgánicas seleccionadas'],
-            
-            // Granos orgánicos
-            ['tipo' => 'Granos', 'variedad' => 'Quinua', 'empaque' => 'Sacos de yute 25kg', 'descripcion' => 'Quinua orgánica real certificada'],
-            ['tipo' => 'Granos', 'variedad' => 'Amaranto', 'empaque' => 'Sacos de yute 20kg', 'descripcion' => 'Amaranto orgánico premium'],
-            
-            // Lácteos orgánicos
-            ['tipo' => 'Lácteos', 'variedad' => 'Leche fresca', 'empaque' => 'Bidones térmicos 50L', 'descripcion' => 'Leche orgánica pasteurizada'],
-            ['tipo' => 'Lácteos', 'variedad' => 'Quesos', 'empaque' => 'Cajas refrigeradas 10kg', 'descripcion' => 'Quesos orgánicos artesanales'],
-        ];
-
-        foreach ($cargas as $carga) {
-            DB::table('catalogo_carga')->insert($carga);
-        }
-
-        $this->command->info('  ✓ Catálogo de carga (productos agrícolas orgánicos)');
+        // ... (Removed legacy seeding)
     }
+    */
 
     private function seedClientes()
     {
@@ -182,7 +160,7 @@ class DatosSeeder extends Seeder
         foreach ($clientes as $clienteData) {
             // Verificar si ya existe
             $usuarioExistente = DB::table('usuarios')->where('correo', $clienteData['correo'])->first();
-            
+
             if ($usuarioExistente) {
                 $clientesIds[] = $usuarioExistente->id;
                 continue;
@@ -242,7 +220,7 @@ class DatosSeeder extends Seeder
         foreach ($transportistas as $transportistaData) {
             // Verificar si ya existe
             $usuarioExistente = DB::table('usuarios')->where('correo', $transportistaData['correo'])->first();
-            
+
             if ($usuarioExistente) {
                 // Obtener el ID del transportista
                 $transportista = DB::table('transportistas')->where('id_usuario', $usuarioExistente->id)->first();
@@ -312,7 +290,7 @@ class DatosSeeder extends Seeder
         foreach ($vehiculos as $vehiculo) {
             // Verificar si ya existe
             $vehiculoExistente = DB::table('vehiculos')->where('placa', $vehiculo['placa'])->first();
-            
+
             if ($vehiculoExistente) {
                 $vehiculosIds[] = $vehiculoExistente->id;
                 continue;
@@ -346,36 +324,43 @@ class DatosSeeder extends Seeder
         $estadoAsignado = DB::table('estados_envio')->where('nombre', 'Asignado')->first();
         $estadoEnCurso = DB::table('estados_envio')->where('nombre', 'En curso')->first();
         $estadoEntregado = DB::table('estados_envio')->where('nombre', 'Entregado')->first();
-        
+
         // Estados de asignación
         $estadoAsigPendiente = DB::table('estados_asignacion_multiple')->where('nombre', 'Pendiente')->first();
         $estadoAsigEnCurso = DB::table('estados_asignacion_multiple')->where('nombre', 'En curso')->first();
-        $estadoAsigCompletada = DB::table('estados_asignacion_multiple')->where('nombre', 'Completada')->first();
-        
+        $estadoAsigEntregado = DB::table('estados_asignacion_multiple')->where('nombre', 'Entregado')->first();
+
         // Estados de transportista y vehículo
         $estadoTranspDisponible = DB::table('estados_transportista')->where('nombre', 'Disponible')->first();
         $estadoTranspNoDisponible = DB::table('estados_transportista')->where('nombre', 'No Disponible')->first();
         $estadoVehDisponible = DB::table('estados_vehiculo')->where('nombre', 'Disponible')->first();
         $estadoVehNoDisponible = DB::table('estados_vehiculo')->where('nombre', 'No Disponible')->first();
-        
+
         // Tipos de transporte
         $tipoRefrigerado = DB::table('tipotransporte')->where('nombre', 'Refrigerado')->first();
         $tipoIsotermico = DB::table('tipotransporte')->where('nombre', 'Isotérmico')->first();
         $tipoMultitemp = DB::table('tipotransporte')->where('nombre', 'Multitemperatura')->first();
-        
-        // Catálogos de carga
-        $catalogoFrutas = DB::table('catalogo_carga')->where('tipo', 'Frutas')->where('variedad', 'Manzanas')->first();
-        $catalogoVerduras = DB::table('catalogo_carga')->where('tipo', 'Verduras')->where('variedad', 'Lechugas')->first();
-        $catalogoGranos = DB::table('catalogo_carga')->where('tipo', 'Granos')->where('variedad', 'Quinua')->first();
-        $catalogoNaranjas = DB::table('catalogo_carga')->where('tipo', 'Frutas')->where('variedad', 'Naranjas')->first();
-        $catalogoTomates = DB::table('catalogo_carga')->where('tipo', 'Verduras')->where('variedad', 'Tomates')->first();
-        
+
+        // Catálogos de carga (NUEVA ESTRUCTURA)
+        $catFrutas = DB::table('catalogo_categorias')->where('nombre', 'Frutas')->first();
+        $catVerduras = DB::table('catalogo_categorias')->where('nombre', 'Verduras')->first();
+
+        // Productos
+        $prodManzana = DB::table('catalogo_productos')->where('nombre', 'Manzanas')->first();
+        $prodLechuga = DB::table('catalogo_productos')->where('nombre', 'Lechugas')->first();
+        $prodNaranja = DB::table('catalogo_productos')->where('nombre', 'Naranjas')->first();
+        $prodTomate = DB::table('catalogo_productos')->where('nombre', 'Tomates')->first();
+
+        // Tipos de Empaque
+        $empaqueCaja = DB::table('catalogo_tipos_empaque')->where('nombre', 'Caja plástica')->first();
+        $empaqueBolsa = DB::table('catalogo_tipos_empaque')->where('nombre', 'Bolsa plástica')->first();
+
         $condiciones = DB::table('condiciones_transporte')->limit(5)->get();
 
         // ========================================
         // Envío 1: COMPLETADO con documentos (transportista y vehículo liberados)
         // ========================================
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoPendiente, $estadoAsignado, $estadoEnCurso, $estadoEntregado, $estadoAsigCompletada, $estadoTranspDisponible, $estadoVehDisponible, $tipoRefrigerado, $catalogoFrutas, $condiciones) {
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoPendiente, $estadoAsignado, $estadoEnCurso, $estadoEntregado, $estadoAsigEntregado, $estadoTranspDisponible, $estadoVehDisponible, $tipoRefrigerado, $prodManzana, $catFrutas, $empaqueCaja, $condiciones) {
             // 1. Dirección: Productor Santa Cruz → Planta La Paz (Ruta realista por carretera)
             // Ruta: Warnes → Santa Cruz → Cochabamba → Oruro → El Alto → La Paz
             $rutaCompleta = [
@@ -396,7 +381,7 @@ class DatosSeeder extends Seeder
                 [-68.1300, -16.5200],  // Bajada a La Paz
                 [-68.1193, -16.5000]   // La Paz (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[0],
                 'nombreorigen' => 'Finca El Paraíso, Warnes - Santa Cruz',
@@ -410,7 +395,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos de la ruta (dividir en tramos principales)
             $segmentos = [
                 // Segmento 1: Warnes → Cochabamba
@@ -441,7 +426,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -473,30 +458,31 @@ class DatosSeeder extends Seeder
             ]);
 
             // 5. Carga
-            $idUnidadKG = DB::table('unidades_medida')->where('codigo', 'KG')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoFrutas->id,
                 'cantidad' => 150,
                 'peso' => 1500.00,
-                'id_unidad_medida' => $idUnidadKG,
+
+                'id_categoria' => $catFrutas->id,
+                'id_producto' => $prodManzana->id,
+                'id_tipo_empaque' => $empaqueCaja->id,
             ]);
 
             // 6. Asignación completada (GENERAR CÓDIGO DE ACCESO)
             $codigoAcceso = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
-            
+
             $idAsignacion = DB::table('asignacionmultiple')->insertGetId([
                 'id_envio' => $idEnvio,
                 'id_transportista' => $transportistasIds[0],
                 'id_vehiculo' => $vehiculosIds[0],
                 'id_recogida_entrega' => $idRecogida,
                 'id_tipo_transporte' => $tipoRefrigerado->id,
-                'id_estado_asignacion' => $estadoAsigCompletada->id,
+                'id_estado_asignacion' => $estadoAsigEntregado->id,
                 'codigo_acceso' => $codigoAcceso,  // CÓDIGO DE ACCESO GENERADO
                 'fecha_asignacion' => now()->subDays(10),
                 'fecha_inicio' => now()->subDays(9),
                 'fecha_fin' => now()->subDays(7),
             ]);
-            
+
             // 7. Como el envío ya está completado, transportista y vehículo están DISPONIBLES nuevamente
             DB::table('transportistas')->where('id', $transportistasIds[0])->update(['id_estado_transportista' => $estadoTranspDisponible->id]);
             DB::table('vehiculos')->where('id', $vehiculosIds[0])->update(['id_estado_vehiculo' => $estadoVehDisponible->id]);
@@ -529,7 +515,7 @@ class DatosSeeder extends Seeder
 
             // 10. Firmas (base64 simplificado para prueba)
             $firmaBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('firmaenvio')->insert([
                 'id_asignacion' => $idAsignacion,
                 'imagenfirma' => $firmaBase64,
@@ -546,7 +532,7 @@ class DatosSeeder extends Seeder
             $estadoQrUsado = DB::table('estados_qrtoken')->where('nombre', 'Usado')->first();
             $token = 'ENV1-' . bin2hex(random_bytes(16));
             $qrBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('qrtoken')->insert([
                 'id_asignacion' => $idAsignacion,
                 'id_estado_qrtoken' => $estadoQrUsado->id,
@@ -577,7 +563,7 @@ class DatosSeeder extends Seeder
         // ========================================
         // Envío 2: EN CURSO (transportista y vehículo NO DISPONIBLES)
         // ========================================
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoEnCurso, $estadoAsigEnCurso, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoIsotermico, $catalogoGranos) {
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoEnCurso, $estadoAsigEnCurso, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoIsotermico, $catVerduras, $prodTomate, $empaqueBolsa) {
             // Ruta: Challapata (Oruro) → La Paz por carretera principal
             $rutaCompleta = [
                 [-66.7667, -18.9167],  // Challapata (inicio)
@@ -591,7 +577,7 @@ class DatosSeeder extends Seeder
                 [-68.1300, -16.5200],  // Bajada a La Paz
                 [-68.1193, -16.5000]   // La Paz (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[1],
                 'nombreorigen' => 'Cooperativa Andina, Challapata - Oruro',
@@ -605,7 +591,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos
             $segmentos = [
                 // Segmento 1: Challapata → Oruro
@@ -627,7 +613,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -654,12 +640,13 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Descargar en almacén de granos secos.',
             ]);
 
-            $idUnidadSACO = DB::table('unidades_medida')->where('codigo', 'SACO')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoGranos->id,
                 'cantidad' => 80,
                 'peso' => 2000.00,
-                'id_unidad_medida' => $idUnidadSACO,
+
+                'id_categoria' => $catVerduras->id,
+                'id_producto' => $prodTomate->id,
+                'id_tipo_empaque' => $empaqueBolsa->id,
             ]);
 
             // GENERAR CÓDIGO DE ACCESO (crítico para envíos asignados)
@@ -677,7 +664,7 @@ class DatosSeeder extends Seeder
                 'fecha_inicio' => now()->subDays(2),
                 'fecha_fin' => null,
             ]);
-            
+
             // Marcar transportista y vehículo como NO DISPONIBLES
             DB::table('transportistas')->where('id', $transportistasIds[1])->update(['id_estado_transportista' => $estadoTranspNoDisponible->id]);
             DB::table('vehiculos')->where('id', $vehiculosIds[1])->update(['id_estado_vehiculo' => $estadoVehNoDisponible->id]);
@@ -689,7 +676,7 @@ class DatosSeeder extends Seeder
 
             // Firma transportista solamente (aún no entregado)
             $firmaBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('firmatransportista')->insert([
                 'id_asignacion' => $idAsignacion,
                 'imagenfirma' => $firmaBase64,
@@ -700,7 +687,7 @@ class DatosSeeder extends Seeder
             $estadoQrActivo = DB::table('estados_qrtoken')->where('nombre', 'Activo')->first();
             $token = 'ENV2-' . bin2hex(random_bytes(16));
             $qrBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('qrtoken')->insert([
                 'id_asignacion' => $idAsignacion,
                 'id_estado_qrtoken' => $estadoQrActivo->id,
@@ -714,7 +701,7 @@ class DatosSeeder extends Seeder
         // ========================================
         // Envío 3: ASIGNADO (transportista y vehículo NO DISPONIBLES, pero aún no iniciado)
         // ========================================
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoAsigPendiente, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoRefrigerado, $catalogoVerduras) {
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoAsigPendiente, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoRefrigerado, $catVerduras, $prodLechuga, $empaqueCaja) {
             // Ruta: Cochabamba → La Paz (ruta corta por carretera principal)
             $rutaCompleta = [
                 [-66.2789, -17.3936],  // Cochabamba (inicio)
@@ -727,7 +714,7 @@ class DatosSeeder extends Seeder
                 [-68.1300, -16.5200],  // Bajada a La Paz
                 [-68.1193, -16.5000]   // La Paz (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[2],
                 'nombreorigen' => 'Cultivos Hidropónicos Verde Vida, Quillacollo - Cochabamba',
@@ -741,7 +728,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos
             $segmentos = [
                 // Segmento 1: Cochabamba → Oruro
@@ -763,7 +750,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -790,15 +777,14 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Entrega urgente en cámara refrigerada.',
             ]);
 
-            $idUnidadKG = DB::table('unidades_medida')->where('codigo', 'KG')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoVerduras->id,
                 'cantidad' => 200,
                 'peso' => 1000.00,
-                'id_unidad_medida' => $idUnidadKG,
-            ]);
 
-            // GENERAR CÓDIGO DE ACCESO (crítico para envíos asignados)
+                'id_categoria' => $catVerduras->id,
+                'id_producto' => $prodLechuga->id,
+                'id_tipo_empaque' => $empaqueCaja->id,
+            ]);
             $codigoAcceso = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
 
             $idAsignacion = DB::table('asignacionmultiple')->insertGetId([
@@ -813,7 +799,7 @@ class DatosSeeder extends Seeder
                 'fecha_inicio' => null,
                 'fecha_fin' => null,
             ]);
-            
+
             // Marcar transportista y vehículo como NO DISPONIBLES (ya están asignados)
             DB::table('transportistas')->where('id', $transportistasIds[2])->update(['id_estado_transportista' => $estadoTranspNoDisponible->id]);
             DB::table('vehiculos')->where('id', $vehiculosIds[2])->update(['id_estado_vehiculo' => $estadoVehNoDisponible->id]);
@@ -827,7 +813,7 @@ class DatosSeeder extends Seeder
             $estadoQrActivo = DB::table('estados_qrtoken')->where('nombre', 'Activo')->first();
             $token = 'ENV3-' . bin2hex(random_bytes(16));
             $qrBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('qrtoken')->insert([
                 'id_asignacion' => $idAsignacion,
                 'id_estado_qrtoken' => $estadoQrActivo->id,
@@ -841,7 +827,7 @@ class DatosSeeder extends Seeder
         // ========================================
         // Envío 4: PENDIENTE (SIN transportista ni vehículo)
         // ========================================
-        DB::transaction(function () use ($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $catalogoNaranjas) {
+        DB::transaction(function () use ($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $catFrutas, $prodNaranja, $empaqueCaja) {
             // Ruta: Tarija → Cochabamba (ruta por carretera)
             $rutaCompleta = [
                 [-64.7296, -21.5355],  // Tarija (inicio)
@@ -855,7 +841,7 @@ class DatosSeeder extends Seeder
                 [-66.1500, -18.5000],  // Zona intermedia
                 [-66.2789, -17.3936]   // Cochabamba (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[3],
                 'nombreorigen' => 'Finca Citrus del Valle, Valle de Tarija - Tarija',
@@ -869,7 +855,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos
             $segmentos = [
                 [
@@ -889,7 +875,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -917,12 +903,13 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Descargar en muelle de carga del centro de distribución.',
             ]);
 
-            $idUnidadCAJA = DB::table('unidades_medida')->where('codigo', 'CAJA')->first()->id;
             $idCarga = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoNaranjas->id,
                 'cantidad' => 100,
                 'peso' => 1500.00,
-                'id_unidad_medida' => $idUnidadCAJA,
+
+                'id_categoria' => $catFrutas->id,
+                'id_producto' => $prodNaranja->id,
+                'id_tipo_empaque' => $empaqueCaja->id,
             ]);
 
             // GENERAR CÓDIGO DE ACCESO (siempre se genera al crear el envío)
@@ -951,7 +938,7 @@ class DatosSeeder extends Seeder
         // ========================================
         // Envío 5: ASIGNADO multitemperatura (múltiples productos)
         // ========================================
-        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoAsigPendiente, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoMultitemp, $catalogoFrutas, $catalogoTomates) {
+        DB::transaction(function () use ($clientesIds, $transportistasIds, $vehiculosIds, $estadoAsignado, $estadoAsigPendiente, $estadoTranspNoDisponible, $estadoVehNoDisponible, $tipoMultitemp, $catFrutas, $prodManzana, $catVerduras, $prodTomate, $empaqueCaja) {
             // Ruta: Trinidad (Beni) → La Paz (ruta larga por Rurrenabaque y Coroico)
             $rutaCompleta = [
                 [-64.8996, -14.8336],  // Trinidad (inicio)
@@ -967,7 +954,7 @@ class DatosSeeder extends Seeder
                 [-68.1500, -16.5500],  // El Alto
                 [-68.1193, -16.5000]   // La Paz (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[4],
                 'nombreorigen' => 'Productora Amazónica, Trinidad - Beni',
@@ -981,7 +968,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos (ruta larga con puntos críticos)
             $segmentos = [
                 [
@@ -1009,7 +996,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -1036,19 +1023,22 @@ class DatosSeeder extends Seeder
             ]);
 
             // Múltiples cargas (carga mixta - multitemperatura)
-            $idUnidadCAJA = DB::table('unidades_medida')->where('codigo', 'CAJA')->first()->id;
             $idCarga1 = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoFrutas->id,
                 'cantidad' => 80,
                 'peso' => 800.00,
-                'id_unidad_medida' => $idUnidadCAJA,
+
+                'id_categoria' => $catFrutas->id,
+                'id_producto' => $prodManzana->id,
+                'id_tipo_empaque' => $empaqueCaja->id,
             ]);
-            
+
             $idCarga2 = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoTomates->id,
                 'cantidad' => 120,
                 'peso' => 960.00,
-                'id_unidad_medida' => $idUnidadCAJA,
+
+                'id_categoria' => $catVerduras->id,
+                'id_producto' => $prodTomate->id,
+                'id_tipo_empaque' => $empaqueCaja->id,
             ]);
 
             // GENERAR CÓDIGO DE ACCESO
@@ -1067,7 +1057,7 @@ class DatosSeeder extends Seeder
                 'fecha_inicio' => null,
                 'fecha_fin' => null,
             ]);
-            
+
             // Marcar como NO DISPONIBLES
             DB::table('transportistas')->where('id', $transportistasIds[3])->update(['id_estado_transportista' => $estadoTranspNoDisponible->id]);
             DB::table('vehiculos')->where('id', $vehiculosIds[5])->update(['id_estado_vehiculo' => $estadoVehNoDisponible->id]);
@@ -1082,7 +1072,7 @@ class DatosSeeder extends Seeder
             $estadoQrActivo = DB::table('estados_qrtoken')->where('nombre', 'Activo')->first();
             $token = 'ENV5-' . bin2hex(random_bytes(16));
             $qrBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            
+
             DB::table('qrtoken')->insert([
                 'id_asignacion' => $idAsignacion,
                 'id_estado_qrtoken' => $estadoQrActivo->id,
@@ -1103,12 +1093,12 @@ class DatosSeeder extends Seeder
         // ========================================
         // Envío 6: PENDIENTE con 2 PARTICIONES
         // ========================================
-        $this->seedEnvioCon2Particiones($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catalogoFrutas, $catalogoVerduras);
+        $this->seedEnvioCon2Particiones($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catFrutas, $prodManzana, $empaqueCaja);
     }
 
-    private function seedEnvioCon2Particiones($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catalogoFrutas, $catalogoVerduras)
+    private function seedEnvioCon2Particiones($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catFrutas, $prodManzana, $empaqueCaja)
     {
-        DB::transaction(function () use ($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catalogoFrutas, $catalogoVerduras) {
+        DB::transaction(function () use ($clientesIds, $estadoPendiente, $estadoAsigPendiente, $tipoRefrigerado, $tipoIsotermico, $catFrutas, $prodManzana, $empaqueCaja) {
             // Ruta: Santa Cruz → Cochabamba
             $rutaCompleta = [
                 [-63.1812, -17.7955],  // Santa Cruz (inicio)
@@ -1119,7 +1109,7 @@ class DatosSeeder extends Seeder
                 [-65.7500, -17.3900],  // Llegando a Cochabamba
                 [-66.1568, -17.3936]   // Cochabamba (destino)
             ];
-            
+
             $idDireccion = DB::table('direccion')->insertGetId([
                 'id_usuario' => $clientesIds[0],
                 'nombreorigen' => 'Almacén Central, Santa Cruz de la Sierra',
@@ -1133,7 +1123,7 @@ class DatosSeeder extends Seeder
                     'coordinates' => $rutaCompleta
                 ], JSON_UNESCAPED_SLASHES),
             ]);
-            
+
             // Crear segmentos
             $segmentos = [
                 [
@@ -1153,7 +1143,7 @@ class DatosSeeder extends Seeder
                     ], JSON_UNESCAPED_SLASHES)
                 ]
             ];
-            
+
             foreach ($segmentos as $segmento) {
                 DB::table('direccionsegmento')->insert($segmento);
             }
@@ -1182,12 +1172,9 @@ class DatosSeeder extends Seeder
                 'instrucciones_entrega' => 'Entregar en cámara fría del centro de distribución.',
             ]);
 
-            $idUnidadCAJA = DB::table('unidades_medida')->where('codigo', 'CAJA')->first()->id;
             $idCarga1 = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoFrutas->id,
                 'cantidad' => 120,
                 'peso' => 1200.00,
-                'id_unidad_medida' => $idUnidadCAJA,
             ]);
 
             // GENERAR CÓDIGO DE ACCESO para partición 1
@@ -1222,10 +1209,8 @@ class DatosSeeder extends Seeder
             ]);
 
             $idCarga2 = DB::table('carga')->insertGetId([
-                'id_catalogo_carga' => $catalogoVerduras->id,
                 'cantidad' => 150,
                 'peso' => 750.00,
-                'id_unidad_medida' => $idUnidadCAJA,
             ]);
 
             // GENERAR CÓDIGO DE ACCESO para partición 2

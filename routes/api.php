@@ -14,9 +14,13 @@ use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\TransportistaController;
 use App\Http\Controllers\Api\FirmaController;
 use App\Http\Controllers\Api\QrController;
-use App\Http\Controllers\Api\UnidadesMedidaController;
-use App\Http\Controllers\Api\CatalogoCargaController;
+
 use App\Http\Controllers\Api\ProductorEnvioController;
+use App\Http\Controllers\Api\CatalogoCategoriaController;
+use App\Http\Controllers\Api\CatalogoProductoController;
+use App\Http\Controllers\Api\CatalogoTipoEmpaqueController;
+use App\Http\Controllers\Api\CatalogoTamanoConteoController;
+
 
 Route::middleware([])->group(function () {
 
@@ -32,7 +36,7 @@ Route::middleware([])->group(function () {
     Route::get('/public/envios/{id}/seguimiento', [EnvioPublicoController::class, 'obtenerEnvioPublicoPorId']);
     Route::get('/public/envios', [EnvioPublicoController::class, 'listarEnviosProductores']);
     Route::get('/public/envios/{id_envio}/documento', [EnvioPublicoController::class, 'obtenerDocumentoProductor']);
-    
+
     // Endpoints públicos necesarios para crear envíos
     Route::get('/tipo-transporte', [TipotransporteController::class, 'index']);
 
@@ -52,13 +56,13 @@ Route::middleware([])->group(function () {
     Route::get('/envios/productor/recursos-disponibles', [ProductorEnvioController::class, 'recursosDisponibles']);
     Route::middleware('jwt')->post('/envios/completo', [EnvioController::class, 'crearEnvioCompleto']);
     Route::middleware('jwt')->post('/envios/completo-admin', [EnvioController::class, 'crearEnvioCompletoAdmin']);
-    
+
     // Rutas específicas PRIMERO (antes de las genéricas)
     Route::middleware('jwt')->get('/envios/mis-envios', [EnvioController::class, 'obtenerMisEnvios']);
     Route::middleware('jwt')->get('/envios/usuario/{id_usuario}', [EnvioController::class, 'obtenerEnviosPorUsuario']);
     Route::middleware('jwt')->get('/envios/transportista/asignados', [EnvioController::class, 'obtenerEnviosAsignadosTransportista']);
     Route::middleware('jwt')->get('/envios/particiones/en-curso', [EnvioController::class, 'obtenerParticionesEnCursoCliente']);
-    
+
     // Rutas con parámetros específicos
     Route::middleware('jwt')->put('/envios/asignacion/{id_asignacion}/asignar', [EnvioController::class, 'asignarTransportistaYVehiculoAParticion']);
     Route::middleware('jwt')->post('/envios/asignacion/{id_asignacion}/iniciar', [EnvioController::class, 'iniciarViaje']);
@@ -67,7 +71,7 @@ Route::middleware([])->group(function () {
     Route::middleware('jwt')->post('/envios/asignacion/{id_asignacion}/checklist-incidentes', [EnvioController::class, 'registrarChecklistIncidentes']);
     Route::middleware('jwt')->get('/envios/asignacion/{id_asignacion}/documento', [EnvioController::class, 'generarDocumentoParticion']);
     Route::middleware('jwt')->get('/envios/documentos/asignacion/{id_asignacion}', [EnvioController::class, 'generarDocumentoParticion']);
-    
+
     // Rutas genéricas AL FINAL
     Route::middleware('jwt')->get('/envios', [EnvioController::class, 'obtenerTodos']);
     Route::middleware('jwt')->get('/envios/{id}', [EnvioController::class, 'obtenerPorId']);
@@ -118,12 +122,12 @@ Route::middleware([])->group(function () {
     Route::middleware('jwt')->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'obtenerTodos']);
         Route::post('/usuarios', [UsuarioController::class, 'crear']);
-        
+
         // Rutas específicas PRIMERO (antes de las genéricas)
         Route::get('/usuarios/clientes', [UsuarioController::class, 'obtenerClientes']);
         Route::get('/usuarios/rol/{rol}', [UsuarioController::class, 'obtenerPorRol']);
         Route::put('/usuarios/{id}/cambiar-rol', [UsuarioController::class, 'cambiarRol']);
-        
+
         // Rutas genéricas AL FINAL
         Route::get('/usuarios/{id}', [UsuarioController::class, 'obtenerPorId']);
         Route::put('/usuarios/{id}', [UsuarioController::class, 'editar']);
@@ -171,23 +175,34 @@ Route::middleware([])->group(function () {
         Route::delete('/{id_asignacion}', [QrController::class, 'eliminarQrToken']);
     });
 
-    // Routes Unidades de Medida
-    Route::middleware('jwt')->group(function () {
-        Route::get('/unidades-medida', [UnidadesMedidaController::class, 'index']);
-        Route::get('/unidades-medida/{id}', [UnidadesMedidaController::class, 'show']);
-        Route::post('/unidades-medida', [UnidadesMedidaController::class, 'store']);
-        Route::put('/unidades-medida/{id}', [UnidadesMedidaController::class, 'update']);
-        Route::delete('/unidades-medida/{id}', [UnidadesMedidaController::class, 'destroy']);
-    });
 
-    // Routes Catálogo de Carga
-    Route::middleware('jwt')->group(function () {
-        Route::get('/catalogo-carga', [CatalogoCargaController::class, 'index']);
-        Route::get('/catalogo-carga/{id}', [CatalogoCargaController::class, 'show']);
-        Route::post('/catalogo-carga', [CatalogoCargaController::class, 'store']);
-        Route::put('/catalogo-carga/{id}', [CatalogoCargaController::class, 'update']);
-        Route::delete('/catalogo-carga/{id}', [CatalogoCargaController::class, 'destroy']);
-    });
+
+
+
+    // Rutas de catálogos (públicas - sin autenticación)
+    Route::get('/catalogo-categorias', [CatalogoCategoriaController::class, 'index']);
+    Route::get('/catalogo-productos', [CatalogoProductoController::class, 'index']);
+    Route::get('/catalogo-tipos-empaque', [CatalogoTipoEmpaqueController::class, 'index']);
+
+    // CRUD de catálogos (públicas - sin autenticación)
+    Route::get('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'show']);
+    Route::post('/catalogo-categorias', [CatalogoCategoriaController::class, 'store']);
+    Route::put('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'update']);
+    Route::delete('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'destroy']);
+
+    Route::get('/catalogo-productos/{id}', [CatalogoProductoController::class, 'show']);
+    Route::post('/catalogo-productos', [CatalogoProductoController::class, 'store']);
+    Route::put('/catalogo-productos/{id}', [CatalogoProductoController::class, 'update']);
+    Route::delete('/catalogo-productos/{id}', [CatalogoProductoController::class, 'destroy']);
+
+    Route::get('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'show']);
+    Route::post('/catalogo-tipos-empaque', [CatalogoTipoEmpaqueController::class, 'store']);
+    Route::put('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'update']);
+    Route::delete('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'destroy']);
+
+    // Catalogo Tamaño Conteo
+    Route::get('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'index']);
+    Route::post('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'store']);
+    Route::put('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'update']);
+    Route::delete('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'destroy']);
 });
-
-

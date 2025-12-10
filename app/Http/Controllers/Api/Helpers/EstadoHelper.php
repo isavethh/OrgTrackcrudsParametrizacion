@@ -66,7 +66,7 @@ class EstadoHelper
         $historial = HistorialEstados::where('id_envio', $id_envio)
             ->orderBy('fecha', 'desc')
             ->first();
-        
+
         return $historial?->estadoEnvio?->nombre;
     }
 
@@ -76,7 +76,7 @@ class EstadoHelper
     public static function actualizarEstadoGlobalEnvio(int $id_envio): void
     {
         $asignaciones = AsignacionMultiple::where('id_envio', $id_envio)->get();
-        
+
         if ($asignaciones->isEmpty()) {
             self::actualizarEstadoEnvio($id_envio, 'Pendiente');
             return;
@@ -99,6 +99,23 @@ class EstadoHelper
         }
 
         self::actualizarEstadoEnvio($id_envio, $nuevoEstado);
+    }
+    public static function actualizarEstadoTransportista(int $id_transportista, string $nombreEstado): void
+    {
+        $id_estado = self::obtenerEstadoTransportistaPorNombre($nombreEstado);
+        \App\Models\Transportista::where('id', $id_transportista)->update(['id_estado_transportista' => $id_estado]);
+    }
+
+    public static function actualizarEstadoVehiculo(int $id_vehiculo, string $nombreEstado): void
+    {
+        $id_estado = self::obtenerEstadoVehiculoPorNombre($nombreEstado);
+        \App\Models\Vehiculo::where('id', $id_vehiculo)->update(['id_estado_vehiculo' => $id_estado]);
+    }
+
+    public static function actualizarEstadoAsignacion(int $id_asignacion, string $nombreEstado): void
+    {
+        $id_estado = self::obtenerEstadoAsignacionPorNombre($nombreEstado);
+        AsignacionMultiple::where('id', $id_asignacion)->update(['id_estado_asignacion' => $id_estado]);
     }
 }
 

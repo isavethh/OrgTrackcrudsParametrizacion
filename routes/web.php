@@ -34,7 +34,6 @@ Route::post('/password/reset', function () {
     return redirect()->route('login')->with('status', 'Tu contraseña ha sido restablecida.');
 })->name('password.update');
 
-// Rutas del dashboard (anteriormente protegidas con Spatie - middleware deshabilitado temporalmente)
 Route::group([], function () {
     Route::get('/dashboard', function () {
         return view('cliente.dashboard');
@@ -143,21 +142,28 @@ Route::prefix('admin')->group(function () {
     Route::get('/condiciones', function () {
         return view('admin.condiciones.index');
     })->name('admin.condiciones.index');
-    
+
     // Catálogo de incidentes
     Route::get('/incidentes', function () {
         return view('admin.incidentes.index');
     })->name('admin.incidentes.index');
 
-    // Unidades de medida
-    Route::get('/unidades-medida', function () {
-        return view('admin.unidades_medida.index');
-    })->name('admin.unidades_medida.index');
 
-    // Catálogo de carga
-    Route::get('/catalogo-carga', function () {
-        return view('admin.catalogo_carga.index');
-    })->name('admin.catalogo_carga.index');
+
+
+
+    // NUEVOS CATÁLOGOS
+    Route::get('/categorias', function () {
+        return view('admin.categorias.index');
+    })->name('admin.categorias.index');
+
+    Route::get('/productos', function () {
+        return view('admin.productos.index');
+    })->name('admin.productos.index');
+
+    Route::get('/tipos-empaque', function () {
+        return view('admin.tipos_empaque.index');
+    })->name('admin.tipos_empaque.index');
 
     // Tipos de Vehículo
     Route::get('/tipos-vehiculo', function () {
@@ -168,6 +174,11 @@ Route::prefix('admin')->group(function () {
     Route::get('/tipos-transporte', function () {
         return view('admin.tipos_transporte.index');
     })->name('admin.tipos_transporte.index');
+
+    // Catálogo Tamaño Conteo
+    Route::get('/catalogo-tamano-conteo', function () {
+        return view('admin.tamano_conteo.index');
+    })->name('admin.tamano_conteo.index');
 
     // Gestión de Roles usando Spatie (nuevo controlador)
     Route::get('/roles', [\App\Http\Controllers\Web\RolesWebController::class, 'index'])->name('admin.roles.index');

@@ -17,6 +17,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             InitialDataSeeder::class,
             AdminSeeder::class,
+            SyncSpatieRolesSeeder::class,
+            SyncSpatiePermissionsSeeder::class,
+            CatalogosEspecificacionesSeeder::class,
+            CatalogosSeeder::class,
             DatosSeeder::class,
         ]);
     }

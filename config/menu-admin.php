@@ -7,7 +7,7 @@ return [
         'route' => 'admin.dashboard',
         'icon' => 'fas fa-home',
     ],
-    
+
     // --- ENVÍOS ---
     ['header' => 'ENVÍOS'],
     [
@@ -25,7 +25,7 @@ return [
         'route' => 'admin.documentos.index',
         'icon' => 'fas fa-file-alt',
     ],
-    
+
     // --- USUARIOS ---
     ['header' => 'USUARIOS'],
     [
@@ -33,7 +33,7 @@ return [
         'route' => 'admin.usuarios.index',
         'icon' => 'fas fa-users',
     ],
-    
+
     // --- DIRECCIONES ---
     ['header' => 'DIRECCIONES'],
     [
@@ -41,7 +41,7 @@ return [
         'route' => 'admin.direcciones.index',
         'icon' => 'fas fa-map-marker-alt',
     ],
-    
+
     // --- FLOTA ---
     ['header' => 'GESTIÓN DE FLOTA'],
     [
@@ -64,7 +64,7 @@ return [
         'route' => 'admin.tipos_transporte.index',
         'icon' => 'fas fa-route',
     ],
-    
+
     // --- CATÁLOGOS ---
     ['header' => 'CATÁLOGOS'],
     [
@@ -72,15 +72,26 @@ return [
         'icon' => 'fas fa-boxes',
         'submenu' => [
             [
-                'text' => 'Tipos de Carga',
-                'route' => 'admin.catalogo_carga.index',
-                'icon' => 'fas fa-box',
+                'text' => 'Categorías',
+                'route' => 'admin.categorias.index',
+                'icon' => 'fas fa-tags',
             ],
             [
-                'text' => 'Unidades de Medida',
-                'route' => 'admin.unidades_medida.index',
+                'text' => 'Productos',
+                'route' => 'admin.productos.index',
+                'icon' => 'fas fa-apple-alt',
+            ],
+            [
+                'text' => 'Tipos de Empaque',
+                'route' => 'admin.tipos_empaque.index',
+                'icon' => 'fas fa-box-open',
+            ],
+            [
+                'text' => 'Tamaño / Conteo',
+                'route' => 'admin.tamano_conteo.index',
                 'icon' => 'fas fa-ruler-combined',
             ],
+
         ]
     ],
     [
@@ -99,7 +110,7 @@ return [
             ],
         ]
     ],
-    
+
     // Logout
     ['header' => 'MI CUENTA'],
     [

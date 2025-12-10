@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Planificador de Carga – Manzanas Orgánicas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #f1f5f1;
+      color: #222;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 22px 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+      color: #24552a;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 18px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .section-title {
+      font-size: 16px;
+      margin: 18px 0 8px;
+      padding-left: 8px;
+      border-left: 4px solid #3c8d40;
+      font-weight: 600;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #cfd8cf;
+      font-size: 13px;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #3c8d40;
+      box-shadow: 0 0 0 1px rgba(60, 141, 64, 0.18);
+    }
+
+    .field-group {
+      background: #f6faf6;
+      border-radius: 10px;
+      border: 1px solid #dde6dd;
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #e1f3e1;
+      color: #24552a;
+      margin-left: 6px;
+    }
+
+    .summary {
+      background: #f7fbf7;
+      border-radius: 12px;
+      border: 1px solid #dce7dc;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+
+    .summary h3 {
+      font-size: 15px;
+      margin-bottom: 6px;
+      color: #24552a;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+
+    .summary-label { color: #555; }
+    .summary-value { font-weight: 600; }
+
+    .truck-tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #24552a;
+      color: #fff;
+    }
+
+    .note { font-size: 11px; color: #777; margin-top: 8px; }
+
+    .alert {
+      margin-top: 10px;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #fff5e5;
+      color: #8a5a00;
+      border: 1px solid #ffd38a;
+    }
+
+    .btn-calc {
+      margin-top: 14px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #3c8d40;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-calc:hover { background: #326f35; }
+
+    .readonly {
+      background: #edf3ed;
+    }
+
+    .help-text {
+      font-size: 11px;
+      color: #777;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <h1>Planificador de Carga – Manzanas Orgánicas</h1>
+      <p class="subtitle">
+        El cliente puede pedir por <strong>empaques</strong> (cajas, bolsas, pallets) o por
+        <strong>número de manzanas</strong>.  
+        La cantidad de manzanas por caja cambia según el <strong>conteo / calibre</strong> (40, 75, 100, 198, 216, etc.).
+      </p>
+
+      <div class="layout">
+        <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+        <div>
+          <!-- 1. PRODUCTO -->
+          <h2 class="section-title">1. Producto</h2>
+          <div class="form-grid">
+            <div>
+              <label>Categoría</label>
+              <select id="categoria" disabled class="readonly">
+                <option value="frutas">Frutas</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Producto</label>
+              <select id="producto" disabled class="readonly">
+                <option value="manzanas">Manzanas orgánicas</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Tipo de empaque</label>
+              <select id="tipoEmpaque">
+                <option value="caja">Caja plástica</option>
+                <option value="bolsa">Bolsa plástica</option>
+                <option value="pallet">Pallet (48 cajas)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 2. CALIBRE / CONTEO POR CAJA -->
+          <h2 class="section-title">
+            2. Tamaño / conteo de manzanas
+            <span class="badge">La etiqueta de la caja</span>
+          </h2>
+          <div class="field-group">
+            <div class="field-row">
+              <div>
+                <label>Conteo por empaque (calibre)</label>
+                <select id="calibre">
+                  <option value="40">40 manzanas (grandes)</option>
+                  <option value="75">75 manzanas (medianas)</option>
+                  <option value="100" selected>100 manzanas (medianas)</option>
+                  <option value="198">198 manzanas (pequeñas)</option>
+                  <option value="216">216 manzanas (extra pequeñas)</option>
+                </select>
+                <div class="help-text">
+                  Este número viene de la etiqueta: 40, 75, 100, 198, 216…
+                </div>
+              </div>
+              <div>
+                <label>Peso promedio por manzana (kg)</label>
+                <input type="number" id="pesoPorManzana" readonly class="readonly" />
+                <div class="help-text">
+                  Cambia según el calibre (aproximado).
+                </div>
+              </div>
+              <div>
+                <label>Capacidad por empaque (manzanas)</label>
+                <input type="number" id="capacidadManzanas" readonly class="readonly" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. MEDIDAS Y PESO -->
+          <h2 class="section-title">
+            3. Medidas y peso del empaque
+          </h2>
+
+          <div class="field-group">
+            <div style="margin-bottom:6px; font-size:12px; color:#555;">
+              <span id="descripcionEmpaque">
+                Caja plástica ventilada estándar para manzanas.
+              </span>
+            </div>
+
+            <div class="field-row">
+              <div>
+                <label>Largo (cm)</label>
+                <input type="number" id="largo" readonly class="readonly" />
+              </div>
+              <div>
+                <label>Ancho (cm)</label>
+                <input type="number" id="ancho" readonly class="readonly" />
+              </div>
+              <div>
+                <label>Alto (cm)</label>
+                <input type="number" id="alto" readonly class="readonly" />
+              </div>
+            </div>
+
+            <div class="field-row" style="margin-top:8px;">
+              <div>
+                <label>Peso neto por empaque (kg)</label>
+                <input type="number" id="pesoNeto" readonly class="readonly" />
+              </div>
+              <div>
+                <label>Tara / envase (kg)</label>
+                <input type="number" id="tara" readonly class="readonly" />
+              </div>
+              <div>
+                <label>Peso bruto por empaque (kg)</label>
+                <input type="number" id="pesoBruto" readonly class="readonly" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. MODO DE PEDIDO + CANTIDAD -->
+          <h2 class="section-title">4. Forma de pedir y cantidad</h2>
+
+          <div class="field-group">
+            <div class="field-row">
+              <div>
+                <label>¿Cómo quiere pedir?</label>
+                <select id="modoPedido">
+                  <option value="empaques">Por empaques (cajas / bolsas / pallets)</option>
+                  <option value="manzanas">Por número de manzanas</option>
+                </select>
+              </div>
+              <div>
+                <label id="labelCantidadPrincipal">Cantidad de empaques</label>
+                <input type="number" id="cantidadPrincipal" min="1" value="10" />
+                <div class="help-text" id="textoCantidadAyuda">
+                  Ejemplo: 10 <strong>cajas</strong> de manzanas.
+                </div>
+              </div>
+              <div>
+                <label>Empaques calculados</label>
+                <input type="text" id="cantidadEmpaquesCalculada" readonly class="readonly" />
+                <div class="help-text">
+                  Si pides por manzanas, aquí se convierten a cajas/bolsas/pallets.
+                </div>
+              </div>
+            </div>
+
+            <div class="field-row" style="margin-top:8px;">
+              <div>
+                <label id="labelUnidadesPorPallet">Unidades por pallet</label>
+                <input type="number" id="unidadesPorPallet" readonly class="readonly" />
+                <div class="help-text" id="textoUnidadesPorPallet">
+                  Ejemplo: 48 <strong>cajas</strong> por pallet.
+                </div>
+              </div>
+              <div>
+                <label>N.º de pallets necesarios</label>
+                <input type="text" id="palletsEstimados" readonly class="readonly" />
+              </div>
+              <div></div>
+            </div>
+          </div>
+
+          <button class="btn-calc" onclick="calcular()">
+            Calcular carga y camión recomendado
+          </button>
+
+          <p class="note">
+            👉 La cantidad puede ser número de <strong>empaques</strong> (cajas/bolsas/pallets)
+            o de <strong>manzanas sueltas</strong> (ej. 1000 manzanas).  
+            El sistema convierte todo a empaques para calcular peso, volumen y pallets.
+          </p>
+        </div>
+
+        <!-- COLUMNA DERECHA: RESUMEN / LÓGICA DE TRANSPORTE -->
+        <div>
+          <h2 class="section-title">5. Resumen logístico</h2>
+          <div class="summary" id="resumen">
+            <h3>Totales estimados</h3>
+            <div class="summary-row">
+              <span class="summary-label">Tipo de empaque:</span>
+              <span class="summary-value" id="tipoResumen">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Modo de pedido:</span>
+              <span class="summary-value" id="modoResumen">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Empaques totales:</span>
+              <span class="summary-value" id="unidadesResumen">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Capacidad por empaque:</span>
+              <span class="summary-value" id="capacidadResumen">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Total de manzanas:</span>
+              <span class="summary-value" id="totalManzanas">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Peso total (kg):</span>
+              <span class="summary-value" id="pesoTotal">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Volumen total (m³):</span>
+              <span class="summary-value" id="volumenTotal">–</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Pallets necesarios:</span>
+              <span class="summary-value" id="palletsEquivalentes">–</span>
+            </div>
+
+            <h3 style="margin-top:14px;">Camión recomendado</h3>
+            <div id="camionRecomendado" class="truck-tag">
+              Sin cálculo aún
+            </div>
+
+            <div class="note" id="notaCamion">
+              Selecciona empaque, calibre, forma de pedir, cantidad y presiona “Calcular”.
+            </div>
+          </div>
+
+          <div class="alert" id="alertaCapacidad" style="display:none;">
+            ⚠ La carga supera la capacidad típica de un semi remolque refrigerado.
+            Considera dividir en más viajes o revisar los datos.
+          </div>
+
+          <h2 class="section-title">6. Lógica usada (resumen)</h2>
+          <div style="font-size:12px; color:#555; margin-top:4px; line-height:1.4;">
+            • La cantidad puede ser en <strong>empaques</strong> (cajas/bolsas/pallets) o en <strong>manzanas</strong>.<br />
+            • El sistema convierte siempre a empaques y luego calcula:<br />
+            &nbsp;&nbsp;– <strong>Peso bruto unidad</strong> = peso neto (manzanas) + tara (empaque).<br />
+            &nbsp;&nbsp;– <strong>Peso total</strong> = peso bruto × número de empaques.<br />
+            &nbsp;&nbsp;– <strong>Volumen unidad</strong> = (L × A × H) / 1 000 000 (cm³ → m³).<br />
+            &nbsp;&nbsp;– <strong>Volumen total</strong> = volumen unidad × número de empaques.<br />
+            &nbsp;&nbsp;– <strong>Total manzanas</strong> = capacidad por empaque × número de empaques.<br />
+            • Los conteos 40, 75, 100, 198, 216 representan cajas con diferentes tamaños de manzana.<br />
+            • Se estima cuántos pallets se necesitan según las unidades por pallet.<br />
+            • Según peso y volumen se sugiere camión ligero, mediano o grande refrigerado.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Datos base de empaques (solo cosas que no dependen del calibre)
+    const empaquesBase = {
+      caja: {
+        nombre: "Caja plástica ventilada",
+        descripcion:
+          "Caja plástica estándar para manzanas orgánicas, apilable y ventilada.",
+        largo: 40,
+        ancho: 30,
+        alto: 25,
+        taraKg: 1.2,
+        unidadesPorPallet: 48 // 48 cajas por pallet
+      },
+      bolsa: {
+        nombre: "Bolsa plástica grado alimenticio",
+        descripcion:
+          "Bolsa plástica sellada para manzana a granel, usada en pedidos pequeños.",
+        largo: 60,
+        ancho: 40,
+        alto: 15,
+        taraKg: 0.1,
+        unidadesPorPallet: 80 // 80 bolsas por pallet (ejemplo)
+      },
+      pallet: {
+        nombre: "Pallet europeo con 48 cajas",
+        descripcion:
+          "Pallet europeo 120×80 cm con 48 cajas de manzanas apiladas.",
+        largo: 120,
+        ancho: 80,
+        alto: 170,
+        taraKg: 48 * 1.2 + 25, // cajas + pallet
+        unidadesPorPallet: 1,  // 1 pallet es 1 unidad
+        cajasPorPallet: 48
+      }
+    };
+
+    // Calibres: conteos por empaque y peso aproximado por manzana
+    const calibres = {
+      "40":  { piezas: 40,  pesoPorManzanaKg: 0.23 }, // grandes
+      "75":  { piezas: 75,  pesoPorManzanaKg: 0.20 }, // medianas
+      "100": { piezas: 100, pesoPorManzanaKg: 0.18 }, // medianas
+      "198": { piezas: 198, pesoPorManzanaKg: 0.10 }, // pequeñas
+      "216": { piezas: 216, pesoPorManzanaKg: 0.09 }  // extra pequeñas
+    };
+
+    const tipoEmpaqueSelect = document.getElementById("tipoEmpaque");
+    const calibreSelect = document.getElementById("calibre");
+    const modoPedidoSelect = document.getElementById("modoPedido");
+
+    let currentEmpaque = null; // se rellena según tipo + calibre
+
+    function textoTipo(tipo) {
+      if (tipo === "caja") return "cajas";
+      if (tipo === "bolsa") return "bolsas";
+      return "pallets";
+    }
+
+    function construirEmpaque() {
+      const tipo = tipoEmpaqueSelect.value;
+      const base = empaquesBase[tipo];
+      const cal = calibres[calibreSelect.value];
+
+      const manzanasPorUnidadBaseCaja = cal.piezas; // ej. 100 manzanas/caja
+      let manzanasPorUnidad;
+      let pesoNetoKg;
+
+      if (tipo === "caja") {
+        manzanasPorUnidad = manzanasPorUnidadBaseCaja;
+        pesoNetoKg = manzanasPorUnidad * cal.pesoPorManzanaKg;
+      } else if (tipo === "bolsa") {
+        // para simplificar, asumimos que la bolsa lleva la mitad que la caja
+        manzanasPorUnidad = Math.round(manzanasPorUnidadBaseCaja / 2);
+        pesoNetoKg = manzanasPorUnidad * cal.pesoPorManzanaKg;
+      } else {
+        // pallet: 48 cajas con ese calibre
+        const cajasPorPallet = base.cajasPorPallet;
+        manzanasPorUnidad = cajasPorPallet * manzanasPorUnidadBaseCaja;
+        pesoNetoKg = manzanasPorUnidad * cal.pesoPorManzanaKg;
+      }
+
+      currentEmpaque = {
+        tipo,
+        nombre: base.nombre,
+        descripcion: base.descripcion,
+        largo: base.largo,
+        ancho: base.ancho,
+        alto: base.alto,
+        taraKg: base.taraKg,
+        unidadesPorPallet: base.unidadesPorPallet,
+        manzanasPorUnidad,
+        pesoNetoKg
+      };
+    }
+
+    function actualizarUIEmpaque() {
+      if (!currentEmpaque) return;
+
+      const e = currentEmpaque;
+      const cal = calibres[calibreSelect.value];
+      const tipo = e.tipo;
+      const tipoTexto = textoTipo(tipo);
+
+      document.getElementById("descripcionEmpaque").textContent =
+        e.nombre + " – " + e.descripcion;
+
+      document.getElementById("largo").value = e.largo;
+      document.getElementById("ancho").value = e.ancho;
+      document.getElementById("alto").value = e.alto;
+
+      document.getElementById("pesoPorManzana").value =
+        cal.pesoPorManzanaKg.toFixed(3);
+      document.getElementById("capacidadManzanas").value =
+        e.manzanasPorUnidad;
+
+      document.getElementById("pesoNeto").value =
+        e.pesoNetoKg.toFixed(1);
+      document.getElementById("tara").value =
+        e.taraKg.toFixed(1);
+      document.getElementById("pesoBruto").value =
+        (e.pesoNetoKg + e.taraKg).toFixed(1);
+
+      document.getElementById("unidadesPorPallet").value =
+        e.unidadesPorPallet;
+
+      // textos de ayuda dinámicos
+      document.getElementById("textoCantidadAyuda").innerHTML =
+        'Ejemplo: 10 <strong>' + tipoTexto + '</strong> de manzanas.';
+
+      if (tipo === "pallet") {
+        document.getElementById("labelUnidadesPorPallet").textContent =
+          "Unidades por pallet (ya es pallet)";
+        document.getElementById("textoUnidadesPorPallet").innerHTML =
+          "Cada unidad ya es un <strong>pallet completo</strong> de cajas.";
+      } else if (tipo === "caja") {
+        document.getElementById("labelUnidadesPorPallet").textContent =
+          "Unidades por pallet (cajas por pallet)";
+        document.getElementById("textoUnidadesPorPallet").innerHTML =
+          "Ejemplo: <strong>48 cajas</strong> por pallet.";
+      } else {
+        document.getElementById("labelUnidadesPorPallet").textContent =
+          "Unidades por pallet (bolsas por pallet)";
+        document.getElementById("textoUnidadesPorPallet").innerHTML =
+          "Ejemplo: <strong>80 bolsas</strong> por pallet.";
+      }
+
+      // reset resumen
+      document.getElementById("tipoResumen").textContent = "–";
+      document.getElementById("modoResumen").textContent = "–";
+      document.getElementById("unidadesResumen").textContent = "–";
+      document.getElementById("capacidadResumen").textContent = "–";
+      document.getElementById("totalManzanas").textContent = "–";
+      document.getElementById("pesoTotal").textContent = "–";
+      document.getElementById("volumenTotal").textContent = "–";
+      document.getElementById("palletsEquivalentes").textContent = "–";
+      document.getElementById("palletsEstimados").value = "";
+      document.getElementById("cantidadEmpaquesCalculada").value = "";
+      document.getElementById("camionRecomendado").textContent = "Sin cálculo aún";
+      document.getElementById("notaCamion").textContent =
+        "Selecciona empaque, calibre, forma de pedir, cantidad y presiona “Calcular”.";
+      document.getElementById("alertaCapacidad").style.display = "none";
+    }
+
+    function actualizarModoPedidoUI() {
+      const modo = modoPedidoSelect.value;
+      const tipo = tipoEmpaqueSelect.value;
+      const tipoTexto = textoTipo(tipo);
+
+      if (modo === "empaques") {
+        document.getElementById("labelCantidadPrincipal").textContent =
+          "Cantidad de " + tipoTexto;
+        document.getElementById("textoCantidadAyuda").innerHTML =
+          'Ejemplo: 10 <strong>' + tipoTexto + '</strong> de manzanas.';
+      } else {
+        document.getElementById("labelCantidadPrincipal").textContent =
+          "Cantidad de manzanas (unidades)";
+        document.getElementById("textoCantidadAyuda").innerHTML =
+          "Ejemplo: 1000 manzanas sueltas.";
+      }
+      document.getElementById("cantidadEmpaquesCalculada").value = "";
+    }
+
+    function recargarEmpaque() {
+      construirEmpaque();
+      actualizarUIEmpaque();
+      actualizarModoPedidoUI();
+    }
+
+    tipoEmpaqueSelect.addEventListener("change", recargarEmpaque);
+    calibreSelect.addEventListener("change", recargarEmpaque);
+    modoPedidoSelect.addEventListener("change", actualizarModoPedidoUI);
+
+    // Inicializar
+    recargarEmpaque();
+
+    function calcular() {
+      if (!currentEmpaque) return;
+
+      const e = currentEmpaque;
+      const tipo = e.tipo;
+      const tipoTexto = textoTipo(tipo);
+      const modo = modoPedidoSelect.value;
+
+      const valor = parseInt(
+        document.getElementById("cantidadPrincipal").value || "0",
+        10
+      );
+
+      if (valor <= 0) {
+        alert("Ingresa una cantidad mayor a 0.");
+        return;
+      }
+
+      // Convertimos a número de empaques
+      let empaques;
+      if (modo === "empaques") {
+        empaques = valor;
+      } else {
+        // modo manzanas: convertir manzanas -> empaques
+        const manzanasPorUnidad = e.manzanasPorUnidad;
+        empaques = Math.ceil(valor / manzanasPorUnidad);
+      }
+
+      document.getElementById("cantidadEmpaquesCalculada").value =
+        empaques + " " + tipoTexto;
+
+      // Volumen y peso por empaque
+      const pesoBrutoUnidad = e.pesoNetoKg + e.taraKg;
+      const volumenUnidad =
+        (e.largo * e.ancho * e.alto) / 1000000; // cm³ → m³
+
+      const pesoTotal = pesoBrutoUnidad * empaques;
+      const volumenTotal = volumenUnidad * empaques;
+
+      // pallets necesarios
+      let palletsEquivalentes;
+      if (tipo === "pallet") {
+        palletsEquivalentes = empaques;
+      } else {
+        palletsEquivalentes = Math.ceil(
+          empaques / e.unidadesPorPallet
+        );
+      }
+
+      const totalManzanas = e.manzanasPorUnidad * empaques;
+
+      // Actualizar resumen
+      document.getElementById("tipoResumen").textContent =
+        tipoTexto.charAt(0).toUpperCase() + tipoTexto.slice(1);
+      document.getElementById("modoResumen").textContent =
+        modo === "empaques"
+          ? "Pedido por empaques"
+          : "Pedido por número de manzanas";
+      document.getElementById("unidadesResumen").textContent =
+        empaques + " " + tipoTexto;
+      document.getElementById("capacidadResumen").textContent =
+        e.manzanasPorUnidad + " manzanas / " + tipoTexto.slice(0, -1);
+      document.getElementById("totalManzanas").textContent =
+        totalManzanas.toString();
+
+      document.getElementById("pesoTotal").textContent =
+        pesoTotal.toFixed(1).replace(".", ",");
+      document.getElementById("volumenTotal").textContent =
+        volumenTotal.toFixed(2).replace(".", ",");
+      document.getElementById("palletsEquivalentes").textContent =
+        palletsEquivalentes;
+      document.getElementById("palletsEstimados").value =
+        palletsEquivalentes;
+
+      // Lógica de camión
+      let camion = "";
+      let detalle = "";
+      let alerta = false;
+
+      if (pesoTotal <= 3500 && volumenTotal <= 18) {
+        camion = "Camión ligero refrigerado";
+        detalle =
+          "Uso urbano / distancias cortas. Hasta aprox. 3,5 t y 18 m³.";
+      } else if (pesoTotal <= 8000 && volumenTotal <= 35) {
+        camion = "Camión mediano refrigerado";
+        detalle =
+          "Adecuado para distribución regional con hasta 8 t y 35 m³.";
+      } else if (pesoTotal <= 24000 && volumenTotal <= 60) {
+        camion = "Camión grande / semi remolque refrigerado";
+        detalle =
+          "Óptimo para largas distancias y grandes volúmenes de manzana paletizada.";
+      } else {
+        camion = "Capacidad excedida";
+        detalle =
+          "La carga calculada excede la capacidad típica. Divide en más viajes o revisa datos.";
+        alerta = true;
+      }
+
+      document.getElementById("camionRecomendado").textContent = camion;
+      document.getElementById("notaCamion").textContent = detalle;
+      document.getElementById("alertaCapacidad").style.display =
+        alerta ? "block" : "none";
+    }
+  </script>
+</body>
+</html>

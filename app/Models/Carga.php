@@ -13,10 +13,13 @@ class Carga extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_catalogo_carga',
         'cantidad',
         'peso',
-        'id_unidad_medida',
+        // 'id_unidad_medida', // Deprecated
+        // Referencias a catálogos
+        'id_categoria',
+        'id_producto',
+        'id_tipo_empaque',
     ];
 
     protected $casts = [
@@ -24,15 +27,12 @@ class Carga extends Model
         'peso' => 'decimal:2',
     ];
 
-    public function catalogoCarga()
-    {
-        return $this->belongsTo(CatalogoCarga::class, 'id_catalogo_carga', 'id');
-    }
-
+    /*
     public function unidadMedida()
     {
         return $this->belongsTo(UnidadMedida::class, 'id_unidad_medida');
     }
+    */
 
     public function asignaciones()
     {
@@ -42,6 +42,37 @@ class Carga extends Model
             'id_carga',
             'id_asignacion'
         );
+    }
+
+    public function categoria()
+    {
+        return $this->belongsTo(CatalogoCategoria::class, 'id_categoria');
+    }
+
+    public function producto()
+    {
+        return $this->belongsTo(CatalogoProducto::class, 'id_producto');
+    }
+
+    public function tipoEmpaque()
+    {
+        return $this->belongsTo(CatalogoTipoEmpaque::class, 'id_tipo_empaque');
+    }
+
+    // Relaciones a tablas de especificaciones
+    public function especificacionTamanoConteo()
+    {
+        return $this->hasOne(EspecificacionTamanoConteo::class, 'id_carga');
+    }
+
+    public function especificacionMedidasPeso()
+    {
+        return $this->hasOne(EspecificacionMedidasPeso::class, 'id_carga');
+    }
+
+    public function especificacionFormaPedido()
+    {
+        return $this->hasOne(EspecificacionFormaPedido::class, 'id_carga');
     }
 }
 

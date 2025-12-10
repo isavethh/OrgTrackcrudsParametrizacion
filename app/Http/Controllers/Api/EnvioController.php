@@ -30,6 +30,9 @@ use App\Models\FirmaEnvio;
 use App\Models\FirmaTransportista;
 use App\Models\QrToken;
 use App\Models\Usuario;
+use App\Models\EspecificacionTamanoConteo;
+use App\Models\EspecificacionMedidasPeso;
+use App\Models\EspecificacionFormaPedido;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -77,7 +80,7 @@ class EnvioController extends Controller
 
                 // validar existencia de tipo transporte
                 if (!Tipotransporte::where('id', $idTipoTransporte)->exists()) {
-                    return response()->json(['error' => 'El tipo de transporte no existe: '.$idTipoTransporte], Response::HTTP_BAD_REQUEST);
+                    return response()->json(['error' => 'El tipo de transporte no existe: ' . $idTipoTransporte], Response::HTTP_BAD_REQUEST);
                 }
 
                 $r = RecogidaEntrega::create([
@@ -103,26 +106,60 @@ class EnvioController extends Controller
                 ]);
 
                 foreach ($cargas as $carga) {
-                    // Buscar o crear catalogo de carga
-                    $catalogo = CatalogoCarga::firstOrCreate(
-                        [
-                            'tipo' => $carga['tipo'],
-                            'variedad' => $carga['variedad'],
-                            'empaque' => $carga['empaquetado'],
-                        ],
-                        ['descripcion' => null]
-                    );
-
                     $c = Carga::create([
-                        'id_catalogo_carga' => $catalogo->id,
                         'cantidad' => $carga['cantidad'],
                         'peso' => $carga['peso'],
+                        'id_categoria' => $carga['id_categoria'] ?? null,
+                        'id_producto' => $carga['id_producto'] ?? null,
+                        'id_tipo_empaque' => $carga['id_tipo_empaque'] ?? null,
                     ]);
+
+                    // Crear especificaciones en tablas separadas si existen datos
+                    if (isset($carga['conteo_por_empaque']) || isset($carga['peso_promedio_unidad']) || isset($carga['capacidad_por_empaque'])) {
+                        EspecificacionTamanoConteo::create([
+                            'id_carga' => $c->id,
+                            'conteo_por_empaque' => $carga['conteo_por_empaque'] ?? null,
+                            'peso_promedio_unidad' => $carga['peso_promedio_unidad'] ?? null,
+                            'capacidad_por_empaque' => $carga['capacidad_por_empaque'] ?? null,
+                        ]);
+                    }
+
+                    if (
+                        isset($carga['largo_cm']) || isset($carga['ancho_cm']) || isset($carga['alto_cm']) ||
+                        isset($carga['peso_neto_kg']) || isset($carga['tara_kg']) || isset($carga['peso_bruto_kg'])
+                    ) {
+                        EspecificacionMedidasPeso::create([
+                            'id_carga' => $c->id,
+                            'largo_cm' => $carga['largo_cm'] ?? null,
+                            'ancho_cm' => $carga['ancho_cm'] ?? null,
+                            'alto_cm' => $carga['alto_cm'] ?? null,
+                            'peso_neto_kg' => $carga['peso_neto_kg'] ?? null,
+                            'tara_kg' => $carga['tara_kg'] ?? null,
+                            'peso_bruto_kg' => $carga['peso_bruto_kg'] ?? null,
+                        ]);
+                    }
+
+                    if (
+                        isset($carga['forma_pedido']) || isset($carga['cantidad_pedido']) || isset($carga['empaques_calculados']) ||
+                        isset($carga['unidades_por_pallet']) || isset($carga['numero_pallets'])
+                    ) {
+                        EspecificacionFormaPedido::create([
+                            'id_carga' => $c->id,
+                            'forma_pedido' => $carga['forma_pedido'] ?? null,
+                            'cantidad_pedido' => $carga['cantidad_pedido'] ?? null,
+                            'empaques_calculados' => $carga['empaques_calculados'] ?? null,
+                            'unidades_por_pallet' => $carga['unidades_por_pallet'] ?? null,
+                            'numero_pallets' => $carga['numero_pallets'] ?? null,
+                        ]);
+                    }
+
                     AsignacionCarga::create([
                         'id_asignacion' => $asignacion->id,
                         'id_carga' => $c->id,
                     ]);
                 }
+
+
             }
 
             return response()->json([
@@ -152,11 +189,28 @@ class EnvioController extends Controller
                 'ubicacion.rutageojson' => 'nullable|string',
                 'particiones' => 'required|array|min:1',
                 'particiones.*.cargas' => 'required|array|min:1',
-                'particiones.*.cargas.*.tipo' => 'required|string|max:50',
-                'particiones.*.cargas.*.variedad' => 'required|string|max:50',
+                // Campos básicos requeridos
                 'particiones.*.cargas.*.cantidad' => 'required|integer|min:1',
-                'particiones.*.cargas.*.empaquetado' => 'required|string|max:50',
                 'particiones.*.cargas.*.peso' => 'required|numeric|min:0',
+                // Catálogos opcionales
+                'particiones.*.cargas.*.id_categoria' => 'nullable|integer|exists:catalogo_categorias,id',
+                'particiones.*.cargas.*.id_producto' => 'nullable|integer|exists:catalogo_productos,id',
+                'particiones.*.cargas.*.id_tipo_empaque' => 'nullable|integer|exists:catalogo_tipos_empaque,id',
+                // Especificaciones opcionales
+                'particiones.*.cargas.*.conteo_por_empaque' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.peso_promedio_unidad' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.capacidad_por_empaque' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.largo_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.ancho_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.alto_cm' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.peso_neto_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.tara_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.peso_bruto_kg' => 'nullable|numeric|min:0',
+                'particiones.*.cargas.*.forma_pedido' => 'nullable|string|in:empaques,cajas,bolsas,pallets',
+                'particiones.*.cargas.*.cantidad_pedido' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.empaques_calculados' => 'nullable|integer|min:0',
+                'particiones.*.cargas.*.unidades_por_pallet' => 'nullable|integer|min:1',
+                'particiones.*.cargas.*.numero_pallets' => 'nullable|integer|min:0',
                 'particiones.*.recogidaEntrega' => 'required|array',
                 'particiones.*.recogidaEntrega.fecha_recogida' => 'required|date',
                 'particiones.*.recogidaEntrega.hora_recogida' => 'required|date_format:H:i:s',
@@ -166,6 +220,7 @@ class EnvioController extends Controller
                 'particiones.*.id_tipo_transporte' => 'required|integer|exists:tipotransporte,id',
                 'particiones.*.id_transportista' => 'required|integer|exists:transportistas,id',
                 'particiones.*.id_vehiculo' => 'required|integer|exists:vehiculos,id',
+
             ]);
 
             $id_usuario_cliente = $request->id_usuario_cliente;
@@ -235,10 +290,10 @@ class EnvioController extends Controller
 
                     // 6. Insertar Asignación
                     $idEstadoPendiente = EstadoHelper::obtenerEstadoAsignacionPorNombre('Pendiente');
-                    
+
                     // Generar código de acceso único de 6 caracteres
                     $codigoAcceso = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
-                    
+
                     $asignacion = AsignacionMultiple::create([
                         'id_envio' => $envio->id,
                         'id_transportista' => $id_transportista,
@@ -257,21 +312,53 @@ class EnvioController extends Controller
 
                     // 8. Insertar cargas y relacionarlas con la asignación
                     foreach ($cargas as $carga) {
-                        // Buscar o crear catalogo de carga
-                        $catalogo = CatalogoCarga::firstOrCreate(
-                            [
-                                'tipo' => $carga['tipo'],
-                                'variedad' => $carga['variedad'],
-                                'empaque' => $carga['empaquetado'],
-                            ],
-                            ['descripcion' => null]
-                        );
-
+                        // Crear carga usando el nuevo sistema de catálogos
                         $nuevaCarga = Carga::create([
-                            'id_catalogo_carga' => $catalogo->id,
                             'cantidad' => $carga['cantidad'],
                             'peso' => $carga['peso'],
+                            'id_categoria' => $carga['id_categoria'] ?? null,
+                            'id_producto' => $carga['id_producto'] ?? null,
+                            'id_tipo_empaque' => $carga['id_tipo_empaque'] ?? null,
                         ]);
+
+                        // Crear especificaciones en tablas separadas si existen datos
+                        if (isset($carga['conteo_por_empaque']) || isset($carga['peso_promedio_unidad']) || isset($carga['capacidad_por_empaque'])) {
+                            EspecificacionTamanoConteo::create([
+                                'id_carga' => $nuevaCarga->id,
+                                'conteo_por_empaque' => $carga['conteo_por_empaque'] ?? null,
+                                'peso_promedio_unidad' => $carga['peso_promedio_unidad'] ?? null,
+                                'capacidad_por_empaque' => $carga['capacidad_por_empaque'] ?? null,
+                            ]);
+                        }
+
+                        if (
+                            isset($carga['largo_cm']) || isset($carga['ancho_cm']) || isset($carga['alto_cm']) ||
+                            isset($carga['peso_neto_kg']) || isset($carga['tara_kg']) || isset($carga['peso_bruto_kg'])
+                        ) {
+                            EspecificacionMedidasPeso::create([
+                                'id_carga' => $nuevaCarga->id,
+                                'largo_cm' => $carga['largo_cm'] ?? null,
+                                'ancho_cm' => $carga['ancho_cm'] ?? null,
+                                'alto_cm' => $carga['alto_cm'] ?? null,
+                                'peso_neto_kg' => $carga['peso_neto_kg'] ?? null,
+                                'tara_kg' => $carga['tara_kg'] ?? null,
+                                'peso_bruto_kg' => $carga['peso_bruto_kg'] ?? null,
+                            ]);
+                        }
+
+                        if (
+                            isset($carga['forma_pedido']) || isset($carga['cantidad_pedido']) || isset($carga['empaques_calculados']) ||
+                            isset($carga['unidades_por_pallet']) || isset($carga['numero_pallets'])
+                        ) {
+                            EspecificacionFormaPedido::create([
+                                'id_carga' => $nuevaCarga->id,
+                                'forma_pedido' => $carga['forma_pedido'] ?? null,
+                                'cantidad_pedido' => $carga['cantidad_pedido'] ?? null,
+                                'empaques_calculados' => $carga['empaques_calculados'] ?? null,
+                                'unidades_por_pallet' => $carga['unidades_por_pallet'] ?? null,
+                                'numero_pallets' => $carga['numero_pallets'] ?? null,
+                            ]);
+                        }
 
                         // Relacionar carga con asignación
                         AsignacionCarga::create([
@@ -279,6 +366,7 @@ class EnvioController extends Controller
                             'id_carga' => $nuevaCarga->id,
                         ]);
                     }
+
                 }
 
                 return response()->json([
@@ -309,10 +397,10 @@ class EnvioController extends Controller
     {
         try {
             \Log::info('Iniciando obtenerTodos');
-            
+
             $usuario = $request->attributes->get('usuario');
             \Log::info('Usuario obtenido: ' . json_encode($usuario));
-            
+
             if (!$usuario) {
                 \Log::error('Usuario no encontrado en request');
                 return response()->json(['error' => 'Usuario no autenticado'], 401);
@@ -399,7 +487,12 @@ class EnvioController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
+                'asignaciones.cargas.especificacionTamanoConteo',
+                'asignaciones.cargas.especificacionMedidasPeso',
+                'asignaciones.cargas.especificacionFormaPedido',
                 'direccion:id,nombreorigen,nombredestino,origen_lng,origen_lat,destino_lng,destino_lat,rutageojson'
             ])->find($id);
 
@@ -428,15 +521,45 @@ class EnvioController extends Controller
             // Transformar asignaciones a particiones
             $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
-                    return [
+                    $result = [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
+                        // Catálogos
+                        'categoria' => $carga->categoria?->nombre,
+                        'producto' => $carga->producto?->nombre,
+                        'tipo_empaque' => $carga->tipoEmpaque?->nombre,
                     ];
+
+                    // Añadir especificaciones de tamaño/conteo si existen
+                    if ($carga->especificacionTamanoConteo) {
+                        $result['conteo_por_empaque'] = $carga->especificacionTamanoConteo->conteo_por_empaque;
+                        $result['peso_promedio_unidad'] = $carga->especificacionTamanoConteo->peso_promedio_unidad;
+                        $result['capacidad_por_empaque'] = $carga->especificacionTamanoConteo->capacidad_por_empaque;
+                    }
+
+                    // Añadir especificaciones de medidas/peso si existen
+                    if ($carga->especificacionMedidasPeso) {
+                        $result['largo_cm'] = $carga->especificacionMedidasPeso->largo_cm;
+                        $result['ancho_cm'] = $carga->especificacionMedidasPeso->ancho_cm;
+                        $result['alto_cm'] = $carga->especificacionMedidasPeso->alto_cm;
+                        $result['peso_neto_kg'] = $carga->especificacionMedidasPeso->peso_neto_kg;
+                        $result['tara_kg'] = $carga->especificacionMedidasPeso->tara_kg;
+                        $result['peso_bruto_kg'] = $carga->especificacionMedidasPeso->peso_bruto_kg;
+                    }
+
+                    // Añadir especificaciones de forma de pedido si existen
+                    if ($carga->especificacionFormaPedido) {
+                        $result['forma_pedido'] = $carga->especificacionFormaPedido->forma_pedido;
+                        $result['cantidad_pedido'] = $carga->especificacionFormaPedido->cantidad_pedido;
+                        $result['empaques_calculados'] = $carga->especificacionFormaPedido->empaques_calculados;
+                        $result['unidades_por_pallet'] = $carga->especificacionFormaPedido->unidades_por_pallet;
+                        $result['numero_pallets'] = $carga->especificacionFormaPedido->numero_pallets;
+                    }
+
+                    return $result;
                 });
+
 
                 return [
                     'id_asignacion' => $asignacion->id,
@@ -584,15 +707,15 @@ class EnvioController extends Controller
     {
         try {
             \Log::info('=== Iniciando obtenerMisEnvios ===');
-            
+
             $usuario = $request->attributes->get('usuario');
             \Log::info('Usuario desde request: ', ['usuario' => $usuario]);
-            
+
             if (!$usuario || !isset($usuario['id'])) {
                 \Log::error('Usuario no autenticado o sin ID');
                 return response()->json(['error' => 'Usuario no autenticado'], 401);
             }
-            
+
             $userId = $usuario['id'];
             \Log::info('User ID: ' . $userId);
 
@@ -610,7 +733,7 @@ class EnvioController extends Controller
             ])->where('id_usuario', $userId)->get();
 
             \Log::info('Total de envíos encontrados: ' . $envios->count());
-            
+
             if ($envios->isEmpty()) {
                 \Log::info('No hay envíos para este usuario');
                 return response()->json([]);
@@ -621,13 +744,13 @@ class EnvioController extends Controller
                 \Log::info('Procesando envío ID: ' . $envio->id);
                 $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
                 \Log::info('Estado actual: ' . $estadoActual);
-                
+
                 $envio->estado = $estadoActual ?? 'Pendiente';
                 $envio->nombre_origen = $envio->direccion?->nombreorigen ?? "—";
                 $envio->nombre_destino = $envio->direccion?->nombredestino ?? "—";
-                
+
                 \Log::info('Total de asignaciones/particiones: ' . $envio->asignaciones->count());
-                
+
                 $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
                     $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                         return [
@@ -692,7 +815,7 @@ class EnvioController extends Controller
     {
         try {
             $usuarioAuth = $request->attributes->get('usuario');
-            
+
             // Verificar que sea admin
             if (!UsuarioHelper::tieneRol($usuarioAuth, 'admin')) {
                 return response()->json(['error' => 'No tienes permiso para ver envíos de otros usuarios'], 403);
@@ -707,18 +830,20 @@ class EnvioController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
                 'direccion:id,nombreorigen,nombredestino'
             ])->where('id_usuario', $id_usuario)->get();
 
             // Transformar la respuesta
             $envios = $envios->map(function ($envio) {
                 $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
-                
+
                 $envio->estado_nombre = $estadoActual ?? 'Pendiente';
                 $envio->nombre_origen = $envio->direccion?->nombreorigen ?? "—";
                 $envio->nombre_destino = $envio->direccion?->nombredestino ?? "—";
-                
+
                 $envio->particiones = $envio->asignaciones->map(function ($asignacion) {
                     $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                         return [
@@ -781,7 +906,7 @@ class EnvioController extends Controller
     {
         try {
             $usuario = $request->attributes->get('usuario');
-            
+
             // Solo admin puede actualizar estado global manualmente
             if (!UsuarioHelper::tieneRol($usuario, 'admin')) {
                 return response()->json(['error' => 'Solo los administradores pueden actualizar el estado global'], 403);
@@ -812,21 +937,21 @@ class EnvioController extends Controller
         try {
             // Usar API de QR Server para generar QR real
             $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($url);
-            
+
             // Descargar la imagen
             $imageData = file_get_contents($qrUrl);
-            
+
             if ($imageData === false) {
                 throw new \Exception('No se pudo generar el QR');
             }
-            
+
             // Convertir a base64 con el formato correcto
             $base64 = base64_encode($imageData);
             return 'data:image/png;base64,' . $base64;
-            
+
         } catch (\Exception $e) {
             \Log::error('Error al generar QR: ' . $e->getMessage());
-            
+
             // Fallback: QR placeholder simple
             return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
         }
@@ -969,7 +1094,7 @@ class EnvioController extends Controller
             // Transformar la respuesta
             $enviosCompletos = $asignaciones->map(function ($asignacion) {
                 $envio = $asignacion->envio;
-                
+
                 $estadoEnvio = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
@@ -1386,7 +1511,10 @@ class EnvioController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                // Actualizado: Usamos las nuevas relaciones directas en lugar de catalogoCarga
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
                 'asignaciones.checklistCondicion.detalles.condicion:id,titulo',
                 'asignaciones.checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'asignaciones.firmaEnvio',
@@ -1415,9 +1543,9 @@ class EnvioController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre,
+                        'variedad' => $carga->producto?->nombre,
+                        'empaquetado' => $carga->tipoEmpaque?->nombre,
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];
@@ -1459,11 +1587,11 @@ class EnvioController extends Controller
                 if (UsuarioHelper::tieneRol($usuario, 'admin')) {
                     $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
                     $particion['observaciones_condiciones'] = $asignacion->checklistCondicion?->observaciones;
-                    
+
                     // Para incidentes, mostrar TODOS (no solo los que ocurrieron)
                     $checklistIncidentes = [];
                     if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
-                        $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
+                        $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function ($det) {
                             return [
                                 'id' => $det->id,
                                 'tipo_incidente' => [
@@ -1475,7 +1603,7 @@ class EnvioController extends Controller
                             ];
                         })->toArray();
                     }
-                    
+
                     $particion['checklistIncidentes'] = $checklistIncidentes;
                     $particion['observaciones_incidentes'] = $asignacion->checklistIncidente?->observaciones;
                 }
@@ -1522,7 +1650,10 @@ class EnvioController extends Controller
                 'transportista.usuario.persona:id,nombre,apellido,ci,telefono',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas.catalogoCarga:id,tipo,variedad,empaque',
+                // Actualizado: Relaciones correctas
+                'cargas.categoria:id,nombre',
+                'cargas.producto:id,nombre',
+                'cargas.tipoEmpaque:id,nombre',
                 'checklistCondicion.detalles.condicion:id,titulo',
                 'checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'incidentes.tipoIncidente:id,titulo',
@@ -1539,12 +1670,13 @@ class EnvioController extends Controller
                 return response()->json(['error' => 'No tienes acceso a esta asignación'], 403);
             }
 
+            // Mapeo corregido
             $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                 return [
                     'id' => $carga->id,
-                    'tipo' => $carga->catalogoCarga?->tipo,
-                    'variedad' => $carga->catalogoCarga?->variedad,
-                    'empaquetado' => $carga->catalogoCarga?->empaque,
+                    'tipo' => $carga->categoria?->nombre,
+                    'variedad' => $carga->producto?->nombre,
+                    'empaquetado' => $carga->tipoEmpaque?->nombre,
                     'cantidad' => $carga->cantidad,
                     'peso' => $carga->peso,
                 ];
@@ -1588,13 +1720,13 @@ class EnvioController extends Controller
             if (UsuarioHelper::tieneRol($usuario, 'admin')) {
                 $particion['checklistCondiciones'] = $asignacion->checklistCondicion?->detalles ?? [];
                 $particion['observaciones_condiciones'] = $asignacion->checklistCondicion?->observaciones;
-                
+
                 // Para incidentes, mostrar TODOS (no solo los que ocurrieron)
                 $checklistIncidentes = [];
                 if ($asignacion->checklistIncidente && $asignacion->checklistIncidente->detalles) {
                     \Log::info('Total detalles cargados: ' . $asignacion->checklistIncidente->detalles->count());
-                    
-                    $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function($det) {
+
+                    $checklistIncidentes = $asignacion->checklistIncidente->detalles->map(function ($det) {
                         return [
                             'id' => $det->id,
                             'tipo_incidente' => [
@@ -1605,15 +1737,15 @@ class EnvioController extends Controller
                             'descripcion' => $det->descripcion,
                         ];
                     })->toArray();
-                    
+
                     \Log::info('Total incidentes mapeados: ' . count($checklistIncidentes));
-                    
+
                     // Agregar observaciones generales del checklist
                     $particion['observaciones_incidentes'] = $asignacion->checklistIncidente->observaciones;
                 }
-                
+
                 $particion['checklistIncidentes'] = $checklistIncidentes;
-                
+
                 // Log para debug
                 \Log::info('ID Asignación: ' . $asignacion->id);
                 \Log::info('Total incidentes en checklist: ' . count($checklistIncidentes));
@@ -1662,11 +1794,11 @@ class EnvioController extends Controller
                 'recogidaEntrega',
                 'cargas.catalogoCarga:id,tipo,variedad,empaque'
             ])
-            ->whereHas('envio', function ($query) use ($userId) {
-                $query->where('id_usuario', $userId);
-            })
-            ->where('id_estado_asignacion', $idEstadoEnCurso)
-            ->get();
+                ->whereHas('envio', function ($query) use ($userId) {
+                    $query->where('id_usuario', $userId);
+                })
+                ->where('id_estado_asignacion', $idEstadoEnCurso)
+                ->get();
 
             $particiones = $particiones->map(function ($particion) {
                 $cargasTransformadas = $particion->cargas->map(function ($carga) {
@@ -1735,17 +1867,17 @@ class EnvioController extends Controller
 
             \Log::info("Intentando cancelar envío ID: {$id_envio}");
             \Log::info("Número de asignaciones: " . $envio->asignaciones->count());
-            
+
             // Verificar que TODAS las particiones estén en estado Pendiente
             $estadosNoPermitidos = [];
             foreach ($envio->asignaciones as $asignacion) {
                 \Log::info("Asignación ID {$asignacion->id} - Estado: '{$asignacion->estado}'");
-                
+
                 if ($asignacion->estado !== 'Pendiente') {
                     $estadosNoPermitidos[] = "Partición ID {$asignacion->id}: {$asignacion->estado}";
                 }
             }
-            
+
             if (!empty($estadosNoPermitidos)) {
                 \Log::warning("No se puede cancelar - Estados no permitidos: " . json_encode($estadosNoPermitidos));
                 return response()->json([
@@ -1781,7 +1913,7 @@ class EnvioController extends Controller
             EstadoHelper::actualizarEstadoEnvio($id_envio, 'Cancelado');
 
             DB::commit();
-            
+
             \Log::info("Envío {$id_envio} cancelado exitosamente");
 
             return response()->json([

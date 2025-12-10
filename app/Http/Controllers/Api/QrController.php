@@ -269,7 +269,10 @@ class QrController extends Controller
                 'transportista.usuario:id,id_persona',
                 'transportista.usuario.persona:id,ci,telefono,nombre,apellido',
                 'tipoTransporte:id,nombre',
-                'cargas:id,id_catalogo_carga,cantidad,peso,id_unidad_medida',
+                'cargas:id,id_catalogo_carga,cantidad,peso,id_unidad_medida,id_categoria,id_producto,id_tipo_empaque',
+                'cargas.categoria:id,nombre',
+                'cargas.producto:id,nombre',
+                'cargas.tipoEmpaque:id,nombre',
                 'cargas.catalogoCarga:id,tipo,variedad,empaque,descripcion',
                 'cargas.unidadMedida:id,nombre',
                 'recogidaEntrega:id,fecha_recogida,hora_recogida,hora_entrega,instrucciones_recogida,instrucciones_entrega'
@@ -317,10 +320,10 @@ class QrController extends Controller
                             'peso' => $c->peso,
                             'unidad' => $c->unidadMedida?->nombre,
                             'catalogo' => [
-                                'tipo' => $c->catalogoCarga?->tipo,
-                                'variedad' => $c->catalogoCarga?->variedad,
-                                'empaque' => $c->catalogoCarga?->empaque,
-                                'descripcion' => $c->catalogoCarga?->descripcion,
+                                'tipo' => $c->categoria?->nombre ?? $c->catalogoCarga?->tipo,
+                                'variedad' => $c->producto?->nombre ?? $c->catalogoCarga?->variedad,
+                                'empaque' => $c->tipoEmpaque?->nombre ?? $c->catalogoCarga?->empaque,
+                                'descripcion' => $c->catalogoCarga?->descripcion ?? '',
                             ],
                         ];
                     })->all(),
@@ -348,7 +351,7 @@ class QrController extends Controller
             // Obtener envíos del usuario y luego los QR tokens de esas asignaciones
             $envios = \App\Models\Envio::where('id_usuario', $userId)->pluck('id');
             $asignaciones = AsignacionMultiple::whereIn('id_envio', $envios)->pluck('id');
-            
+
             $qrTokens = QrToken::with([
                 'asignacion.envio.historialEstados.estadoEnvio:id,nombre',
                 'asignacion.vehiculo.tipoVehiculo:id,nombre',
@@ -357,9 +360,9 @@ class QrController extends Controller
                 'asignacion.transportista.usuario.persona:id,ci,telefono',
                 'estadoQrToken:id,nombre'
             ])
-            ->whereIn('id_asignacion', $asignaciones)
-            ->orderBy('fecha_creacion', 'desc')
-            ->get();
+                ->whereIn('id_asignacion', $asignaciones)
+                ->orderBy('fecha_creacion', 'desc')
+                ->get();
 
             $tokens = $qrTokens->map(function ($qrToken) {
                 $estadoEnvio = \App\Http\Controllers\Api\Helpers\EstadoHelper::obtenerEstadoActualEnvio($qrToken->asignacion?->envio?->id ?? 0);
@@ -426,21 +429,21 @@ class QrController extends Controller
         try {
             // Usar API de QR Server para generar QR real
             $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($url);
-            
+
             // Descargar la imagen
             $imageData = file_get_contents($qrUrl);
-            
+
             if ($imageData === false) {
                 throw new \Exception('No se pudo generar el QR');
             }
-            
+
             // Convertir a base64 con el formato correcto
             $base64 = base64_encode($imageData);
             return 'data:image/png;base64,' . $base64;
-            
+
         } catch (\Exception $e) {
             \Log::error('Error al generar QR: ' . $e->getMessage());
-            
+
             // Fallback: QR placeholder simple
             return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
         }
