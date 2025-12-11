@@ -111,6 +111,15 @@ return [
         ]
     ],
 
+
+    // --- REPORTES ---
+    ['header' => 'REPORTES'],
+    [
+        'text' => 'Reportes Avanzados',
+        'route' => 'admin.reportes.index',
+        'icon' => 'fas fa-chart-line',
+    ],
+
     // Logout
     ['header' => 'MI CUENTA'],
     [

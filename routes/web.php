@@ -184,6 +184,18 @@ Route::prefix('admin')->group(function () {
     Route::get('/roles', [\App\Http\Controllers\Web\RolesWebController::class, 'index'])->name('admin.roles.index');
     Route::post('/roles/{id}/asignar', [\App\Http\Controllers\Web\RolesWebController::class, 'asignarRol'])->name('admin.roles.asignar');
     Route::get('/roles/{id}/verificar', [\App\Http\Controllers\Web\RolesWebController::class, 'verificarRoles'])->name('admin.roles.verificar');
+
+    // REPORTES (9 reportes funcionales)
+    Route::get('/reportes', [\App\Http\Controllers\Admin\ReporteController::class, 'index'])->name('admin.reportes.index');
+    Route::get('/reportes/envios-estado', [\App\Http\Controllers\Admin\ReporteController::class, 'enviosPorEstado'])->name('admin.reportes.envios_estado');
+    Route::get('/reportes/envios-transportista', [\App\Http\Controllers\Admin\ReporteController::class, 'enviosPorTransportista'])->name('admin.reportes.envios_transportista');
+    Route::get('/reportes/productos-enviados', [\App\Http\Controllers\Admin\ReporteController::class, 'productosMasEnviados'])->name('admin.reportes.productos_enviados');
+    Route::get('/reportes/usuarios-rol', [\App\Http\Controllers\Admin\ReporteController::class, 'usuariosPorRol'])->name('admin.reportes.usuarios_rol');
+    Route::get('/reportes/vehiculos-tipo', [\App\Http\Controllers\Admin\ReporteController::class, 'vehiculosPorTipo'])->name('admin.reportes.vehiculos_tipo');
+    Route::get('/reportes/envios-mes', [\App\Http\Controllers\Admin\ReporteController::class, 'enviosPorMes'])->name('admin.reportes.envios_mes');
+    Route::get('/reportes/envio-detallado', [\App\Http\Controllers\Admin\ReporteController::class, 'envioDetallado'])->name('admin.reportes.envio_detallado');
+    Route::get('/reportes/tipos-empaque', [\App\Http\Controllers\Admin\ReporteController::class, 'tiposEmpaque'])->name('admin.reportes.tipos_empaque');
+    Route::get('/reportes/tamano-conteo', [\App\Http\Controllers\Admin\ReporteController::class, 'tamanoConteo'])->name('admin.reportes.tamano_conteo');
 });
 
 // Ruta pública para validar QR (token en URL opcional)
