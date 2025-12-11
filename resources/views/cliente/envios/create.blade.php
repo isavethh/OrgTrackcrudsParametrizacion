@@ -1404,24 +1404,24 @@
                     const cargasHtml = p.cargas.map(c => `<li>${c.cantidad || 1}x ${c._productoNombre} - ${(c.peso || 0).toFixed(2)}kg</li>`).join('');
 
                     const html = `
-                            <div class="card mb-2">
-                                <div class="card-header bg-light p-2">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link btn-block text-left text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseRes${idx}">
-                                            Camión #${idx + 1} - ${p.recogidaEntrega.fecha_recogida}
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseRes${idx}" class="collapse show">
-                                    <div class="card-body p-3">
-                                        <p class="mb-1"><strong>Horario:</strong> ${p.recogidaEntrega.hora_recogida} - ${p.recogidaEntrega.hora_entrega}</p>
-                                        <p class="mb-2"><strong>Instrucciones:</strong> ${p.recogidaEntrega.instrucciones_recogida || 'Ninguna'}</p>
-                                        <strong>Cargas:</strong>
-                                        <ul class="pl-3 mb-0">${cargasHtml}</ul>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                                            <div class="card mb-2">
+                                                <div class="card-header bg-light p-2">
+                                                    <h5 class="mb-0">
+                                                        <button class="btn btn-link btn-block text-left text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseRes${idx}">
+                                                            Camión #${idx + 1} - ${p.recogidaEntrega.fecha_recogida}
+                                                        </button>
+                                                    </h5>
+                                                </div>
+                                                <div id="collapseRes${idx}" class="collapse show">
+                                                    <div class="card-body p-3">
+                                                        <p class="mb-1"><strong>Horario:</strong> ${p.recogidaEntrega.hora_recogida} - ${p.recogidaEntrega.hora_entrega}</p>
+                                                        <p class="mb-2"><strong>Instrucciones:</strong> ${p.recogidaEntrega.instrucciones_recogida || 'Ninguna'}</p>
+                                                        <strong>Cargas:</strong>
+                                                        <ul class="pl-3 mb-0">${cargasHtml}</ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
                     container.insertAdjacentHTML('beforeend', html);
                 });
             }
