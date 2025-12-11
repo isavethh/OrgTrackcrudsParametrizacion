@@ -712,7 +712,6 @@ class EnvioPublicoController extends Controller
                 'asignaciones.cargas.categoria:id,nombre',
                 'asignaciones.cargas.producto:id,nombre',
                 'asignaciones.cargas.tipoEmpaque:id,nombre',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque', // Legacy split
                 'asignaciones.checklistCondicion.detalles.condicion:id,titulo',
                 'asignaciones.checklistIncidente.detalles.tipoIncidente:id,titulo',
                 'asignaciones.firmaEnvio',
@@ -743,9 +742,9 @@ class EnvioPublicoController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->categoria?->nombre ?? $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->producto?->nombre ?? $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? '—',
+                        'variedad' => $carga->producto?->nombre ?? '—',
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];

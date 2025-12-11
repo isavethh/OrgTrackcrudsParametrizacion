@@ -1,6 +1,22 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\EnvioPublicoController;
+use App\Http\Controllers\Api\EnvioController;
+use App\Http\Controllers\Api\TipotransporteController;
+use App\Http\Controllers\Api\CatalogoCategoriaController;
+use App\Http\Controllers\Api\CatalogoProductoController;
+use App\Http\Controllers\Api\CatalogoTipoEmpaqueController;
+use App\Http\Controllers\Api\CatalogoTamanoConteoController;
+use App\Http\Controllers\Api\VehiculoController;
+use App\Http\Controllers\Api\TiposVehiculoController;
+use App\Http\Controllers\Api\TransportistaController;
+use App\Http\Controllers\Api\UsuarioController;
+use App\Http\Controllers\Api\CondicionTransporteController;
+use App\Http\Controllers\Api\TipoIncidenteTransporteController;
+use App\Http\Controllers\Api\FirmaController;
+use App\Http\Controllers\Api\QrController;
+use App\Http\Controllers\Admin\DashboardController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -79,6 +95,9 @@ Route::prefix('admin')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
+
+    // API de estadísticas del dashboard (para gráficas)
+    Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats'])->name('admin.dashboard.stats');
 
     // Rutas de envíos admin
     Route::get('/envios', function () {
@@ -202,3 +221,164 @@ Route::prefix('admin')->group(function () {
 Route::get('/validar-qr/{token?}', function ($token = null) {
     return view('validar-qr', ['token' => $token]);
 })->name('validar-qr');
+
+// ============================================
+// RUTAS API
+// ============================================
+
+// Rutas API duplicadas para uso web
+Route::prefix('web-api')->group(function () {
+
+    // ============================================
+    // ENVÍOS PÚBLICOS (Productores) - sin autenticación
+    // ============================================
+    Route::post('/public/direccion', [EnvioPublicoController::class, 'crearDireccionProductor']);
+    Route::post('/public/envios', [EnvioPublicoController::class, 'crearEnvioProductor']);
+    Route::post('/public/envios/from-material-request', [EnvioPublicoController::class, 'crearEnvioDesdeMateriaPrima']);
+    Route::get('/public/envios/all', [EnvioPublicoController::class, 'listarTodosEnviosPublicos']);
+    Route::get('/public/envios/{id}/seguimiento', [EnvioPublicoController::class, 'obtenerEnvioPublicoPorId']);
+    Route::get('/public/envios', [EnvioPublicoController::class, 'listarEnviosProductores']);
+    Route::get('/public/envios/{id_envio}/documento', [EnvioPublicoController::class, 'obtenerDocumentoProductor']);
+
+    // ============================================
+    // ENVÍOS (Admin/Cliente)
+    // ============================================
+    Route::post('/envios/completo', [EnvioController::class, 'crearEnvioCompleto']);
+    Route::post('/envios/completo-admin', [EnvioController::class, 'crearEnvioCompletoAdmin']);
+    Route::get('/envios/mis-envios', [EnvioController::class, 'obtenerMisEnvios']);
+    Route::get('/envios/usuario/{id_usuario}', [EnvioController::class, 'obtenerEnviosPorUsuario']);
+    Route::get('/envios/transportista/asignados', [EnvioController::class, 'obtenerEnviosAsignadosTransportista']);
+    Route::get('/envios/particiones/en-curso', [EnvioController::class, 'obtenerParticionesEnCursoCliente']);
+    Route::put('/envios/asignacion/{id_asignacion}/asignar', [EnvioController::class, 'asignarTransportistaYVehiculoAParticion']);
+    Route::post('/envios/asignacion/{id_asignacion}/iniciar', [EnvioController::class, 'iniciarViaje']);
+    Route::post('/envios/asignacion/{id_asignacion}/finalizar', [EnvioController::class, 'finalizarEnvio']);
+    Route::post('/envios/asignacion/{id_asignacion}/checklist-condiciones', [EnvioController::class, 'registrarChecklistCondiciones']);
+    Route::post('/envios/asignacion/{id_asignacion}/checklist-incidentes', [EnvioController::class, 'registrarChecklistIncidentes']);
+    Route::get('/envios/asignacion/{id_asignacion}/documento', [EnvioController::class, 'generarDocumentoParticion']);
+    Route::get('/envios/documentos/asignacion/{id_asignacion}', [EnvioController::class, 'generarDocumentoParticion']);
+    Route::get('/envios', [EnvioController::class, 'obtenerTodos']);
+    Route::get('/envios/{id}', [EnvioController::class, 'obtenerPorId']);
+    Route::put('/envios/{id_envio}/asignar', [EnvioController::class, 'asignarTransportistaYVehiculo']);
+    Route::delete('/envios/{id_envio}/cancelar', [EnvioController::class, 'cancelarEnvio']);
+    Route::get('/envios/{id_envio}/documento', [EnvioController::class, 'generarDocumentoEnvio']);
+    Route::put('/envios/{id_envio}/estado-global', [EnvioController::class, 'actualizarEstadoGlobalEnvio']);
+
+    // ============================================
+    // VEHÍCULOS
+    // ============================================
+    Route::get('/vehiculos', [VehiculoController::class, 'index']);
+    Route::get('/vehiculos/{id}', [VehiculoController::class, 'show']);
+    Route::post('/vehiculos', [VehiculoController::class, 'store']);
+    Route::put('/vehiculos/{id}', [VehiculoController::class, 'update']);
+    Route::delete('/vehiculos/{id}', [VehiculoController::class, 'destroy']);
+
+    // ============================================
+    // TIPOS DE VEHÍCULO
+    // ============================================
+    Route::get('/tipos-vehiculo', [TiposVehiculoController::class, 'index']);
+    Route::post('/tipos-vehiculo', [TiposVehiculoController::class, 'store']);
+    Route::put('/tipos-vehiculo/{id}', [TiposVehiculoController::class, 'update']);
+    Route::delete('/tipos-vehiculo/{id}', [TiposVehiculoController::class, 'destroy']);
+
+    // ============================================
+    // TIPOS DE TRANSPORTE
+    // ============================================
+    Route::get('/tipo-transporte', [TipotransporteController::class, 'index']);
+    Route::get('/tipotransporte', [TipotransporteController::class, 'index']);
+    Route::post('/tipotransporte', [TipotransporteController::class, 'store']);
+    Route::put('/tipotransporte/{id}', [TipotransporteController::class, 'update']);
+    Route::delete('/tipotransporte/{id}', [TipotransporteController::class, 'destroy']);
+
+    // ============================================
+    // TRANSPORTISTAS
+    // ============================================
+    Route::get('/transportistas', [TransportistaController::class, 'obtenerTodos']);
+    Route::get('/transportistas/{id}', [TransportistaController::class, 'obtenerPorId'])->whereNumber('id');
+    Route::post('/transportistas', [TransportistaController::class, 'crear']);
+    Route::put('/transportistas/{id}', [TransportistaController::class, 'editar'])->whereNumber('id');
+    Route::delete('/transportistas/{id}', [TransportistaController::class, 'eliminar'])->whereNumber('id');
+    Route::post('/transportistas/completo', [TransportistaController::class, 'crearTransportistaCompleto']);
+    Route::get('/transportistas/estado/{estado}', [TransportistaController::class, 'obtenerPorEstado']);
+    Route::get('/transportistas/disponibles', [TransportistaController::class, 'obtenerDisponibles']);
+
+    // ============================================
+    // USUARIOS
+    // ============================================
+    Route::get('/usuarios', [UsuarioController::class, 'obtenerTodos']);
+    Route::post('/usuarios', [UsuarioController::class, 'crear']);
+    Route::get('/usuarios/clientes', [UsuarioController::class, 'obtenerClientes']);
+    Route::get('/usuarios/rol/{rol}', [UsuarioController::class, 'obtenerPorRol']);
+    Route::put('/usuarios/{id}/cambiar-rol', [UsuarioController::class, 'cambiarRol']);
+    Route::get('/usuarios/{id}', [UsuarioController::class, 'obtenerPorId']);
+    Route::put('/usuarios/{id}', [UsuarioController::class, 'editar']);
+    Route::delete('/usuarios/{id}', [UsuarioController::class, 'eliminar']);
+
+    // ============================================
+    // CONDICIONES DE TRANSPORTE (Checklist)
+    // ============================================
+    Route::get('/condiciones-transporte', [CondicionTransporteController::class, 'index']);
+    Route::post('/condiciones-transporte', [CondicionTransporteController::class, 'store']);
+    Route::put('/condiciones-transporte/{id}', [CondicionTransporteController::class, 'update'])->whereNumber('id');
+    Route::delete('/condiciones-transporte/{id}', [CondicionTransporteController::class, 'destroy'])->whereNumber('id');
+
+    // ============================================
+    // TIPOS DE INCIDENTE (Checklist)
+    // ============================================
+    Route::get('/tipos-incidente-transporte', [TipoIncidenteTransporteController::class, 'index']);
+    Route::post('/tipos-incidente-transporte', [TipoIncidenteTransporteController::class, 'store']);
+    Route::put('/tipos-incidente-transporte/{id}', [TipoIncidenteTransporteController::class, 'update'])->whereNumber('id');
+    Route::delete('/tipos-incidente-transporte/{id}', [TipoIncidenteTransporteController::class, 'destroy'])->whereNumber('id');
+
+    // ============================================
+    // CATÁLOGOS
+    // ============================================
+    // Categorías
+    Route::get('/catalogo-categorias', [CatalogoCategoriaController::class, 'index']);
+    Route::get('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'show']);
+    Route::post('/catalogo-categorias', [CatalogoCategoriaController::class, 'store']);
+    Route::put('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'update']);
+    Route::delete('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'destroy']);
+
+    // Productos
+    Route::get('/catalogo-productos', [CatalogoProductoController::class, 'index']);
+    Route::get('/catalogo-productos/{id}', [CatalogoProductoController::class, 'show']);
+    Route::post('/catalogo-productos', [CatalogoProductoController::class, 'store']);
+    Route::put('/catalogo-productos/{id}', [CatalogoProductoController::class, 'update']);
+    Route::delete('/catalogo-productos/{id}', [CatalogoProductoController::class, 'destroy']);
+
+    // Tipos de Empaque
+    Route::get('/catalogo-tipos-empaque', [CatalogoTipoEmpaqueController::class, 'index']);
+    Route::get('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'show']);
+    Route::post('/catalogo-tipos-empaque', [CatalogoTipoEmpaqueController::class, 'store']);
+    Route::put('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'update']);
+    Route::delete('/catalogo-tipos-empaque/{id}', [CatalogoTipoEmpaqueController::class, 'destroy']);
+
+    // Tamaño Conteo
+    Route::get('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'index']);
+    Route::post('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'store']);
+    Route::put('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'update']);
+    Route::delete('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'destroy']);
+
+    // ============================================
+    // FIRMAS
+    // ============================================
+    Route::post('/firmas/envio/{id_asignacion}', [FirmaController::class, 'guardarFirmaEnvio']);
+    Route::post('/firmas/transportista/{id_asignacion}', [FirmaController::class, 'guardarFirmaTransportista']);
+    Route::get('/firmas/envio/{id_asignacion}', [FirmaController::class, 'obtenerFirmaEnvio']);
+    Route::get('/firmas/transportista/{id_asignacion}', [FirmaController::class, 'obtenerFirmaTransportista']);
+    Route::get('/firmas/transportista/asignacion/{id_asignacion}', [FirmaController::class, 'obtenerFirmaPorAsignacion']);
+    Route::put('/firmas/envio/{id_asignacion}', [FirmaController::class, 'actualizarFirmaEnvio']);
+    Route::delete('/firmas/envio/{id_asignacion}', [FirmaController::class, 'eliminarFirmaEnvio']);
+
+    // ============================================
+    // QR TOKENS
+    // ============================================
+    Route::post('/qr/validar-public', [QrController::class, 'validarQrToken']);
+    Route::post('/qr/codigoacceso', [QrController::class, 'validarCodigoAcceso']);
+    Route::get('/qr/generar/{id_asignacion}', [QrController::class, 'generarQrToken']);
+    Route::get('/qr/{id_asignacion}', [QrController::class, 'obtenerQrToken']);
+    Route::get('/qr/transportista/{id_asignacion}', [QrController::class, 'obtenerQR']);
+    Route::post('/qr/validar', [QrController::class, 'validarQrToken']);
+    Route::get('/qr/cliente/tokens', [QrController::class, 'obtenerQrTokensCliente']);
+    Route::delete('/qr/{id_asignacion}', [QrController::class, 'eliminarQrToken']);
+});

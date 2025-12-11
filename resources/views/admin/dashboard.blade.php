@@ -198,7 +198,7 @@
         </div>
         <div class="col-md-6 mb-4">
             <div class="card" style="min-height: 400px;">
-                <div class="card-header"><b>Estados de los envíos</b></div>
+                <div class="card-header"><b>Transportistas - Disponibilidad</b></div>
                 <div class="card-body" style="height: 320px;">
                     <canvas id="estadosEnviosChart"></canvas>
                 </div>
@@ -348,11 +348,11 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Use window properties to avoid duplicate declaration errors
         window.enviosPorMesChart = window.enviosPorMesChart || null;
         window.estadosEnviosChart = window.estadosEnviosChart || null;
         window.estadosPieChart = window.estadosPieChart || null;
         window.productosPorCategoriaChart = window.productosPorCategoriaChart || null;
+
         (function () {
             const dashboardToken = localStorage.getItem('authToken');
             if (!dashboardToken) {
@@ -362,176 +362,151 @@
 
             async function cargarEstadisticas() {
                 try {
+                    // ========== KPIs (usando APIs originales) ==========
                     // Envíos
-                    const resEnvios = await fetch(`${window.location.origin}/api/envios`, {
+                    const resEnvios = await fetch(`/api/envios`, {
                         headers: { 'Authorization': `Bearer ${dashboardToken}` }
                     });
                     let envios = [];
                     if (resEnvios.ok) {
                         envios = await resEnvios.json();
                         document.getElementById('total-envios').textContent = Array.isArray(envios) ? envios.length : 0;
-                        // Mostrar envíos recientes
+                        
                         const recentEnvios = Array.isArray(envios) ? envios.slice(0, 5) : [];
                         const tbody = document.getElementById('recent-envios');
                         if (recentEnvios.length === 0) {
                             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay envíos</td></tr>';
                         } else {
                             tbody.innerHTML = recentEnvios.map(e => `
-                                                        <tr>
-                                                            <td>#${e.id}</td>
-                                                            <td>${e.nombre_destino || '—'}</td>
-                                                            <td><span class="badge badge-${e.estado === 'Entregado' ? 'success' : e.estado === 'En curso' ? 'info' : 'warning'}">${e.estado || '—'}</span></td>
-                                                            <td>${e.fecha_creacion || '—'}</td>
-                                                        </tr>
-                                                    `).join('');
+                                <tr>
+                                    <td>#${e.id}</td>
+                                    <td>${e.nombre_destino || '—'}</td>
+                                    <td><span class="badge badge-${e.estado === 'Entregado' ? 'success' : e.estado === 'En curso' ? 'info' : 'warning'}">${e.estado || '—'}</span></td>
+                                    <td>${e.fecha_creacion || '—'}</td>
+                                </tr>
+                            `).join('');
                         }
                     }
 
                     // Usuarios
-                    const resUsuarios = await fetch(`${window.location.origin}/api/usuarios`, {
-                        headers: { 'Authorization': `Bearer ${dashboardToken}` }
-                    });
-                    if (resUsuarios.ok) {
-                        const usuarios = await resUsuarios.json();
-                        document.getElementById('total-usuarios').textContent = Array.isArray(usuarios) ? usuarios.length : 0;
-                    }
+                    fetch(`/api/usuarios`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-usuarios').textContent = Array.isArray(d) ? d.length : 0);
 
                     // Transportistas
-                    const resTransportistas = await fetch(`${window.location.origin}/api/transportistas`, {
-                        headers: { 'Authorization': `Bearer ${dashboardToken}` }
-                    });
-                    if (resTransportistas.ok) {
-                        const transportistas = await resTransportistas.json();
-                        document.getElementById('total-transportistas').textContent = Array.isArray(transportistas) ? transportistas.length : 0;
-                    }
+                    fetch(`/api/transportistas`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-transportistas').textContent = Array.isArray(d) ? d.length : 0);
 
                     // Vehículos
-                    const resVehiculos = await fetch(`${window.location.origin}/api/vehiculos`, {
-                        headers: { 'Authorization': `Bearer ${dashboardToken}` }
-                    });
-                    if (resVehiculos.ok) {
-                        const vehiculos = await resVehiculos.json();
-                        document.getElementById('total-vehiculos').textContent = Array.isArray(vehiculos) ? vehiculos.length : 0;
-                    }
+                    fetch(`/api/vehiculos`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-vehiculos').textContent = Array.isArray(d) ? d.length : 0);
 
                     // Direcciones
-                    fetch(`${window.location.origin}/api/ubicaciones`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
-                        .then(r => r.json())
-                        .then(d => document.getElementById('total-direcciones').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
-                        .catch(e => console.error(e));
+                    fetch(`/api/ubicaciones`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-direcciones').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0));
 
                     // Tipos Vehículo
-                    fetch(`${window.location.origin}/api/tipos-vehiculo`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
-                        .then(r => r.json())
-                        .then(d => document.getElementById('total-tipos-vehiculo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
-                        .catch(e => console.error(e));
+                    fetch(`/api/tipos-vehiculo`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-tipos-vehiculo').textContent = Array.isArray(d) ? d.length : 0);
 
                     // Catálogo Categorías
-                    fetch(`${window.location.origin}/api/catalogo-categorias`)
-                        .then(r => r.json())
-                        .then(d => document.getElementById('total-catalogo').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
-                        .catch(e => console.error(e));
+                    fetch(`/api/catalogo-categorias`)
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-catalogo').textContent = Array.isArray(d) ? d.length : 0);
 
                     // Incidentes
-                    fetch(`${window.location.origin}/api/tipos-incidente-transporte`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
-                        .then(r => r.json())
-                        .then(d => document.getElementById('total-incidentes').textContent = Array.isArray(d) ? d.length : (d.data ? d.data.length : 0))
-                        .catch(e => console.error(e));
+                    fetch(`/api/tipos-incidente-transporte`, { headers: { 'Authorization': `Bearer ${dashboardToken}` } })
+                        .then(r => r.ok ? r.json() : [])
+                        .then(d => document.getElementById('total-incidentes').textContent = Array.isArray(d) ? d.length : 0);
 
-                    // --- Gráficas ---
-                    // Tendencia de envíos por mes
-                    const meses = {};
-                    envios.forEach(e => {
-                        if (e.fecha_creacion) {
-                            const [a, m] = e.fecha_creacion.split('-');
-                            const key = `${m}/${a}`;
-                            meses[key] = (meses[key] || 0) + 1;
-                        }
-                    });
-                    const labelsMeses = Object.keys(meses);
-                    const dataMeses = Object.values(meses);
+                    // ========== GRÁFICAS (usando nuevo endpoint) ==========
+                    const resCharts = await fetch('/admin/api/dashboard/stats');
+                    const chartData = resCharts.ok ? await resCharts.json() : {};
+
+                    // GRÁFICA 1: Tendencia de envíos por mes
                     if (window.enviosPorMesChart && typeof window.enviosPorMesChart.destroy === 'function') window.enviosPorMesChart.destroy();
-                    if (labelsMeses.length) {
+                    const enviosMes = chartData.envios_por_mes || [];
+                    if (enviosMes.length) {
                         window.enviosPorMesChart = new Chart(document.getElementById('enviosPorMesChart'), {
                             type: 'line',
                             data: {
-                                labels: labelsMeses,
+                                labels: enviosMes.map(m => m.mes_corto),
                                 datasets: [{
                                     label: 'Envíos',
-                                    data: dataMeses,
+                                    data: enviosMes.map(m => m.total),
                                     borderColor: 'rgba(54, 162, 235, 1)',
                                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                    fill: true
+                                    fill: true,
+                                    tension: 0.3
                                 }]
                             },
-                            options: { responsive: true, maintainAspectRatio: false }
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: { display: true, text: `Variación: ${chartData.variacion_mensual > 0 ? '+' : ''}${chartData.variacion_mensual || 0}% vs mes anterior` }
+                                }
+                            }
                         });
                     }
 
-                    // Estados de los envíos
-                    const estados = {};
-                    envios.forEach(e => {
-                        if (e.estado) {
-                            estados[e.estado] = (estados[e.estado] || 0) + 1;
-                        }
-                    });
+                    // GRÁFICA 2: Transportistas Disponibilidad
                     if (window.estadosEnviosChart && typeof window.estadosEnviosChart.destroy === 'function') window.estadosEnviosChart.destroy();
-                    if (Object.keys(estados).length) {
+                    const transpDisp = chartData.transportistas_disponibilidad || [];
+                    if (transpDisp.length) {
                         window.estadosEnviosChart = new Chart(document.getElementById('estadosEnviosChart'), {
                             type: 'doughnut',
                             data: {
-                                labels: Object.keys(estados),
+                                labels: transpDisp.map(t => t.estado),
                                 datasets: [{
-                                    data: Object.values(estados),
-                                    backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#4BC0C0', '#9966FF']
+                                    data: transpDisp.map(t => t.total),
+                                    backgroundColor: transpDisp.map(t => t.color)
                                 }]
                             },
                             options: { responsive: true, maintainAspectRatio: false }
                         });
                     }
 
-                    // Porcentaje de estados de los envíos (Pie Chart)
+                    // GRÁFICA 3: Estados de envíos
                     if (window.estadosPieChart && typeof window.estadosPieChart.destroy === 'function') window.estadosPieChart.destroy();
-                    if (Object.keys(estados).length) {
+                    const estadosEnvio = chartData.envios_por_estado || [];
+                    if (estadosEnvio.length) {
                         window.estadosPieChart = new Chart(document.getElementById('estadosPieChart'), {
                             type: 'pie',
                             data: {
-                                labels: Object.keys(estados),
+                                labels: estadosEnvio.map(e => `${e.estado} (${e.porcentaje}%)`),
                                 datasets: [{
-                                    data: Object.values(estados),
-                                    backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#4BC0C0', '#9966FF']
+                                    data: estadosEnvio.map(e => e.total),
+                                    backgroundColor: estadosEnvio.map(e => e.color)
                                 }]
                             },
-                            options: { responsive: true, maintainAspectRatio: false }
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { title: { display: true, text: `Tasa de entrega: ${chartData.tasa_entrega || 0}%` } }
+                            }
                         });
                     }
 
-                    // Comparativa de productos enviados por categoría
-                    // Usar catálogo de productos y categorías
-                    const resProductos = await fetch(`${window.location.origin}/api/catalogo-productos`);
-                    const productos = resProductos.ok ? await resProductos.json() : [];
-                    const resCategorias = await fetch(`${window.location.origin}/api/catalogo-categorias`);
-                    const categorias = resCategorias.ok ? await resCategorias.json() : [];
-                    // Agrupar productos por categoría
-                    const categoriaConteo = {};
-                    productos.forEach(p => {
-                        const cat = categorias.find(c => c.id === p.categoria_id);
-                        const nombreCat = cat ? cat.nombre : 'Sin categoría';
-                        categoriaConteo[nombreCat] = (categoriaConteo[nombreCat] || 0) + 1;
-                    });
+                    // GRÁFICA 4: Productos por categoría
                     if (window.productosPorCategoriaChart && typeof window.productosPorCategoriaChart.destroy === 'function') window.productosPorCategoriaChart.destroy();
-                    if (Object.keys(categoriaConteo).length) {
+                    const productosCat = chartData.productos_por_categoria || [];
+                    if (productosCat.length) {
                         window.productosPorCategoriaChart = new Chart(document.getElementById('productosPorCategoriaChart'), {
                             type: 'bar',
                             data: {
-                                labels: Object.keys(categoriaConteo),
+                                labels: productosCat.map(p => p.categoria),
                                 datasets: [{
-                                    label: 'Productos',
-                                    data: Object.values(categoriaConteo),
-                                    backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                                    label: 'Cargas',
+                                    data: productosCat.map(p => p.total),
+                                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7BC225']
                                 }]
                             },
-                            options: { responsive: true, maintainAspectRatio: false }
+                            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
                         });
                     }
 
