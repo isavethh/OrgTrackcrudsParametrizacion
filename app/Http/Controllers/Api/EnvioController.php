@@ -18,7 +18,6 @@ use App\Models\ChecklistIncidente;
 use App\Models\ChecklistIncidenteDetalle;
 use App\Models\TiposIncidenteTransporte;
 use App\Models\IncidentesTransporte;
-use App\Models\CatalogoCarga;
 use App\Models\EstadosAsignacionMultiple;
 use App\Models\EstadosEnvio;
 use App\Models\EstadosVehiculo;
@@ -728,7 +727,9 @@ class EnvioController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque',
+                'asignaciones.cargas.categoria:id,nombre',
+                'asignaciones.cargas.producto:id,nombre',
+                'asignaciones.cargas.tipoEmpaque:id,nombre',
                 'direccion:id,nombreorigen,nombredestino'
             ])->where('id_usuario', $userId)->get();
 
@@ -755,9 +756,9 @@ class EnvioController extends Controller
                     $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                         return [
                             'id' => $carga->id,
-                            'tipo' => $carga->catalogoCarga?->tipo,
-                            'variedad' => $carga->catalogoCarga?->variedad,
-                            'empaquetado' => $carga->catalogoCarga?->empaque,
+                            'tipo' => $carga->categoria?->nombre ?? '—',
+                            'variedad' => $carga->producto?->nombre ?? '—',
+                            'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                             'cantidad' => $carga->cantidad,
                             'peso' => $carga->peso,
                         ];
@@ -848,9 +849,9 @@ class EnvioController extends Controller
                     $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                         return [
                             'id' => $carga->id,
-                            'tipo' => $carga->catalogoCarga?->tipo,
-                            'variedad' => $carga->catalogoCarga?->variedad,
-                            'empaquetado' => $carga->catalogoCarga?->empaque,
+                            'tipo' => $carga->categoria?->nombre ?? '—',
+                            'variedad' => $carga->producto?->nombre ?? '—',
+                            'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                             'cantidad' => $carga->cantidad,
                             'peso' => $carga->peso,
                         ];
@@ -1088,7 +1089,9 @@ class EnvioController extends Controller
                 'estadoAsignacion:id,nombre',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas.catalogoCarga:id,tipo,variedad,empaque'
+                'cargas.categoria:id,nombre',
+                'cargas.producto:id,nombre',
+                'cargas.tipoEmpaque:id,nombre'
             ])->where('id_transportista', $transportista->id)->get();
 
             // Transformar la respuesta
@@ -1099,9 +1102,9 @@ class EnvioController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? '—',
+                        'variedad' => $carga->producto?->nombre ?? '—',
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];
@@ -1432,21 +1435,16 @@ class EnvioController extends Controller
                     ], 400);
                 }
 
-                // Buscar o crear catalogo de carga
-                $catalogo = CatalogoCarga::firstOrCreate(
-                    [
-                        'tipo' => $request->carga['tipo'],
-                        'variedad' => $request->carga['variedad'],
-                        'empaque' => $request->carga['empaquetado'],
-                    ],
-                    ['descripcion' => null]
-                );
-
-                // Insertar carga
+                // NOTA: El catálogo CatalogoCarga ya no existe. 
+                // Se crea carga con campos directos para compatibilidad con código legacy.
+                // El nuevo sistema usa id_categoria, id_producto, id_tipo_empaque.
                 $carga = Carga::create([
-                    'id_catalogo_carga' => $catalogo->id,
                     'cantidad' => $request->carga['cantidad'],
                     'peso' => $request->carga['peso'],
+                    // Los campos nuevos de catálogo se dejan null para este método legacy
+                    'id_categoria' => null,
+                    'id_producto' => null,
+                    'id_tipo_empaque' => null,
                 ]);
 
                 // Insertar RecogidaEntrega
@@ -1792,7 +1790,9 @@ class EnvioController extends Controller
                 'estadoAsignacion:id,nombre',
                 'tipoTransporte:id,nombre,descripcion',
                 'recogidaEntrega',
-                'cargas.catalogoCarga:id,tipo,variedad,empaque'
+                'cargas.categoria:id,nombre',
+                'cargas.producto:id,nombre',
+                'cargas.tipoEmpaque:id,nombre'
             ])
                 ->whereHas('envio', function ($query) use ($userId) {
                     $query->where('id_usuario', $userId);
@@ -1804,9 +1804,9 @@ class EnvioController extends Controller
                 $cargasTransformadas = $particion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? '—',
+                        'variedad' => $carga->producto?->nombre ?? '—',
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];

@@ -269,12 +269,10 @@ class QrController extends Controller
                 'transportista.usuario:id,id_persona',
                 'transportista.usuario.persona:id,ci,telefono,nombre,apellido',
                 'tipoTransporte:id,nombre',
-                'cargas:id,id_catalogo_carga,cantidad,peso,id_unidad_medida,id_categoria,id_producto,id_tipo_empaque',
+                'cargas:id,cantidad,peso,id_categoria,id_producto,id_tipo_empaque',
                 'cargas.categoria:id,nombre',
                 'cargas.producto:id,nombre',
                 'cargas.tipoEmpaque:id,nombre',
-                'cargas.catalogoCarga:id,tipo,variedad,empaque,descripcion',
-                'cargas.unidadMedida:id,nombre',
                 'recogidaEntrega:id,fecha_recogida,hora_recogida,hora_entrega,instrucciones_recogida,instrucciones_entrega'
             ])->where('codigo_acceso', $request->codigo)->first();
 
@@ -318,12 +316,11 @@ class QrController extends Controller
                             'id' => $c->id,
                             'cantidad' => $c->cantidad,
                             'peso' => $c->peso,
-                            'unidad' => $c->unidadMedida?->nombre,
                             'catalogo' => [
-                                'tipo' => $c->categoria?->nombre ?? $c->catalogoCarga?->tipo,
-                                'variedad' => $c->producto?->nombre ?? $c->catalogoCarga?->variedad,
-                                'empaque' => $c->tipoEmpaque?->nombre ?? $c->catalogoCarga?->empaque,
-                                'descripcion' => $c->catalogoCarga?->descripcion ?? '',
+                                'tipo' => $c->categoria?->nombre ?? '—',
+                                'variedad' => $c->producto?->nombre ?? '—',
+                                'empaque' => $c->tipoEmpaque?->nombre ?? '—',
+                                'descripcion' => '',
                             ],
                         ];
                     })->all(),
