@@ -502,11 +502,9 @@ class EnvioPublicoController extends Controller
                 'asignaciones.estadoAsignacion:id,nombre',
                 'asignaciones.tipoTransporte:id,nombre,descripcion',
                 'asignaciones.recogidaEntrega',
-                'asignaciones.recogidaEntrega',
                 'asignaciones.cargas.categoria:id,nombre',
                 'asignaciones.cargas.producto:id,nombre',
                 'asignaciones.cargas.tipoEmpaque:id,nombre',
-                'asignaciones.cargas.catalogoCarga:id,tipo,variedad,empaque', // Legacy fallback
                 'direccion:id,nombreorigen,nombredestino,origen_lng,origen_lat,destino_lng,destino_lat,rutageojson'
             ])
                 ->where('es_publico', true)
@@ -558,9 +556,9 @@ class EnvioPublicoController extends Controller
                 $cargasTransformadas = $asignacion->cargas->map(function ($carga) {
                     return [
                         'id' => $carga->id,
-                        'tipo' => $carga->categoria?->nombre ?? $carga->catalogoCarga?->tipo,
-                        'variedad' => $carga->producto?->nombre ?? $carga->catalogoCarga?->variedad,
-                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? $carga->catalogoCarga?->empaque,
+                        'tipo' => $carga->categoria?->nombre ?? '—',
+                        'variedad' => $carga->producto?->nombre ?? '—',
+                        'empaquetado' => $carga->tipoEmpaque?->nombre ?? '—',
                         'cantidad' => $carga->cantidad,
                         'peso' => $carga->peso,
                     ];
