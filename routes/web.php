@@ -1,6 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+/*
+|--------------------------------------------------------------------------
+| Web API Routes
+|--------------------------------------------------------------------------
+|
+| Rutas API para consumo desde el frontend web.
+| Prefijo: /web-api
+|
+*/
 use App\Http\Controllers\Api\EnvioPublicoController;
 use App\Http\Controllers\Api\EnvioController;
 use App\Http\Controllers\Api\TipotransporteController;
@@ -16,6 +24,8 @@ use App\Http\Controllers\Api\CondicionTransporteController;
 use App\Http\Controllers\Api\TipoIncidenteTransporteController;
 use App\Http\Controllers\Api\FirmaController;
 use App\Http\Controllers\Api\QrController;
+
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
 
 Route::get('/', function () {
@@ -222,16 +232,14 @@ Route::get('/validar-qr/{token?}', function ($token = null) {
     return view('validar-qr', ['token' => $token]);
 })->name('validar-qr');
 
-// ============================================
-// RUTAS API
-// ============================================
 
-// Rutas API duplicadas para uso web
 Route::prefix('web-api')->group(function () {
 
-    // ============================================
-    // ENVÍOS PÚBLICOS (Productores) - sin autenticación
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Envíos Públicos (Productores)
+    |--------------------------------------------------------------------------
+    */
     Route::post('/public/direccion', [EnvioPublicoController::class, 'crearDireccionProductor']);
     Route::post('/public/envios', [EnvioPublicoController::class, 'crearEnvioProductor']);
     Route::post('/public/envios/from-material-request', [EnvioPublicoController::class, 'crearEnvioDesdeMateriaPrima']);
@@ -240,9 +248,11 @@ Route::prefix('web-api')->group(function () {
     Route::get('/public/envios', [EnvioPublicoController::class, 'listarEnviosProductores']);
     Route::get('/public/envios/{id_envio}/documento', [EnvioPublicoController::class, 'obtenerDocumentoProductor']);
 
-    // ============================================
-    // ENVÍOS (Admin/Cliente)
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Envíos (Admin/Cliente)
+    |--------------------------------------------------------------------------
+    */
     Route::post('/envios/completo', [EnvioController::class, 'crearEnvioCompleto']);
     Route::post('/envios/completo-admin', [EnvioController::class, 'crearEnvioCompletoAdmin']);
     Route::get('/envios/mis-envios', [EnvioController::class, 'obtenerMisEnvios']);
@@ -263,35 +273,43 @@ Route::prefix('web-api')->group(function () {
     Route::get('/envios/{id_envio}/documento', [EnvioController::class, 'generarDocumentoEnvio']);
     Route::put('/envios/{id_envio}/estado-global', [EnvioController::class, 'actualizarEstadoGlobalEnvio']);
 
-    // ============================================
-    // VEHÍCULOS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Vehículos
+    |--------------------------------------------------------------------------
+    */
     Route::get('/vehiculos', [VehiculoController::class, 'index']);
     Route::get('/vehiculos/{id}', [VehiculoController::class, 'show']);
     Route::post('/vehiculos', [VehiculoController::class, 'store']);
     Route::put('/vehiculos/{id}', [VehiculoController::class, 'update']);
     Route::delete('/vehiculos/{id}', [VehiculoController::class, 'destroy']);
 
-    // ============================================
-    // TIPOS DE VEHÍCULO
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Vehículo
+    |--------------------------------------------------------------------------
+    */
     Route::get('/tipos-vehiculo', [TiposVehiculoController::class, 'index']);
     Route::post('/tipos-vehiculo', [TiposVehiculoController::class, 'store']);
     Route::put('/tipos-vehiculo/{id}', [TiposVehiculoController::class, 'update']);
     Route::delete('/tipos-vehiculo/{id}', [TiposVehiculoController::class, 'destroy']);
 
-    // ============================================
-    // TIPOS DE TRANSPORTE
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Transporte
+    |--------------------------------------------------------------------------
+    */
     Route::get('/tipo-transporte', [TipotransporteController::class, 'index']);
     Route::get('/tipotransporte', [TipotransporteController::class, 'index']);
     Route::post('/tipotransporte', [TipotransporteController::class, 'store']);
     Route::put('/tipotransporte/{id}', [TipotransporteController::class, 'update']);
     Route::delete('/tipotransporte/{id}', [TipotransporteController::class, 'destroy']);
 
-    // ============================================
-    // TRANSPORTISTAS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Transportistas
+    |--------------------------------------------------------------------------
+    */
     Route::get('/transportistas', [TransportistaController::class, 'obtenerTodos']);
     Route::get('/transportistas/{id}', [TransportistaController::class, 'obtenerPorId'])->whereNumber('id');
     Route::post('/transportistas', [TransportistaController::class, 'crear']);
@@ -301,9 +319,11 @@ Route::prefix('web-api')->group(function () {
     Route::get('/transportistas/estado/{estado}', [TransportistaController::class, 'obtenerPorEstado']);
     Route::get('/transportistas/disponibles', [TransportistaController::class, 'obtenerDisponibles']);
 
-    // ============================================
-    // USUARIOS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Usuarios
+    |--------------------------------------------------------------------------
+    */
     Route::get('/usuarios', [UsuarioController::class, 'obtenerTodos']);
     Route::post('/usuarios', [UsuarioController::class, 'crear']);
     Route::get('/usuarios/clientes', [UsuarioController::class, 'obtenerClientes']);
@@ -313,25 +333,32 @@ Route::prefix('web-api')->group(function () {
     Route::put('/usuarios/{id}', [UsuarioController::class, 'editar']);
     Route::delete('/usuarios/{id}', [UsuarioController::class, 'eliminar']);
 
-    // ============================================
-    // CONDICIONES DE TRANSPORTE (Checklist)
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Condiciones de Transporte (Checklist)
+    |--------------------------------------------------------------------------
+    */
     Route::get('/condiciones-transporte', [CondicionTransporteController::class, 'index']);
     Route::post('/condiciones-transporte', [CondicionTransporteController::class, 'store']);
     Route::put('/condiciones-transporte/{id}', [CondicionTransporteController::class, 'update'])->whereNumber('id');
     Route::delete('/condiciones-transporte/{id}', [CondicionTransporteController::class, 'destroy'])->whereNumber('id');
 
-    // ============================================
-    // TIPOS DE INCIDENTE (Checklist)
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Tipos de Incidente (Checklist)
+    |--------------------------------------------------------------------------
+    */
     Route::get('/tipos-incidente-transporte', [TipoIncidenteTransporteController::class, 'index']);
     Route::post('/tipos-incidente-transporte', [TipoIncidenteTransporteController::class, 'store']);
     Route::put('/tipos-incidente-transporte/{id}', [TipoIncidenteTransporteController::class, 'update'])->whereNumber('id');
     Route::delete('/tipos-incidente-transporte/{id}', [TipoIncidenteTransporteController::class, 'destroy'])->whereNumber('id');
 
-    // ============================================
-    // CATÁLOGOS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Catálogos
+    |--------------------------------------------------------------------------
+    */
+
     // Categorías
     Route::get('/catalogo-categorias', [CatalogoCategoriaController::class, 'index']);
     Route::get('/catalogo-categorias/{id}', [CatalogoCategoriaController::class, 'show']);
@@ -359,9 +386,11 @@ Route::prefix('web-api')->group(function () {
     Route::put('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'update']);
     Route::delete('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'destroy']);
 
-    // ============================================
-    // FIRMAS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | Firmas
+    |--------------------------------------------------------------------------
+    */
     Route::post('/firmas/envio/{id_asignacion}', [FirmaController::class, 'guardarFirmaEnvio']);
     Route::post('/firmas/transportista/{id_asignacion}', [FirmaController::class, 'guardarFirmaTransportista']);
     Route::get('/firmas/envio/{id_asignacion}', [FirmaController::class, 'obtenerFirmaEnvio']);
@@ -370,9 +399,11 @@ Route::prefix('web-api')->group(function () {
     Route::put('/firmas/envio/{id_asignacion}', [FirmaController::class, 'actualizarFirmaEnvio']);
     Route::delete('/firmas/envio/{id_asignacion}', [FirmaController::class, 'eliminarFirmaEnvio']);
 
-    // ============================================
-    // QR TOKENS
-    // ============================================
+    /*
+    |--------------------------------------------------------------------------
+    | QR Tokens
+    |--------------------------------------------------------------------------
+    */
     Route::post('/qr/validar-public', [QrController::class, 'validarQrToken']);
     Route::post('/qr/codigoacceso', [QrController::class, 'validarCodigoAcceso']);
     Route::get('/qr/generar/{id_asignacion}', [QrController::class, 'generarQrToken']);
