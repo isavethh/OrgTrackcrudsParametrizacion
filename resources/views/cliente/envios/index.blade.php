@@ -79,31 +79,31 @@
                     let contenidoExtra = '';
                     if (e.estado === 'Cancelado') {
                         contenidoExtra = `
-                        <div class="alert alert-danger mt-2 mb-0 py-2 px-3">
-                            <i class="fas fa-times-circle mr-1"></i>
-                            <strong>Envío rechazado por el administrador</strong>
-                            <p class="mb-0 small">Este envío fue cancelado y no será procesado. Si tienes dudas, contacta con soporte.</p>
-                        </div>
-                    `;
+                                    <div class="alert alert-danger mt-2 mb-0 py-2 px-3">
+                                        <i class="fas fa-times-circle mr-1"></i>
+                                        <strong>Envío rechazado por el administrador</strong>
+                                        <p class="mb-0 small">Este envío fue cancelado y no será procesado. Si tienes dudas, contacta con soporte.</p>
+                                    </div>
+                                `;
                     }
 
                     li.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">
-                                <strong>Envío #${e.id}</strong>
-                                <span class="badge ${badgeClass} ml-2">${e.estado || 'Sin estado'}</span>
-                            </h6>
-                            <div class="text-muted small">
-                                <div class="mb-1"><i class="fas fa-map-marker-alt text-success mr-1"></i><strong>Origen:</strong> ${e.nombre_origen || '—'}</div>
-                                <div><i class="fas fa-map-marker-alt text-danger mr-1"></i><strong>Destino:</strong> ${e.nombre_destino || '—'}</div>
-                            </div>
-                            ${contenidoExtra}
-                        </div>
-                        <div class="text-right text-muted small">
-                            <div><i class="far fa-calendar mr-1"></i>${e.fecha_creacion || '—'}</div>
-                        </div>
-                    </div>`;
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <strong>Envío #${e.id}</strong>
+                                            <span class="badge ${badgeClass} ml-2">${e.estado || 'Sin estado'}</span>
+                                        </h6>
+                                        <div class="text-muted small">
+                                            <div class="mb-1"><i class="fas fa-map-marker-alt text-success mr-1"></i><strong>Origen:</strong> ${e.nombre_origen || '—'}</div>
+                                            <div><i class="fas fa-map-marker-alt text-danger mr-1"></i><strong>Destino:</strong> ${e.nombre_destino || '—'}</div>
+                                        </div>
+                                        ${contenidoExtra}
+                                    </div>
+                                    <div class="text-right text-muted small">
+                                        <div><i class="far fa-calendar mr-1"></i>${e.fecha_creacion || '—'}</div>
+                                    </div>
+                                </div>`;
                     ul.appendChild(li);
                 });
                 container.innerHTML = '';
