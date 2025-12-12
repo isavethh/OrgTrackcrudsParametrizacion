@@ -13,6 +13,7 @@ services:
       DB_DATABASE: org_db
       DB_USERNAME: admin
       DB_PASSWORD: admin123
+      CACHE_STORE: file
     depends_on:
       - db
     networks:
