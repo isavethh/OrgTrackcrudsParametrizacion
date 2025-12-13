@@ -15,6 +15,7 @@ services:
       DB_PASSWORD: admin123
       CACHE_STORE: file
       APP_ENV: local
+      FRONTEND_URL: https://orgtrack.dasalas.shop
     depends_on:
       - db
     networks:
