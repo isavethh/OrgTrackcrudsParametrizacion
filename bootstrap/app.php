@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,18 +14,53 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+
     ->withMiddleware(function (Middleware $middleware): void {
-        // Registrar alias para middleware JWT
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRUST PROXIES (Nginx Proxy Manager)
+        |--------------------------------------------------------------------------
+        | Permite que Laravel reconozca HTTPS cuando viene desde un proxy
+        */
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_ALL
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | MIDDLEWARE ALIASES
+        |--------------------------------------------------------------------------
+        */
         $middleware->alias([
-            'jwt' => \App\Http\Middleware\JwtMiddleware::class,
+            'jwt'  => \App\Http\Middleware\JwtMiddleware::class,
             'cors' => \App\Http\Middleware\CorsMiddleware::class,
         ]);
-        
-        // Aplicar CORS a todas las rutas de API
+
+        /*
+        |--------------------------------------------------------------------------
+        | CORS GLOBAL PARA API
+        |--------------------------------------------------------------------------
+        */
         $middleware->api(prepend: [
             \App\Http\Middleware\CorsMiddleware::class,
         ]);
     })
+
+    ->withBooting(function () {
+        /*
+        |--------------------------------------------------------------------------
+        | FORCE HTTPS (PRODUCCIÓN)
+        |--------------------------------------------------------------------------
+        */
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+    })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+
+    ->create();
