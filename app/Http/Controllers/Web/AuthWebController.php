@@ -58,6 +58,11 @@ class AuthWebController extends Controller
         // Guardar sesión inmediatamente
         session()->save();
         
+        \Illuminate\Support\Facades\Log::info('Login Session Debug:', [
+            'session_id' => session()->getId(),
+            'session_data' => session()->all(),
+        ]);
+        
         // Sincronizar rol en Spatie usando el helper (con fallback automático)
         SpatieHelper::asignarRol($usuario, $rolCodigo);
 

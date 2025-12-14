@@ -257,6 +257,17 @@ Route::prefix('admin')->group(function () {
     Route::get('/reportes/envio-detallado', [\App\Http\Controllers\Admin\ReporteController::class, 'envioDetallado'])->name('admin.reportes.envio_detallado');
     Route::get('/reportes/tipos-empaque', [\App\Http\Controllers\Admin\ReporteController::class, 'tiposEmpaque'])->name('admin.reportes.tipos_empaque');
     Route::get('/reportes/tamano-conteo', [\App\Http\Controllers\Admin\ReporteController::class, 'tamanoConteo'])->name('admin.reportes.tamano_conteo');
+    Route::get('/reportes/tamano-conteo', [\App\Http\Controllers\Admin\ReporteController::class, 'tamanoConteo'])->name('admin.reportes.tamano_conteo');
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Helpdesk Widget (Integración Manual / Nuclear Option)
+    // ────────────────────────────────────────────────────────────────────────
+    
+    // 1. Endpoint API para generar URL SSO (SSO backend-to-backend)
+    Route::get('/api/helpdesk/sso-url', [\App\Http\Controllers\Admin\HelpdeskIntegrationController::class, 'generateUrl']);
+
+    // 2. Vista Principal (SPA Wrapper)
+    Route::get('/helpdesk', [\App\Http\Controllers\Admin\HelpdeskIntegrationController::class, 'index'])->name('helpdesk');
 });
 
 // ============================================================================
@@ -424,3 +435,6 @@ Route::prefix('web-api')->group(function () {
     Route::get('/qr/cliente/tokens', [QrController::class, 'obtenerQrTokensCliente']);
     Route::delete('/qr/{id_asignacion}', [QrController::class, 'eliminarQrToken']);
 });
+
+
+
