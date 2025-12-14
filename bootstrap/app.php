@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
         apiPrefix: 'api',
-        commands: __DIR__.'/../routes/console.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -24,10 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(
             at: '*',
             headers:
-                Request::HEADER_X_FORWARDED_FOR |
-                Request::HEADER_X_FORWARDED_PROTO |
-                Request::HEADER_X_FORWARDED_HOST |
-                Request::HEADER_X_FORWARDED_PORT
+            Request::HEADER_X_FORWARDED_FOR |
+            Request::HEADER_X_FORWARDED_PROTO |
+            Request::HEADER_X_FORWARDED_HOST |
+            Request::HEADER_X_FORWARDED_PORT
         );
 
         /*
@@ -36,7 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         |--------------------------------------------------------------------------
         */
         $middleware->alias([
-            'jwt'  => \App\Http\Middleware\JwtMiddleware::class,
+            'jwt' => \App\Http\Middleware\JwtMiddleware::class,
+            'jwt.auth' => \App\Http\Middleware\JwtToAuthMiddleware::class, // Bridge para Helpdesk
             'cors' => \App\Http\Middleware\CorsMiddleware::class,
         ]);
 

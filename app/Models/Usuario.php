@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    use HasFactory, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $table = 'usuarios';
     public $timestamps = false;
@@ -70,6 +71,36 @@ class Usuario extends Model
     public function calificaciones()
     {
         return $this->hasMany(Calificacion::class, 'id_usuario');
+    }
+    public function getAuthPassword()
+    {
+        return $this->contrasena;
+    }
+
+    // Accessors para compatibilidad con paquetes estándar (como Helpdesk Widget)
+
+    public function getEmailAttribute()
+    {
+        return $this->correo;
+    }
+
+    public function getNameAttribute()
+    {
+        // Concatenar nombre y apellido si existen
+        if ($this->persona) {
+            return trim($this->persona->nombre . ' ' . $this->persona->apellido);
+        }
+        return 'Usuario ' . $this->id;
+    }
+
+    public function getFirstNameAttribute()
+    {
+        return $this->persona?->nombre ?? 'Usuario';
+    }
+
+    public function getLastNameAttribute()
+    {
+        return $this->persona?->apellido ?? '';
     }
 }
 
