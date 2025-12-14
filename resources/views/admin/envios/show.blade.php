@@ -5,7 +5,15 @@
 @section('page-content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Detalles del Envío</h3>
+                    <div class="card-tools">
+                        <a href="{{ url('/admin/envios') }}" class="btn btn-sm btn-default">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver a envíos
+                        </a>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div id="detalleEnvio"></div>
                 </div>
@@ -73,19 +81,19 @@
                 return state.transportistas.map(t => {
                     const nombreCompleto = [t.nombre, t.apellido].filter(Boolean).join(' ') || 'Sin nombre';
                     return `
-                                <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="transportista" data-id="${t.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <span class="badge badge-primary badge-pill mr-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">${initials(t.nombre, t.apellido)}</span>
-                                            <div>
-                                                <div class="font-weight-bold">${nombreCompleto}</div>
-                                                <small class="text-muted">Tel: ${t.telefono || '—'}</small>
-                                            </div>
-                                        </div>
-                                        <span class="badge badge-success">Disponible</span>
-                                    </div>
-                                </button>
-                            `;
+                                            <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="transportista" data-id="${t.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge badge-primary badge-pill mr-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">${initials(t.nombre, t.apellido)}</span>
+                                                        <div>
+                                                            <div class="font-weight-bold">${nombreCompleto}</div>
+                                                            <small class="text-muted">Tel: ${t.telefono || '—'}</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge badge-success">Disponible</span>
+                                                </div>
+                                            </button>
+                                        `;
                 }).join('');
             }
 
@@ -94,16 +102,16 @@
                     return '<div class="alert alert-info">No hay vehículos compatibles disponibles</div>';
                 }
                 return vehiculos.map(v => `
-                            <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="vehiculo" data-id="${v.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <div class="font-weight-bold">${v.tipo || 'Vehículo'} - ${v.placa || 'Sin placa'}</div>
-                                        <small class="text-muted">Cap: ${formatCapacidad(v.capacidad)} · ${v.tipo_transporte?.nombre || 'Sin tipo'}</small>
-                                    </div>
-                                    <span class="badge badge-success">Disponible</span>
-                                </div>
-                            </button>
-                        `).join('');
+                                        <button type="button" class="btn btn-outline-secondary btn-block text-left mb-2 selection-card" data-role="vehiculo" data-id="${v.id}" data-asignacion="${asignacionId}" style="transition: all 0.2s;">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <div class="font-weight-bold">${v.tipo || 'Vehículo'} - ${v.placa || 'Sin placa'}</div>
+                                                    <small class="text-muted">Cap: ${formatCapacidad(v.capacidad)} · ${v.tipo_transporte?.nombre || 'Sin tipo'}</small>
+                                                </div>
+                                                <span class="badge badge-success">Disponible</span>
+                                            </div>
+                                        </button>
+                                    `).join('');
             }
 
             function showFeedback(message, type = 'success') {
@@ -194,60 +202,60 @@
                     const colLeft = document.createElement('div');
                     colLeft.className = 'col-lg-6';
                     colLeft.innerHTML = `
-                                <h5 class="mb-3 d-flex align-items-center justify-content-between">Partición ${idx + 1} ${badgeFor(p.estado)}</h5>
-                                <h6>Transportista</h6>
-                                <p class="mb-1">Nombre: ${(p.transportista?.nombre || '—')} ${(p.transportista?.apellido || '')}</p>
-                                <p class="mb-1">Teléfono: ${p.transportista?.telefono || '—'}</p>
-                                <p class="mb-3">CI: ${p.transportista?.ci || '—'}</p>
+                                            <h5 class="mb-3 d-flex align-items-center justify-content-between">Partición ${idx + 1} ${badgeFor(p.estado)}</h5>
+                                            <h6>Transportista</h6>
+                                            <p class="mb-1">Nombre: ${(p.transportista?.nombre || '—')} ${(p.transportista?.apellido || '')}</p>
+                                            <p class="mb-1">Teléfono: ${p.transportista?.telefono || '—'}</p>
+                                            <p class="mb-3">CI: ${p.transportista?.ci || '—'}</p>
 
-                                <h6>Vehículo</h6>
-                                <p class="mb-3">Placa: ${p.vehiculo?.placa || '—'}</p>
+                                            <h6>Vehículo</h6>
+                                            <p class="mb-3">Placa: ${p.vehiculo?.placa || '—'}</p>
 
-                                <h6>Transporte</h6>
-                                <p class="mb-1">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}</p>
-                                <p class="mb-3">Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
+                                            <h6>Transporte</h6>
+                                            <p class="mb-1">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}</p>
+                                            <p class="mb-3">Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
 
-                                <div class="timeline-item mb-3">
-                                    <span class="text-success">●</span>
-                                    <strong class="ml-1">Recogida:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_recogida || '—'}
-                                    <div class="mt-2 p-2 bg-light rounded">
-                                        <strong>Origen:</strong> ${envio.nombre_origen || '—'}<br>
-                                        ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
+                                            <div class="timeline-item mb-3">
+                                                <span class="text-success">●</span>
+                                                <strong class="ml-1">Recogida:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_recogida || '—'}
+                                                <div class="mt-2 p-2 bg-light rounded">
+                                                    <strong>Origen:</strong> ${envio.nombre_origen || '—'}<br>
+                                                    ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
                         const categoria = c.categoria || 'Sin categoría';
                         const producto = c.producto || 'Sin producto';
                         const tipoEmpaque = c.tipo_empaque || 'Sin empaque';
                         return `<div>• ${categoria} - ${producto} (${Number(c.cantidad || 0)} uds, ${Number(c.peso || 0).toFixed(1)} kg, ${tipoEmpaque})</div>`;
                     }).join('') : 'Sin productos'}<br>
-                                        Sin instrucciones
-                                    </div>
-                                </div>
+                                                    Sin instrucciones
+                                                </div>
+                                            </div>
 
-                                <div class="timeline-item">
-                                    <span class="text-muted">●</span>
-                                    <strong class="ml-1">Entrega:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_entrega || '—'}
-                                    <div class="mt-2 p-2 bg-light rounded">
-                                        <strong>Destino:</strong> ${envio.nombre_destino || '—'}<br>
-                                        ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
+                                            <div class="timeline-item">
+                                                <span class="text-muted">●</span>
+                                                <strong class="ml-1">Entrega:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_entrega || '—'}
+                                                <div class="mt-2 p-2 bg-light rounded">
+                                                    <strong>Destino:</strong> ${envio.nombre_destino || '—'}<br>
+                                                    ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
                         const categoria = c.categoria || 'Sin categoría';
                         const producto = c.producto || 'Sin producto';
                         const tipoEmpaque = c.tipo_empaque || 'Sin empaque';
                         return `<div>• ${categoria} - ${producto} (${Number(c.cantidad || 0)} uds, ${Number(c.peso || 0).toFixed(1)} kg, ${tipoEmpaque})</div>`;
                     }).join('') : 'Sin productos'}<br>
-                                        Sin instrucciones
-                                    </div>
-                                </div>
-                            `;
+                                                    Sin instrucciones
+                                                </div>
+                                            </div>
+                                        `;
 
                     const colRight = document.createElement('div');
                     colRight.className = 'col-lg-6';
                     const mapId = `map-${idx}`;
                     colRight.innerHTML = `
-                                <div id="${mapId}" style="height: 420px;" class="rounded border"></div>
-                                <div class="mt-3 p-3 bg-light rounded border">
-                                    <h6 class="mb-2 font-weight-bold">Código de Acceso</h6>
-                                    <p class="mb-0 h4 font-monospace text-primary">${p.codigo_acceso || 'No asignado'}</p>
-                                </div>
-                            `;
+                                            <div id="${mapId}" style="height: 420px;" class="rounded border"></div>
+                                            <div class="mt-3 p-3 bg-light rounded border">
+                                                <h6 class="mb-2 font-weight-bold">Código de Acceso</h6>
+                                                <p class="mb-0 h4 font-monospace text-primary">${p.codigo_acceso || 'No asignado'}</p>
+                                            </div>
+                                        `;
 
                     row.appendChild(colLeft);
                     row.appendChild(colRight);
@@ -255,66 +263,79 @@
 
                     const alreadyAssigned = Boolean(p.id_transportista && p.id_vehiculo);
                     const estadoNoEditable = ['En curso', 'Finalizado', 'Entregado', 'Completado'].includes((p.estado || '').trim());
+                    // Verificar si está rechazado (global o partición)
+                    const isCancelled = Boolean(Number(envio.cancelado)) || ['Cancelado', 'Rechazado'].includes((p.estado || '').trim());
+
                     const assignmentSection = document.createElement('div');
                     assignmentSection.className = 'mt-4';
 
-                    if (alreadyAssigned || estadoNoEditable) {
+                    if (isCancelled) {
                         assignmentSection.innerHTML = `
-                                    <div class="alert alert-${alreadyAssigned ? 'success' : 'secondary'}">
-                                        <h5 class="alert-heading">
-                                            <i class="icon fas fa-${alreadyAssigned ? 'check' : 'ban'}"></i>
-                                            ${alreadyAssigned ? 'Recursos confirmados' : 'No disponible'}
-                                        </h5>
-                                        <p class="mb-0">
-                                            ${alreadyAssigned
+                                        <div class="alert alert-danger bg-white border-danger text-danger">
+                                            <h5 class="alert-heading font-weight-bold"><i class="fas fa-ban mr-2"></i>Envío Rechazado</h5>
+                                            <hr class="border-danger">
+                                            <p class="mb-2"><strong>Motivo del rechazo:</strong></p>
+                                            <p class="lead mb-2">${envio.observacion_cancelacion || 'Sin motivo registrado'}</p>
+                                            <small class="text-muted">Fecha de rechazo: ${envio.fecha_cancelacion ? new Date(envio.fecha_cancelacion).toLocaleString() : '—'}</small>
+                                        </div>
+                                    `;
+                    } else if (alreadyAssigned || estadoNoEditable) {
+                        assignmentSection.innerHTML = `
+                                                <div class="alert alert-${alreadyAssigned ? 'success' : 'secondary'}">
+                                                    <h5 class="alert-heading">
+                                                        <i class="icon fas fa-${alreadyAssigned ? 'check' : 'ban'}"></i>
+                                                        ${alreadyAssigned ? 'Recursos confirmados' : 'No disponible'}
+                                                    </h5>
+                                                    <p class="mb-0">
+                                                        ${alreadyAssigned
                                 ? 'Esta partición ya tiene transportista y vehículo asignados.'
                                 : `Estado actual: ${p.estado || 'Desconocido'}. Las asignaciones solo se permiten cuando está pendiente.`}
-                                        </p>
-                                    </div>
-                                `;
+                                                    </p>
+                                                </div>
+                                            `;
                     } else {
                         const vehiculosCompatibles = vehiculosCompatiblesPara(p);
                         assignmentSection.innerHTML = `
-                                    <div class="row">
-                                        <div class="col-lg-6 mb-4">
-                                            <div class="card card-outline card-primary">
-                                                <div class="card-header">
-                                                    <h3 class="card-title">
-                                                        <i class="fas fa-user mr-1"></i>
-                                                        Seleccionar transportista
-                                                    </h3>
-                                                    <div class="card-tools">
-                                                        <span class="badge badge-primary">${state.transportistas.length}</span>
+                                                <div class="row">
+                                                    <div class="col-lg-6 mb-4">
+                                                        <div class="card card-outline card-primary">
+                                                            <div class="card-header">
+                                                                <h3 class="card-title">
+                                                                    <i class="fas fa-user mr-1"></i>
+                                                                    Seleccionar transportista
+                                                                </h3>
+                                                                <div class="card-tools">
+                                                                    <span class="badge badge-primary">${state.transportistas.length}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-body" data-role="transportista" data-asignacion="${p.id_asignacion}">
+                                                                ${buildTransportistasList(p.id_asignacion)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-6 mb-4">
+                                                        <div class="card card-outline card-primary">
+                                                            <div class="card-header">
+                                                                <h3 class="card-title">
+                                                                    <i class="fas fa-truck mr-1"></i>
+                                                                    Seleccionar vehículo
+                                                                </h3>
+                                                                <div class="card-tools">
+                                                                    <span class="badge badge-primary">${vehiculosCompatibles.length}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-body" data-role="vehiculo" data-asignacion="${p.id_asignacion}">
+                                                                ${buildVehiculosList(p.id_asignacion, vehiculosCompatibles)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <button type="button" class="btn btn-success btn-lg btn-block assignment-confirm-btn" data-asignacion="${p.id_asignacion}" disabled>
+                                                            <i class="fas fa-check mr-2"></i>Confirmar asignación
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div class="card-body" data-role="transportista" data-asignacion="${p.id_asignacion}">
-                                                    ${buildTransportistasList(p.id_asignacion)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 mb-4">
-                                            <div class="card card-outline card-primary">
-                                                <div class="card-header">
-                                                    <h3 class="card-title">
-                                                        <i class="fas fa-truck mr-1"></i>
-                                                        Seleccionar vehículo
-                                                    </h3>
-                                                    <div class="card-tools">
-                                                        <span class="badge badge-primary">${vehiculosCompatibles.length}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body" data-role="vehiculo" data-asignacion="${p.id_asignacion}">
-                                                    ${buildVehiculosList(p.id_asignacion, vehiculosCompatibles)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <button type="button" class="btn btn-success btn-lg btn-block assignment-confirm-btn" data-asignacion="${p.id_asignacion}" disabled>
-                                                <i class="fas fa-check mr-2"></i>Confirmar asignación
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
+                                            `;
                     }
 
                     body.appendChild(assignmentSection);

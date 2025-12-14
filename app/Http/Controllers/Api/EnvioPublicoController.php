@@ -478,6 +478,8 @@ class EnvioPublicoController extends Controller
                         'prioridad' => $envio->prioridad,
                         'observaciones_solicitud' => $envio->observaciones_solicitud,
                         'cancelado' => $envio->cancelado,
+                        'observacion_cancelacion' => $envio->observacion_cancelacion,
+                        'motivo' => $envio->observacion_cancelacion,
                     ];
                 });
 
@@ -541,6 +543,8 @@ class EnvioPublicoController extends Controller
                 'prioridad' => $envio->prioridad,
                 'observaciones_solicitud' => $envio->observaciones_solicitud,
                 'cancelado' => $envio->cancelado,
+                'observacion_cancelacion' => $envio->observacion_cancelacion,
+                'motivo' => $envio->observacion_cancelacion,
 
                 // Coordenadas
                 'coordenadas_origen' => [
@@ -681,6 +685,7 @@ class EnvioPublicoController extends Controller
                     'estado' => $estadoActual,
                     'fecha_creacion' => $envio->fecha_creacion,
                     'fecha_entrega' => $fechaEntrega,
+                    'numero_solicitud' => $envio->numero_solicitud,
                     'nombre_origen' => $envio->direccion?->nombreorigen ?? "—",
                     'nombre_destino' => $envio->direccion?->nombredestino ?? "—",
                 ];

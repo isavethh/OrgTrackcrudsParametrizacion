@@ -3,297 +3,306 @@
 @section('page-title', 'Gestión de Tipos de Transporte')
 
 @section('page-content')
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Lista de Tipos de Transporte</h3>
-        <div class="card-tools">
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalCrear">
-                <i class="fas fa-plus"></i> Nuevo Tipo
-            </button>
-        </div>
-    </div>
-    <div class="card-body">
-        <table id="tabla-tipos" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Los datos se cargan dinámicamente con JavaScript -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Modal Crear -->
-<div class="modal fade" id="modalCrear" tabindex="-1" role="dialog" aria-labelledby="modalCrearLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalCrearLabel">Nuevo Tipo de Transporte</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Lista de Tipos de Transporte</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalCrear">
+                    <i class="fas fa-plus"></i> Nuevo Tipo
                 </button>
             </div>
-            <form id="formCrear">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="crear_nombre">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="crear_nombre" name="nombre" required maxlength="50" placeholder="Ej: Terrestre, Aéreo, Marítimo">
-                    </div>
-                    <div class="form-group">
-                        <label for="crear_descripcion">Descripción</label>
-                        <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="3" maxlength="150"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
         </div>
-    </div>
-</div>
-
-<!-- Modal Editar -->
-<div class="modal fade" id="modalEditar" tabindex="-1" role="dialog" aria-labelledby="modalEditarLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEditarLabel">Editar Tipo de Transporte</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tiposTableBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <form id="formEditar">
-                <input type="hidden" id="editar_id">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="editar_nombre">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="editar_nombre" name="nombre" required maxlength="50">
-                    </div>
-                    <div class="form-group">
-                        <label for="editar_descripcion">Descripción</label>
-                        <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="3" maxlength="150"></textarea>
-                    </div>
+
+            <!-- Paginación -->
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <div id="paginationInfo" class="text-muted">
+                    Mostrando 0 a 0 de 0 registros
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
-                </div>
-            </form>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls">
+                        <!-- Controles generados dinámicamente -->
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Modal Crear -->
+    <div class="modal fade" id="modalCrear" tabindex="-1" role="dialog" aria-labelledby="modalCrearLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCrearLabel">Nuevo Tipo de Transporte</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formCrear">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="crear_nombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="crear_nombre" name="nombre" required maxlength="50"
+                                placeholder="Ej: Terrestre, Aéreo, Marítimo">
+                        </div>
+                        <div class="form-group">
+                            <label for="crear_descripcion">Descripción</label>
+                            <textarea class="form-control" id="crear_descripcion" name="descripcion" rows="3"
+                                maxlength="150"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar -->
+    <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog" aria-labelledby="modalEditarLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarLabel">Editar Tipo de Transporte</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formEditar">
+                    <input type="hidden" id="editar_id">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editar_nombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editar_nombre" name="nombre" required
+                                maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="editar_descripcion">Descripción</label>
+                            <textarea class="form-control" id="editar_descripcion" name="descripcion" rows="3"
+                                maxlength="150"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
-@push('css')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-@endpush
+
 
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
 <script>
     const API_URL = '/api/tipotransporte';
-    const TOKEN = localStorage.getItem('authToken');
-    let tabla;
+    const _rawToken = localStorage.getItem('authToken');
+    const TOKEN = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
 
-    $(document).ready(function() {
-        // Verificar que el token exista
-        if (!TOKEN) {
-            Swal.fire('Error', 'No se encontró el token de autenticación. Por favor, inicie sesión nuevamente.', 'error').then(() => {
-                window.location.href = '/login';
-            });
+    if (!TOKEN) {
+        window.location.href = '/login';
+    }
+
+    let tiposCache = [];
+    var currentPage = 1;
+    const itemsPerPage = 10;
+    var filteredData = []; 
+
+    const tablaBody = document.getElementById('tiposTableBody');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationControls = document.getElementById('paginationControls');
+
+    function renderTipos(data) {
+        filteredData = data; 
+        const totalItems = data.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        // Ajustar página actual
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+
+        // Renderizar Info
+        if (totalItems === 0) {
+            tablaBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No hay registros coincidentes</td></tr>';
+            paginationInfo.textContent = 'Mostrando 0 a 0 de 0 registros';
+            paginationControls.innerHTML = '';
             return;
         }
 
-        // Inicializar DataTable
-        tabla = $('#tabla-tipos').DataTable({
-            language: {
-                "decimal": "",
-                "emptyTable": "No hay datos disponibles",
-                "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                "infoEmpty": "Mostrando 0 a 0 de 0 registros",
-                "infoFiltered": "(filtrado de _MAX_ registros totales)",
-                "infoPostFix": "",
-                "thousands": ",",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "loadingRecords": "Cargando...",
-                "processing": "Procesando...",
-                "search": "Buscar:",
-                "zeroRecords": "No se encontraron registros coincidentes",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "Siguiente",
-                    "previous": "Anterior"
-                },
-                "aria": {
-                    "sortAscending": ": activar para ordenar la columna ascendente",
-                    "sortDescending": ": activar para ordenar la columna descendente"
-                }
-            },
-            responsive: true,
-            columns: [
-                { data: 'id' },
-                { data: 'nombre' },
-                { data: 'descripcion', defaultContent: '-' },
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        return `
-                            <button class="btn btn-sm btn-info btn-editar" data-id="${row.id}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        `;
-                    }
-                }
-            ]
-        });
+        paginationInfo.textContent = `Mostrando ${startIndex + 1} a ${endIndex} de ${totalItems} registros`;
 
-        cargarDatos();
+        // Renderizar Filas
+        const itemsToShow = data.slice(startIndex, endIndex);
+        tablaBody.innerHTML = itemsToShow.map(row => `
+            <tr>
+                <td>${row.id}</td>
+                <td>${row.nombre}</td>
+                <td>${row.descripcion || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-info btn-editar" data-id="${row.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
 
-        // Form crear
-        $('#formCrear').on('submit', function(e) {
-            e.preventDefault();
-            crearRegistro();
-        });
+        // Renderizar Controles
+        let controlsHtml = '';
+        controlsHtml += `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage - 1})">Anterior</a>
+            </li>
+        `;
 
-        // Form editar
-        $('#formEditar').on('submit', function(e) {
-            e.preventDefault();
-            actualizarRegistro();
-        });
-
-        // Event delegation para botones
-        $(document).on('click', '.btn-editar', function() {
-            const id = $(this).data('id');
-            editarRegistro(id);
-        });
-
-        $(document).on('click', '.btn-eliminar', function() {
-            const id = $(this).data('id');
-            eliminarRegistro(id);
-        });
-    });
-
-    function cargarDatos() {
-        $.ajax({
-            url: API_URL,
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + TOKEN
-            },
-            success: function(response) {
-                // La API puede devolver array directo o {data: []}
-                const data = Array.isArray(response) ? response : (response.data || []);
-                tabla.clear();
-                tabla.rows.add(data);
-                tabla.draw();
-            },
-            error: function(xhr) {
-                console.error('Error al cargar datos:', xhr);
-                let mensaje = 'No se pudieron cargar los datos';
-                
-                if (xhr.status === 401) {
-                    mensaje = 'Sesión expirada. Por favor, inicie sesión nuevamente.';
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
-                }
-                
-                Swal.fire('Error', mensaje, 'error');
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                controlsHtml += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    controlsHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
-        });
+        }
+
+        controlsHtml += `
+            <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage + 1})">Siguiente</a>
+            </li>
+        `;
+        paginationControls.innerHTML = controlsHtml;
     }
 
-    function crearRegistro() {
-        const datos = {
-            nombre: $('#crear_nombre').val(),
-            descripcion: $('#crear_descripcion').val()
-        };
-
-        $.ajax({
-            url: API_URL,
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + TOKEN,
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify(datos),
-            success: function(response) {
-                $('#modalCrear').modal('hide');
-                $('#formCrear')[0].reset();
-                Swal.fire('Éxito', 'Registro creado correctamente', 'success');
-                cargarDatos();
-            },
-            error: function(xhr) {
-                const error = xhr.responseJSON;
-                let mensaje = 'Error al crear el registro';
-                if (error && error.errors) {
-                    mensaje = Object.values(error.errors).join('<br>');
-                }
-                Swal.fire('Error', mensaje, 'error');
-            }
-        });
+    function changePage(page) {
+        const totalItems = tiposCache.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderTipos(tiposCache);
     }
 
-    function editarRegistro(id) {
-        const tr = $(`button[data-id="${id}"]`).closest('tr');
-        const row = tabla.row(tr).data();
-        
-        if (row) {
-            $('#editar_id').val(row.id);
-            $('#editar_nombre').val(row.nombre);
-            $('#editar_descripcion').val(row.descripcion);
-            $('#modalEditar').modal('show');
-        } else {
-             Swal.fire('Error', 'No se pudo cargar el registro', 'error');
+    async function cargarDatos() {
+        tablaBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Cargando...</td></tr>';
+        try {
+            const res = await fetch(API_URL, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            
+            if (!res.ok) {
+                if (res.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error('No se pudieron cargar los datos');
+            }
+
+            const response = await res.json();
+            // La API puede devolver array directo o {data: []}
+            tiposCache = Array.isArray(response) ? response : (response.data || []);
+            
+            renderTipos(tiposCache);
+
+        } catch (e) {
+            tablaBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">${e.message}</td></tr>`;
+            console.error(e);
         }
     }
 
-    function actualizarRegistro() {
-        const id = $('#editar_id').val();
-        const datos = {
-            nombre: $('#editar_nombre').val(),
-            descripcion: $('#editar_descripcion').val()
-        };
+    async function crearRegistro() {
+        const nombre = document.getElementById('crear_nombre').value.trim();
+        const descripcion = document.getElementById('crear_descripcion').value.trim();
+        
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nombre, descripcion })
+            });
 
-        $.ajax({
-            url: `${API_URL}/${id}`,
-            method: 'PUT',
-            headers: {
-                'Authorization': 'Bearer ' + TOKEN,
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify(datos),
-            success: function(response) {
-                $('#modalEditar').modal('hide');
-                Swal.fire('Éxito', 'Registro actualizado correctamente', 'success');
-                cargarDatos();
-            },
-            error: function(xhr) {
-                const error = xhr.responseJSON;
-                let mensaje = 'Error al actualizar el registro';
-                if (error && error.errors) {
-                    mensaje = Object.values(error.errors).join('<br>');
-                }
-                Swal.fire('Error', mensaje, 'error');
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                let mensaje = 'Error al crear el registro';
+                if (err && err.errors) mensaje = Object.values(err.errors).join('<br>');
+                throw new Error(mensaje);
             }
-        });
+
+            $('#modalCrear').modal('hide');
+            document.getElementById('formCrear').reset();
+            Swal.fire('Éxito', 'Registro creado correctamente', 'success');
+            cargarDatos();
+
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
     }
 
-    function eliminarRegistro(id) {
-        Swal.fire({
+    async function actualizarRegistro() {
+        const id = document.getElementById('editar_id').value;
+        const nombre = document.getElementById('editar_nombre').value.trim();
+        const descripcion = document.getElementById('editar_descripcion').value.trim();
+
+        try {
+            const res = await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nombre, descripcion })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                let mensaje = 'Error al actualizar el registro';
+                if (err && err.errors) mensaje = Object.values(err.errors).join('<br>');
+                throw new Error(mensaje);
+            }
+
+            $('#modalEditar').modal('hide');
+            Swal.fire('Éxito', 'Registro actualizado correctamente', 'success');
+            cargarDatos();
+
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
+    }
+
+    async function eliminarRegistro(id) {
+        const result = await Swal.fire({
             title: '¿Está seguro?',
             text: "Esta acción no se puede revertir",
             icon: 'warning',
@@ -302,24 +311,62 @@
             cancelButtonColor: '#d33',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `${API_URL}/${id}`,
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`${API_URL}/${id}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': 'Bearer ' + TOKEN
-                    },
-                    success: function(response) {
-                        Swal.fire('Eliminado', 'Registro eliminado correctamente', 'success');
-                        cargarDatos();
-                    },
-                    error: function(xhr) {
-                        Swal.fire('Error', 'Error al eliminar el registro', 'error');
-                    }
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
                 });
+
+                if (!res.ok) throw new Error('Error al eliminar el registro');
+
+                Swal.fire('Eliminado', 'Registro eliminado correctamente', 'success');
+                cargarDatos();
+
+            } catch (e) {
+                Swal.fire('Error', e.message, 'error');
+            }
+        }
+    }
+
+    function editarRegistro(id) {
+        const tipo = tiposCache.find(t => t.id == id);
+        if (tipo) {
+            $('#editar_id').val(tipo.id);
+            $('#editar_nombre').val(tipo.nombre);
+            $('#editar_descripcion').val(tipo.descripcion);
+            $('#modalEditar').modal('show');
+        } else {
+            Swal.fire('Error', 'No se pudo cargar el registro', 'error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarDatos();
+
+        document.getElementById('formCrear').addEventListener('submit', function(e) {
+            e.preventDefault();
+            crearRegistro();
+        });
+
+        document.getElementById('formEditar').addEventListener('submit', function(e) {
+            e.preventDefault();
+            actualizarRegistro();
+        });
+
+        tablaBody.addEventListener('click', (e) => {
+            const btnEdit = e.target.closest('.btn-editar');
+            if (btnEdit) {
+                editarRegistro(btnEdit.dataset.id);
+                return;
+            }
+            const btnDel = e.target.closest('.btn-eliminar');
+            if (btnDel) {
+                eliminarRegistro(btnDel.dataset.id);
             }
         });
-    }
+    });
 </script>
 @endpush

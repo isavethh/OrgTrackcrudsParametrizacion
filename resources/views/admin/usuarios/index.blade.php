@@ -54,6 +54,18 @@
                             <tbody id="usuariosTableBody">
                             </tbody>
                         </table>
+
+                        <!-- Paginación -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div id="paginationInfo" class="text-muted">
+                                Mostrando 0 a 0 de 0 registros
+                            </div>
+                            <nav>
+                                <ul class="pagination mb-0" id="paginationControls">
+                                    <!-- Controles generados dinámicamente -->
+                                </ul>
+                            </nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -173,13 +185,20 @@
 @endsection
 
 @push('js')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         var _rawToken = localStorage.getItem('authToken');
         var token = _rawToken ? _rawToken.replace(/^"+|"+$/g, '') : null;
         if (!token) { window.location.href = '/login'; }
 
         var usuarios = [];
+        var usuariosFiltradosCache = []; // Para almacenar el resultado del filtro actual
         var editingUserId = null;
+
+        // Variables de paginación
+        var currentPage = 1;
+        var filteredData = []; // La data que se está mostrando actualmente (filtrada)
+        const itemsPerPage = 10;
 
         function badgeForRol(rol) {
             const map = {
@@ -190,40 +209,107 @@
             return `<span class="badge ${map[rol] || 'badge-secondary'}">${rol || 'Sin rol'}</span>`;
         }
 
+        // Función principal de renderizado con paginación
         function renderUsuarios(data) {
+            filteredData = data; // Guardamos la data filtrada actual
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // Ajustar página actual si excede el total
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+
             const tbody = document.getElementById('usuariosTableBody');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const paginationControls = document.getElementById('paginationControls');
 
-            console.log('Usuarios recibidos:', data);
-
-            if (data.length === 0) {
+            // Renderizar Información de Paginación
+            if (totalItems === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay usuarios registrados</td></tr>';
+                paginationInfo.textContent = 'Mostrando 0 a 0 de 0 registros';
+                paginationControls.innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = data.map(user => `
-                    <tr>
-                        <td>${user.id}</td>
-                        <td>${user.nombre || '—'} ${user.apellido || ''}</td>
-                        <td>${user.correo || '—'}</td>
-                        <td>${badgeForRol(user.rol)}</td>
-                        <td>${user.ci || '—'}</td>
-                        <td>${user.telefono || '—'}</td>
-                        <td>
-                            <span class="badge badge-success">Activo</span>
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm" onclick="editarUsuario(${user.id})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-warning btn-sm" onclick="abrirCambiarRol(${user.id}, '${user.nombre} ${user.apellido}', '${user.rol}')" title="Cambiar Rol">
-                                <i class="fas fa-user-tag"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${user.id})" title="Eliminar">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+            paginationInfo.textContent = `Mostrando ${startIndex + 1} a ${endIndex} de ${totalItems} registros`;
+
+            // Obtener items de la página actual
+            const itemsToShow = data.slice(startIndex, endIndex);
+
+            // Renderizar filas
+            tbody.innerHTML = itemsToShow.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.nombre || '—'} ${user.apellido || ''}</td>
+                                <td>${user.correo || '—'}</td>
+                                <td>${badgeForRol(user.rol)}</td>
+                                <td>${user.ci || '—'}</td>
+                                <td>${user.telefono || '—'}</td>
+                                <td>
+                                    <span class="badge badge-success">Activo</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-info btn-sm" onclick="editarUsuario(${user.id})" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="abrirCambiarRol(${user.id}, '${user.nombre} ${user.apellido}', '${user.rol}')" title="Cambiar Rol">
+                                        <i class="fas fa-user-tag"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${user.id})" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+            // Renderizar Controles de Paginación
+            let controlsHtml = '';
+
+            // Botón Anterior
+            controlsHtml += `
+                        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage - 1})">Anterior</a>
+                        </li>
+                    `;
+
+            // Páginas (Lógica simple: mostrar todas o rango limitado si son muchas - implementaré simple por ahora)
+            // Para "1 2 3 ... Last" logic se puede complicar, user pidió simple como la imagen "Anterior 1 Siguiente"
+            // Mostraremos un rango de páginas alrededor de la actual
+
+            for (let i = 1; i <= totalPages; i++) {
+                // Mostrar siempre primera, última, y rango cercano a current
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    controlsHtml += `
+                                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                    <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${i})">${i}</a>
+                                </li>
+                            `;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    controlsHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Botón Siguiente
+            controlsHtml += `
+                        <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage + 1})">Siguiente</a>
+                        </li>
+                    `;
+
+            paginationControls.innerHTML = controlsHtml;
+        }
+
+        function changePage(page) {
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            renderUsuarios(filteredData); // Re-renderizar con la nueva página
         }
 
         async function cargarUsuarios() {
@@ -239,14 +325,16 @@
 
                 usuarios = await res.json();
 
+                // Inicializar visualización
+                currentPage = 1;
+                filtrarUsuarios(); // Esto llamará a renderUsuarios
+
                 document.getElementById('loadingSpinner').style.display = 'none';
                 document.getElementById('usuariosContainer').style.display = 'block';
 
-                renderUsuarios(usuarios);
-
             } catch (e) {
                 document.getElementById('loadingSpinner').style.display = 'none';
-                alert('Error al cargar usuarios: ' + e.message);
+                Swal.fire('Error', 'Error al cargar usuarios: ' + e.message, 'error');
             }
         }
 
@@ -265,9 +353,12 @@
                 return matchSearch && matchRol;
             });
 
+            // Al filtrar, resetear a página 1
+            currentPage = 1;
             renderUsuarios(filtrados);
         }
 
+        // Listeners existentes
         document.getElementById('searchInput').addEventListener('input', filtrarUsuarios);
         document.getElementById('filterRol').addEventListener('change', filtrarUsuarios);
 
@@ -311,7 +402,7 @@
                 $('#modalUsuario').modal('show');
 
             } catch (e) {
-                alert('Error al cargar usuario: ' + e.message);
+                Swal.fire('Error', 'Error al cargar usuario: ' + e.message, 'error');
             }
         }
 
@@ -349,7 +440,7 @@
                     });
                 } else {
                     if (!password) {
-                        alert('La contraseña es requerida para nuevos usuarios');
+                        Swal.fire('Atención', 'La contraseña es requerida para nuevos usuarios', 'warning');
                         return;
                     }
                     res = await fetch(`${window.location.origin}/api/usuarios`, {
@@ -368,11 +459,11 @@
                 }
 
                 $('#modalUsuario').modal('hide');
-                alert(editingUserId ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente');
+                Swal.fire('Éxito', editingUserId ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente', 'success');
                 cargarUsuarios();
 
             } catch (e) {
-                alert('Error: ' + e.message);
+                Swal.fire('Error', 'Error: ' + e.message, 'error');
             }
         });
 
@@ -403,16 +494,27 @@
                 }
 
                 $('#modalCambiarRol').modal('hide');
-                alert('Rol cambiado correctamente');
+                Swal.fire('Éxito', 'Rol cambiado correctamente', 'success');
                 cargarUsuarios();
 
             } catch (e) {
-                alert('Error: ' + e.message);
+                Swal.fire('Error', 'Error: ' + e.message, 'error');
             }
         });
 
         async function eliminarUsuario(id) {
-            if (!confirm('¿Está seguro de eliminar este usuario?')) return;
+            const result = await Swal.fire({
+                title: '¿Está seguro?',
+                text: "¿Está seguro de eliminar este usuario?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 const res = await fetch(`${window.location.origin}/api/usuarios/${id}`, {
@@ -425,11 +527,11 @@
                     throw new Error(error.error || 'Error al eliminar usuario');
                 }
 
-                alert('Usuario eliminado correctamente');
+                Swal.fire('Eliminado', 'Usuario eliminado correctamente', 'success');
                 cargarUsuarios();
 
             } catch (e) {
-                alert('Error: ' + e.message);
+                Swal.fire('Error', 'Error: ' + e.message, 'error');
             }
         }
 

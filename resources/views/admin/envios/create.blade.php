@@ -66,12 +66,7 @@
                             <h3 class="card-title"><i class="fas fa-map-marker-alt mr-2"></i>Dirección</h3>
                         </div>
                         <div class="card-body">
-                            <div class="form-group">
-                                <label>Seleccionar ruta guardada (del cliente):</label>
-                                <select id="selRutaGuardada" class="form-control select2" style="width: 100%;">
-                                    <option value="">-- Nueva Ruta --</option>
-                                </select>
-                            </div>
+
                             <hr>
                             <div class="form-group">
                                 <label class="text-success"><i class="fas fa-map-marker-alt mr-1"></i> Origen</label>
@@ -146,8 +141,8 @@
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <div class="info-box bg-light">
-                                <span class="info-box-icon bg-primary"><i class="fas fa-user"></i></span>
+                            <div class="info-box bg-light h-100">
+                                <span class="info-box-icon bg-secondary"><i class="fas fa-user"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Cliente</span>
                                     <span class="info-box-number" id="resumenCliente">--</span>
@@ -155,7 +150,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="info-box bg-light">
+                            <div class="info-box bg-light h-100">
                                 <span class="info-box-icon bg-success"><i class="fas fa-map-marker-alt"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Origen</span>
@@ -164,7 +159,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="info-box bg-light">
+                            <div class="info-box bg-light h-100">
                                 <span class="info-box-icon bg-danger"><i class="fas fa-map-marker-alt"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Destino</span>
@@ -188,12 +183,14 @@
                 <button type="button" class="btn btn-secondary" id="btnPrev" disabled>
                     <i class="fas fa-arrow-left mr-2"></i> Anterior
                 </button>
-                <button type="button" class="btn btn-primary" id="btnNext">
-                    Siguiente <i class="fas fa-arrow-right ml-2"></i>
-                </button>
-                <button type="button" class="btn btn-success d-none" id="btnFinish">
-                    <i class="fas fa-check mr-2"></i> Confirmar y Crear Envío
-                </button>
+                <div class="ml-auto">
+                    <button type="button" class="btn btn-primary" id="btnNext">
+                        Siguiente <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-success d-none" id="btnFinish">
+                        <i class="fas fa-check mr-2"></i> Confirmar y Crear Envío
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -568,15 +565,23 @@
             leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
             document.head.appendChild(leafletScript);
 
-            // Load Select2 after jQuery
-            var select2Script = document.createElement('script');
-            select2Script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
-            select2Script.onload = function () {
-                console.log('Select2 loaded');
-                // Now initialize everything
-                initApp();
+            // Load SweetAlert2
+            const swalScript = document.createElement('script');
+            swalScript.src = "https://cdn.jsdelivr.net/npm/sweetalert2@11";
+            swalScript.onload = function () {
+                console.log('SweetAlert2 loaded');
+
+                // Load Select2 after jQuery and SweetAlert2
+                var select2Script = document.createElement('script');
+                select2Script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
+                select2Script.onload = function () {
+                    console.log('Select2 loaded');
+                    // Now initialize everything
+                    initApp();
+                };
+                document.head.appendChild(select2Script);
             };
-            document.head.appendChild(select2Script);
+            document.head.appendChild(swalScript);
         };
         document.head.appendChild(jqueryScript);
 
@@ -630,11 +635,7 @@
                     placeholder: 'Buscar cliente...',
                     allowClear: true
                 });
-                $('#selRutaGuardada').select2({
-                    theme: 'bootstrap4',
-                    placeholder: '-- Nueva Ruta --',
-                    allowClear: true
-                });
+
             }
 
             // --- INICIALIZACIÓN ---
@@ -642,6 +643,9 @@
             loadClients();
             loadTiposTransporte();
             loadResources(); // Cargar transportistas y vehículos
+
+            // Inicializar botones y estado
+            goToStep(1);
 
             // Cargar catálogos PRIMERO, luego agregar partición
             loadCatalogs().then(() => {
@@ -902,7 +906,13 @@
 
                 state.currentStep = step;
 
-                btns.prev.disabled = step === 1;
+                // Ocultar botón anterior si estamos en el paso 1
+                if (step === 1) {
+                    btns.prev.style.display = 'none';
+                } else {
+                    btns.prev.style.display = 'inline-block';
+                    btns.prev.disabled = false;
+                }
                 if (step === 5) {
                     btns.next.classList.add('d-none');
                     btns.finish.classList.remove('d-none');
@@ -922,7 +932,7 @@
             function validateStep(step) {
                 if (step === 1) {
                     if (!$('#selCliente').val()) {
-                        alert('Debe seleccionar un cliente.');
+                        Swal.fire('Atención', 'Debe seleccionar un cliente.', 'warning');
                         return false;
                     }
                     return true;
@@ -931,7 +941,7 @@
                     const idDir = document.getElementById('idDireccionSeleccionada').value;
                     const hasMarkers = state.markers.origin && state.markers.destination;
                     if (!idDir && !hasMarkers) {
-                        alert('Seleccione una ruta o marque origen y destino.');
+                        Swal.fire('Atención', 'Seleccione una ruta o marque origen y destino.', 'warning');
                         return false;
                     }
                     return true;
@@ -946,7 +956,7 @@
                         if (!input.value) { input.classList.add('is-invalid'); isValid = false; }
                         else input.classList.remove('is-invalid');
                     });
-                    if (!isValid) alert('Complete todos los campos requeridos.');
+                    if (!isValid) Swal.fire('Atención', 'Complete todos los campos requeridos.', 'warning');
                     return isValid;
                 }
                 if (step === 4) {
@@ -964,21 +974,21 @@
                             // Check for duplicates
                             if (input.classList.contains('js-transportista-id')) {
                                 if (selectedTransportistas.has(input.value)) {
-                                    alert('No puede asignar el mismo transportista a múltiples particiones.');
+                                    Swal.fire('Error', 'No puede asignar el mismo transportista a múltiples particiones.', 'error');
                                     isValid = false;
                                 }
                                 selectedTransportistas.add(input.value);
                             }
                             if (input.classList.contains('js-vehiculo-id')) {
                                 if (selectedVehiculos.has(input.value)) {
-                                    alert('No puede asignar el mismo vehículo a múltiples particiones.');
+                                    Swal.fire('Error', 'No puede asignar el mismo vehículo a múltiples particiones.', 'error');
                                     isValid = false;
                                 }
                                 selectedVehiculos.add(input.value);
                             }
                         }
                     });
-                    if (!isValid && selectedTransportistas.size === 0 && selectedVehiculos.size === 0) alert('Debe asignar transportista y vehículo a todas las particiones.');
+                    if (!isValid && selectedTransportistas.size === 0 && selectedVehiculos.size === 0) Swal.fire('Atención', 'Debe asignar transportista y vehículo a todas las particiones.', 'warning');
                     return isValid;
                 }
                 return true;
@@ -1034,10 +1044,7 @@
             }
 
             function handleMapClick(e) {
-                if ($('#selRutaGuardada').val()) {
-                    $('#selRutaGuardada').val('').trigger('change');
-                    document.getElementById('idDireccionSeleccionada').value = "";
-                }
+
                 if (!state.markers.origin) setMarker('origin', e.latlng);
                 else if (!state.markers.destination) {
                     setMarker('destination', e.latlng);
@@ -1133,6 +1140,26 @@
 
                 const select = card.querySelector('.js-tipo-transporte');
                 state.tiposTransporte.forEach(t => select.appendChild(new Option(t.nombre, t.id)));
+
+                // Configurar Inputs de Fecha y Hora
+                const inputFecha = card.querySelector('.js-fecha-recogida');
+                const inputsTiempo = card.querySelectorAll('.js-hora-recogida, .js-hora-entrega');
+
+                // 1. Restringir fecha a hoy o futuro
+                const hoy = new Date().toISOString().split('T')[0];
+                inputFecha.setAttribute('min', hoy);
+
+                // 2. Hacer clickables los inputs completos (mostrar picker)
+                [inputFecha, ...inputsTiempo].forEach(input => {
+                    input.addEventListener('click', function (e) {
+                        try {
+                            this.showPicker();
+                        } catch (error) {
+                            // Fallback para navegadores antiguos que no soporten showPicker
+                            console.log('showPicker no soportado');
+                        }
+                    });
+                });
 
                 addCarga(card.querySelector('.cargas-container'));
                 document.getElementById('particionesContainer').appendChild(card);
@@ -1331,9 +1358,23 @@
                         const idCategoria = c.querySelector('.js-carga-categoria')?.value;
                         const idProducto = c.querySelector('.js-carga-producto')?.value;
                         const idTipoEmpaque = c.querySelector('.js-carga-tipo-empaque')?.value;
-                        if (idCategoria) cargaData.id_categoria = parseInt(idCategoria);
-                        if (idProducto) cargaData.id_producto = parseInt(idProducto);
-                        if (idTipoEmpaque) cargaData.id_tipo_empaque = parseInt(idTipoEmpaque);
+                        if (idCategoria) {
+                            cargaData.id_categoria = parseInt(idCategoria);
+                            cargaData.tipo = c.querySelector('.js-carga-categoria option:checked')?.text || 'N/A';
+                        }
+                        if (idProducto) {
+                            cargaData.id_producto = parseInt(idProducto);
+                            cargaData.variedad = c.querySelector('.js-carga-producto option:checked')?.text || 'N/A';
+                        }
+                        if (idTipoEmpaque) {
+                            cargaData.id_tipo_empaque = parseInt(idTipoEmpaque);
+                            cargaData.empaquetado = c.querySelector('.js-carga-tipo-empaque option:checked')?.text || 'N/A';
+                        }
+
+                        // Fallbacks for undefined values in Summary
+                        cargaData.tipo = cargaData.tipo || 'Carga General';
+                        cargaData.variedad = cargaData.variedad || '-';
+                        cargaData.empaquetado = cargaData.empaquetado || 'Sin empaque';
 
                         // Especificaciones de tamaño/conteo
                         if (conteo) cargaData.conteo_por_empaque = parseInt(conteo);
@@ -1415,17 +1456,17 @@
                         item.className = `resource-card p-2 mb-1 rounded ${!disponible ? 'disabled' : ''}`;
                         item.dataset.name = nombre;
                         item.innerHTML = `
-                                                                                                                                                                                                <div class="d-flex align-items-center">
-                                                                                                                                                                                                    <div class="mr-3"><i class="fas fa-user-tie fa-2x text-secondary"></i></div>
-                                                                                                                                                                                                    <div class="flex-grow-1">
-                                                                                                                                                                                                        <div class="font-weight-bold">${nombre}</div>
-                                                                                                                                                                                                        <div class="small text-muted">CI: ${ci} | Tel: ${telefono}</div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="ml-2">
-                                                                                                                                                                                                        <span class="badge ${badgeClass}">${estado}</span>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                                        <div class="d-flex align-items-center">
+                                                                                                                                                                                                                            <div class="mr-3"><i class="fas fa-user-tie fa-2x text-secondary"></i></div>
+                                                                                                                                                                                                                            <div class="flex-grow-1">
+                                                                                                                                                                                                                                <div class="font-weight-bold">${nombre}</div>
+                                                                                                                                                                                                                                <div class="small text-muted">CI: ${ci} | Tel: ${telefono}</div>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <div class="ml-2">
+                                                                                                                                                                                                                                <span class="badge ${badgeClass}">${estado}</span>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                    `;
 
                         if (disponible) {
                             item.addEventListener('click', () => {
@@ -1455,18 +1496,18 @@
                         item.className = `resource-card p-2 mb-1 rounded ${!disponible ? 'disabled' : ''}`;
                         item.dataset.name = `Vehículo [${placa}]`;
                         item.innerHTML = `
-                                                                                                                                                                                                <div class="d-flex align-items-center">
-                                                                                                                                                                                                    <div class="mr-3"><i class="fas fa-truck fa-2x text-secondary"></i></div>
-                                                                                                                                                                                                    <div class="flex-grow-1">
-                                                                                                                                                                                                        <div class="font-weight-bold">Vehículo <span class="text-primary">[${placa}]</span></div>
-                                                                                                                                                                                                        <div class="small text-muted">Tipo: ${tipo} | Transp: ${tipoTransporte}</div>
-                                                                                                                                                                                                        <div class="small text-muted">Cap: ${capacidad} kg</div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="ml-2">
-                                                                                                                                                                                                        <span class="badge ${badgeClass}">${estado}</span>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                                        <div class="d-flex align-items-center">
+                                                                                                                                                                                                                            <div class="mr-3"><i class="fas fa-truck fa-2x text-secondary"></i></div>
+                                                                                                                                                                                                                            <div class="flex-grow-1">
+                                                                                                                                                                                                                                <div class="font-weight-bold">Vehículo <span class="text-primary">[${placa}]</span></div>
+                                                                                                                                                                                                                                <div class="small text-muted">Tipo: ${tipo} | Transp: ${tipoTransporte}</div>
+                                                                                                                                                                                                                                <div class="small text-muted">Cap: ${capacidad} kg</div>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <div class="ml-2">
+                                                                                                                                                                                                                                <span class="badge ${badgeClass}">${estado}</span>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                    `;
 
                         if (disponible) {
                             item.addEventListener('click', () => {
@@ -1516,41 +1557,41 @@
                     cargasHtml += '</ul>';
 
                     const html = `
-                                                                                                                                                                                            <div class="card mb-3 border-primary">
-                                                                                                                                                                                                <div class="card-header bg-primary text-white p-2">
-                                                                                                                                                                                                    <strong><i class="fas fa-box-open mr-2"></i>Partición #${part.index}</strong>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                <div class="card-body p-3">
-                                                                                                                                                                                                    <div class="row">
-                                                                                                                                                                                                        <div class="col-md-6 border-right">
-                                                                                                                                                                                                            <h6 class="text-primary font-weight-bold">Detalles del Envío</h6>
-                                                                                                                                                                                                            <p class="mb-1"><strong>Tipo Transporte:</strong> ${part.tipo_transporte_txt}</p>
-                                                                                                                                                                                                            <p class="mb-1"><strong>Recogida:</strong> ${part.recogidaEntrega.fecha_recogida} a las ${part.recogidaEntrega.hora_recogida}</p>
-                                                                                                                                                                                                            <p class="mb-1"><strong>Entrega Estimada:</strong> ${part.recogidaEntrega.hora_entrega}</p>
-                                                                                                                                                                                                            <div class="mt-2">
-                                                                                                                                                                                                                <strong>Cargas:</strong>
-                                                                                                                                                                                                                ${cargasHtml}
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                            ${(part.recogidaEntrega.instrucciones_recogida || part.recogidaEntrega.instrucciones_entrega) ?
+                                                                                                                                                                                                                    <div class="card mb-3 border-primary">
+                                                                                                                                                                                                                        <div class="card-header bg-primary text-white p-2">
+                                                                                                                                                                                                                            <strong><i class="fas fa-box-open mr-2"></i>Partición #${part.index}</strong>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                        <div class="card-body p-3">
+                                                                                                                                                                                                                            <div class="row">
+                                                                                                                                                                                                                                <div class="col-md-6 border-right">
+                                                                                                                                                                                                                                    <h6 class="text-primary font-weight-bold">Detalles del Envío</h6>
+                                                                                                                                                                                                                                    <p class="mb-1"><strong>Tipo Transporte:</strong> ${part.tipo_transporte_txt}</p>
+                                                                                                                                                                                                                                    <p class="mb-1"><strong>Recogida:</strong> ${part.recogidaEntrega.fecha_recogida} a las ${part.recogidaEntrega.hora_recogida}</p>
+                                                                                                                                                                                                                                    <p class="mb-1"><strong>Entrega Estimada:</strong> ${part.recogidaEntrega.hora_entrega}</p>
+                                                                                                                                                                                                                                    <div class="mt-2">
+                                                                                                                                                                                                                                        <strong>Cargas:</strong>
+                                                                                                                                                                                                                                        ${cargasHtml}
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    ${(part.recogidaEntrega.instrucciones_recogida || part.recogidaEntrega.instrucciones_entrega) ?
                             `<div class="mt-2 small text-muted">
-                                                                                                                                                                                                                    <em>Instr: ${part.recogidaEntrega.instrucciones_recogida || ''} / ${part.recogidaEntrega.instrucciones_entrega || ''}</em>
-                                                                                                                                                                                                                </div>` : ''}
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <div class="col-md-6">
-                                                                                                                                                                                                            <h6 class="text-success font-weight-bold">Recursos Asignados</h6>
-                                                                                                                                                                                                            <div class="mb-3">
-                                                                                                                                                                                                                <label class="small text-muted mb-0">Transportista</label>
-                                                                                                                                                                                                                <div class="font-weight-bold">${transpTxt}</div>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                <label class="small text-muted mb-0">Vehículo</label>
-                                                                                                                                                                                                                <div class="font-weight-bold">${vehicTxt}</div>
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        `;
+                                                                                                                                                                                                                                            <em>Instr: ${part.recogidaEntrega.instrucciones_recogida || ''} / ${part.recogidaEntrega.instrucciones_entrega || ''}</em>
+                                                                                                                                                                                                                                        </div>` : ''}
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="col-md-6">
+                                                                                                                                                                                                                                    <h6 class="text-success font-weight-bold">Recursos Asignados</h6>
+                                                                                                                                                                                                                                    <div class="mb-3">
+                                                                                                                                                                                                                                        <label class="small text-muted mb-0">Transportista</label>
+                                                                                                                                                                                                                                        <div class="font-weight-bold">${transpTxt}</div>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                                                        <label class="small text-muted mb-0">Vehículo</label>
+                                                                                                                                                                                                                                        <div class="font-weight-bold">${vehicTxt}</div>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                `;
                     container.insertAdjacentHTML('beforeend', html);
                 });
             }
@@ -1558,6 +1599,8 @@
             // --- ENVÍO FINAL ---
             async function submitForm() {
                 const btn = document.getElementById('btnFinish');
+                if (btn.disabled) return;
+
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
@@ -1613,8 +1656,15 @@
                         throw new Error(data.mensaje || data.error || 'Error desconocido en el servidor');
                     }
 
-                    alert('Envío creado exitosamente');
-                    window.location.href = '/admin/envios';
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'Envío creado exitosamente',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = '/admin/envios';
+                    });
 
                 } catch (e) {
                     console.error(e);
@@ -1628,7 +1678,7 @@
                         errorMsg += '\n' + Object.values(e.response.data.errors).flat().join('\n');
                     }
 
-                    alert('Error al crear el envío:\n' + errorMsg);
+                    Swal.fire('Error', 'Error al crear el envío:\n' + errorMsg, 'error');
 
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmar y Crear Envío';

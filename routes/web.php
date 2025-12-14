@@ -110,6 +110,13 @@ Route::group([], function () {
     Route::get('/documentos', function () {
         return view('cliente.documentos.index');
     })->name('documentos.index');
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Centro de Soporte Cliente
+    // ────────────────────────────────────────────────────────────────────────
+    Route::get('/helpdesk', function () {
+        return view('cliente.helpdesk.index');
+    })->name('cliente.helpdesk');
 });
 
 // ============================================================================
@@ -262,7 +269,7 @@ Route::prefix('admin')->group(function () {
     // ────────────────────────────────────────────────────────────────────────
     // Helpdesk Widget (Integración Manual / Nuclear Option)
     // ────────────────────────────────────────────────────────────────────────
-    
+
     // 1. Endpoint API para generar URL SSO (SSO backend-to-backend)
     Route::get('/api/helpdesk/sso-url', [\App\Http\Controllers\Admin\HelpdeskIntegrationController::class, 'generateUrl']);
 

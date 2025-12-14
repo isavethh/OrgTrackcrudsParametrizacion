@@ -9,20 +9,20 @@
 @section('title', 'OrgTrack - Admin')
 
 @section('content_header')
-    <h1 class="m-0">@yield('page-title', 'Dashboard Admin')</h1>
+<h1 class="m-0">@yield('page-title', 'Dashboard Admin')</h1>
 @stop
 
 @section('content')
-    @yield('page-content')
+@yield('page-content')
 @stop
 
 @section('css')
-    {{-- CSS adicional específico del admin --}}
-    @stack('css')
+{{-- CSS adicional específico del admin --}}
+@stack('css')
 @stop
 
 @section('js')
-    <script>
+<script>
     // Función de logout
     function performLogout(event) {
         if (event) event.preventDefault();
@@ -36,12 +36,12 @@
     }
 
     // Agregar evento de logout
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var logoutLink = document.getElementById('logout-link');
         if (logoutLink) {
             logoutLink.addEventListener('click', performLogout);
         }
     });
-    </script>
-    @stack('js')
+</script>
+@stack('js')
 @stop

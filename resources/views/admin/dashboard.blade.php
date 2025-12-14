@@ -266,83 +266,83 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <!-- Recent Envios -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Envíos Recientes</h3>
-            </div>
-            <!-- /.card-header -->
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Destinatario</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-envios">
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">Cargando...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Recent Envios -->
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">Envíos Recientes</h3>
                 </div>
+                <!-- /.card-header -->
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Destinatario</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-envios">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer text-center">
+                    <a href="{{ route('admin.envios.index') }}" class="uppercase">Ver todos los envíos</a>
+                </div>
+                <!-- /.card-footer -->
             </div>
-            <!-- /.card-body -->
-            <div class="card-footer text-center">
-                <a href="{{ route('admin.envios.index') }}" class="uppercase">Ver todos los envíos</a>
-            </div>
-            <!-- /.card-footer -->
+            <!-- /.card -->
         </div>
-        <!-- /.card -->
-    </div>
-    <!-- /.col -->
-    <div class="col-md-6">
-        <!-- Quick Actions -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Acciones Rápidas</h3>
-            </div>
-            <!-- /.card-header -->
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-6">
-                        <a href="{{ route('admin.envios.create') }}" class="btn btn-primary btn-block mb-3">
-                            <i class="fas fa-plus"></i> Nuevo Envío
-                        </a>
+        <!-- /.col -->
+        <div class="col-md-6">
+            <!-- Quick Actions -->
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">Acciones Rápidas</h3>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="{{ route('admin.envios.create') }}" class="btn btn-primary btn-block mb-3">
+                                <i class="fas fa-plus"></i> Nuevo Envío
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ route('admin.usuarios.index') }}" class="btn btn-success btn-block mb-3">
+                                <i class="fas fa-users"></i> Gestionar Usuarios
+                            </a>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <a href="{{ route('admin.usuarios.index') }}" class="btn btn-success btn-block mb-3">
-                            <i class="fas fa-users"></i> Gestionar Usuarios
-                        </a>
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="{{ route('admin.transportistas.index') }}" class="btn btn-info btn-block mb-3">
+                                <i class="fas fa-user-friends"></i> Transportistas
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ route('admin.vehiculos.index') }}" class="btn btn-warning btn-block mb-3">
+                                <i class="fas fa-truck"></i> Vehículos
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <a href="{{ route('admin.transportistas.index') }}" class="btn btn-info btn-block mb-3">
-                            <i class="fas fa-user-friends"></i> Transportistas
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="{{ route('admin.vehiculos.index') }}" class="btn btn-warning btn-block mb-3">
-                            <i class="fas fa-truck"></i> Vehículos
-                        </a>
-                    </div>
-                </div>
+                <!-- /.card-body -->
             </div>
-            <!-- /.card-body -->
+            <!-- /.card -->
         </div>
-        <!-- /.card -->
+        <!-- /.col -->
     </div>
-    <!-- /.col -->
-</div>
-<!-- /.row -->
-
+    <!-- /.row -->
+@endsection
 
 @push('js')
     <!-- Chart.js CDN -->
@@ -378,13 +378,13 @@
                             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay envíos</td></tr>';
                         } else {
                             tbody.innerHTML = recentEnvios.map(e => `
-                                    <tr>
-                                        <td>#${e.id}</td>
-                                        <td>${e.nombre_destino || '—'}</td>
-                                        <td><span class="badge badge-${e.estado === 'Entregado' ? 'success' : e.estado === 'En curso' ? 'info' : 'warning'}">${e.estado || '—'}</span></td>
-                                        <td>${e.fecha_creacion || '—'}</td>
-                                    </tr>
-                                `).join('');
+                                            <tr>
+                                                <td>#${e.id}</td>
+                                                <td>${e.nombre_destino || '—'}</td>
+                                                <td><span class="badge badge-${e.estado === 'Entregado' ? 'success' : e.estado === 'En curso' ? 'info' : 'warning'}">${e.estado || '—'}</span></td>
+                                                <td>${e.fecha_creacion || '—'}</td>
+                                            </tr>
+                                        `).join('');
                         }
                     }
 
