@@ -14,6 +14,7 @@ class FirmaController extends Controller
 {
     /**
      * Guardar firma de envío
+     * XD
      */
     public function guardarFirmaEnvio(Request $request, int $id_asignacion): JsonResponse
     {
