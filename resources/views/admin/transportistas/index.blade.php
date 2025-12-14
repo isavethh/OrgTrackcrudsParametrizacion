@@ -3,428 +3,520 @@
 @section('page-title', 'Transportistas')
 
 @section('page-content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title mb-0">Listado de Transportistas</h3>
-        <button class="btn btn-primary btn-sm" id="btnNuevoTransportista">
-            <i class="fas fa-plus"></i> Nuevo Transportista
-        </button>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-striped mb-0">
-                <thead>
-                    <tr>
-                        <th style="width: 60px;">ID</th>
-                        <th>Nombre</th>
-                        <th>CI</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th style="width: 160px;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="transportistasTableBody">
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Cargando transportistas...</td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Listado de Transportistas</h3>
+            <button class="btn btn-primary btn-sm" id="btnNuevoTransportista">
+                <i class="fas fa-plus"></i> Nuevo Transportista
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>Nombre</th>
+                            <th>CI</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th style="width: 160px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transportistasTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Cargando transportistas...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <div id="paginationInfo" class="text-muted">
+                    Mostrando 0 a 0 de 0 registros
+                </div>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls">
+                        <!-- Controles generados dinámicamente -->
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Modal Crear / Editar -->
-<div class="modal fade" id="transportistaModal" tabindex="-1" role="dialog" aria-labelledby="transportistaModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form id="transportistaForm">
+    <!-- Modal Crear / Editar -->
+    <div class="modal fade" id="transportistaModal" tabindex="-1" role="dialog" aria-labelledby="transportistaModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="transportistaForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="transportistaModalLabel">Nuevo transportista</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="transportistaIdField">
+
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="chkCrearUsuarioNuevo">
+                            <label class="form-check-label" for="chkCrearUsuarioNuevo">Crear nuevo usuario</label>
+                        </div>
+
+                        <div id="usuarioExistenteWrapper" class="form-group">
+                            <label for="selectUsuarioExistente">Seleccionar usuario registrado</label>
+                            <select class="form-control" id="selectUsuarioExistente"></select>
+                            <small class="form-text text-muted">Solo se muestran usuarios que aún no son
+                                transportistas.</small>
+                        </div>
+
+                        <div id="usuarioNuevoWrapper" class="border rounded p-3 mb-3 d-none">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="usuarioNombre">Nombre</label>
+                                    <input type="text" class="form-control" id="usuarioNombre">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="usuarioApellido">Apellido</label>
+                                    <input type="text" class="form-control" id="usuarioApellido">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="usuarioCorreo">Correo</label>
+                                <input type="email" class="form-control" id="usuarioCorreo">
+                            </div>
+                            <div class="form-group">
+                                <label for="usuarioContrasena">Contraseña</label>
+                                <input type="password" class="form-control" id="usuarioContrasena">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transportistaNombreResumen">Nombre completo</label>
+                            <input type="text" class="form-control" id="transportistaNombreResumen" disabled>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="transportistaCI">CI</label>
+                                <input type="text" class="form-control" id="transportistaCI" required maxlength="20">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="transportistaTelefono">Teléfono</label>
+                                <input type="text" class="form-control" id="transportistaTelefono" required maxlength="20">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transportistaEstado">Estado</label>
+                            <input type="text" class="form-control" id="transportistaEstado" value="Disponible" disabled>
+                            <small class="form-text text-muted">El estado se gestiona automáticamente.</small>
+                        </div>
+
+                        <div class="alert alert-danger d-none" id="transportistaError"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btnGuardarTransportista">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal eliminar -->
+    <div class="modal fade" id="transportistaDeleteModal" tabindex="-1" role="dialog"
+        aria-labelledby="transportistaDeleteLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="transportistaModalLabel">Nuevo transportista</h5>
+                    <h5 class="modal-title" id="transportistaDeleteLabel">Eliminar transportista</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="transportistaIdField">
-
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="chkCrearUsuarioNuevo">
-                        <label class="form-check-label" for="chkCrearUsuarioNuevo">Crear nuevo usuario</label>
-                    </div>
-
-                    <div id="usuarioExistenteWrapper" class="form-group">
-                        <label for="selectUsuarioExistente">Seleccionar usuario registrado</label>
-                        <select class="form-control" id="selectUsuarioExistente"></select>
-                        <small class="form-text text-muted">Solo se muestran usuarios que aún no son transportistas.</small>
-                    </div>
-
-                    <div id="usuarioNuevoWrapper" class="border rounded p-3 mb-3 d-none">
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="usuarioNombre">Nombre</label>
-                                <input type="text" class="form-control" id="usuarioNombre">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="usuarioApellido">Apellido</label>
-                                <input type="text" class="form-control" id="usuarioApellido">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="usuarioCorreo">Correo</label>
-                            <input type="email" class="form-control" id="usuarioCorreo">
-                        </div>
-                        <div class="form-group">
-                            <label for="usuarioContrasena">Contraseña</label>
-                            <input type="password" class="form-control" id="usuarioContrasena">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transportistaNombreResumen">Nombre completo</label>
-                        <input type="text" class="form-control" id="transportistaNombreResumen" disabled>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="transportistaCI">CI</label>
-                            <input type="text" class="form-control" id="transportistaCI" required maxlength="20">
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="transportistaTelefono">Teléfono</label>
-                            <input type="text" class="form-control" id="transportistaTelefono" required maxlength="20">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="transportistaEstado">Estado</label>
-                        <input type="text" class="form-control" id="transportistaEstado" value="Disponible" disabled>
-                        <small class="form-text text-muted">El estado se gestiona automáticamente.</small>
-                    </div>
-
-                    <div class="alert alert-danger d-none" id="transportistaError"></div>
+                    ¿Seguro que deseas eliminar al transportista <strong id="transportistaDeleteNombre"></strong>?
+                    <div class="alert alert-danger d-none mt-3" id="transportistaDeleteError"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btnGuardarTransportista">Guardar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmDeleteTransportista">Eliminar</button>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal eliminar -->
-<div class="modal fade" id="transportistaDeleteModal" tabindex="-1" role="dialog" aria-labelledby="transportistaDeleteLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="transportistaDeleteLabel">Eliminar transportista</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                ¿Seguro que deseas eliminar al transportista <strong id="transportistaDeleteNombre"></strong>?
-                <div class="alert alert-danger d-none mt-3" id="transportistaDeleteError"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="btnConfirmDeleteTransportista">Eliminar</button>
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('js')
-<script>
-    const tokenRaw = localStorage.getItem('authToken');
-    const authToken = tokenRaw ? tokenRaw.replace(/^"+|"+$/g, '') : null;
-    if (!authToken) { window.location.href = '/login'; }
+    <script>
+        const tokenRaw = localStorage.getItem('authToken');
+        const authToken = tokenRaw ? tokenRaw.replace(/^"+|"+$/g, '') : null;
+        if (!authToken) { window.location.href = '/login'; }
 
-    const tablaBody = document.getElementById('transportistasTableBody');
-    const btnNuevo = document.getElementById('btnNuevoTransportista');
-    const formTransportista = document.getElementById('transportistaForm');
-    const modalTransportista = $('#transportistaModal');
-    const modalEliminar = $('#transportistaDeleteModal');
+        const tablaBody = document.getElementById('transportistasTableBody');
+        const btnNuevo = document.getElementById('btnNuevoTransportista');
+        const formTransportista = document.getElementById('transportistaForm');
+        const modalTransportista = $('#transportistaModal');
+        const modalEliminar = $('#transportistaDeleteModal');
 
-    const fieldId = document.getElementById('transportistaIdField');
-    const chkNuevoUsuario = document.getElementById('chkCrearUsuarioNuevo');
-    const wrapperUsuarioExistente = document.getElementById('usuarioExistenteWrapper');
-    const wrapperUsuarioNuevo = document.getElementById('usuarioNuevoWrapper');
-    const selectUsuario = document.getElementById('selectUsuarioExistente');
-    const fieldNombre = document.getElementById('usuarioNombre');
-    const fieldApellido = document.getElementById('usuarioApellido');
-    const fieldCorreo = document.getElementById('usuarioCorreo');
-    const fieldContrasena = document.getElementById('usuarioContrasena');
+        const fieldId = document.getElementById('transportistaIdField');
+        const chkNuevoUsuario = document.getElementById('chkCrearUsuarioNuevo');
+        const wrapperUsuarioExistente = document.getElementById('usuarioExistenteWrapper');
+        const wrapperUsuarioNuevo = document.getElementById('usuarioNuevoWrapper');
+        const selectUsuario = document.getElementById('selectUsuarioExistente');
+        const fieldNombre = document.getElementById('usuarioNombre');
+        const fieldApellido = document.getElementById('usuarioApellido');
+        const fieldCorreo = document.getElementById('usuarioCorreo');
+        const fieldContrasena = document.getElementById('usuarioContrasena');
 
-    const fieldResumenNombre = document.getElementById('transportistaNombreResumen');
-    const fieldCI = document.getElementById('transportistaCI');
-    const fieldTelefono = document.getElementById('transportistaTelefono');
-    const fieldEstado = document.getElementById('transportistaEstado');
-    const errorForm = document.getElementById('transportistaError');
-    const btnGuardar = document.getElementById('btnGuardarTransportista');
+        const fieldResumenNombre = document.getElementById('transportistaNombreResumen');
+        const fieldCI = document.getElementById('transportistaCI');
+        const fieldTelefono = document.getElementById('transportistaTelefono');
+        const fieldEstado = document.getElementById('transportistaEstado');
+        const errorForm = document.getElementById('transportistaError');
+        const btnGuardar = document.getElementById('btnGuardarTransportista');
 
-    const deleteNombre = document.getElementById('transportistaDeleteNombre');
-    const deleteError = document.getElementById('transportistaDeleteError');
-    const btnDeleteConfirm = document.getElementById('btnConfirmDeleteTransportista');
+        const deleteNombre = document.getElementById('transportistaDeleteNombre');
+        const deleteError = document.getElementById('transportistaDeleteError');
+        const btnDeleteConfirm = document.getElementById('btnConfirmDeleteTransportista');
 
-    let idTransportistaDelete = null;
-    let transportistasCache = [];
-    let clientesDisponibles = [];
+        let idTransportistaDelete = null;
+        let transportistasCache = [];
+        let clientesDisponibles = [];
 
-    const badgeEstado = (estado) => {
-        const clases = {
-            'Disponible': 'badge-success',
-            'No Disponible': 'badge-secondary',
-            'En ruta': 'badge-info',
-            'Inactivo': 'badge-warning'
-        };
-        return `<span class="badge ${clases[estado] || 'badge-light'}">${estado}</span>`;
-    };
+        // Variables de paginación
+        var currentPage = 1;
+        const itemsPerPage = 10;
+        var filteredData = [];
 
-    function actualizarResumenNombre() {
-        if (chkNuevoUsuario.checked) {
-            fieldResumenNombre.value = `${fieldNombre.value.trim()} ${fieldApellido.value.trim()}`.trim();
-        } else {
-            const selected = selectUsuario.options[selectUsuario.selectedIndex];
-            fieldResumenNombre.value = selected ? selected.textContent : '';
-        }
-    }
+        function renderTransportistas(data) {
+            filteredData = data;
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-    chkNuevoUsuario.addEventListener('change', () => {
-        if (chkNuevoUsuario.checked) {
-            wrapperUsuarioNuevo.classList.remove('d-none');
-            wrapperUsuarioExistente.classList.add('d-none');
-            selectUsuario.value = '';
-        } else {
-            wrapperUsuarioNuevo.classList.add('d-none');
-            wrapperUsuarioExistente.classList.remove('d-none');
-        }
-        actualizarResumenNombre();
-    });
+            // Ajustar página actual si excede el total
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+            if (currentPage < 1) currentPage = 1;
 
-    [selectUsuario, fieldNombre, fieldApellido].forEach(el => {
-        el.addEventListener('input', actualizarResumenNombre);
-        el.addEventListener('change', actualizarResumenNombre);
-    });
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
-    async function cargarClientesDisponibles(){
-        try{
-            const res = await fetch(`${window.location.origin}/api/usuarios/rol/cliente`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            if (!res.ok) throw new Error('No se pudieron cargar los usuarios disponibles');
-            const usuarios = await res.json();
-            clientesDisponibles = usuarios.filter(u => !transportistasCache.some(t => t.id_usuario === u.id));
-            selectUsuario.innerHTML = '<option value="">Selecciona un usuario...</option>';
-            clientesDisponibles.forEach(u => {
-                const opt = document.createElement('option');
-                opt.value = u.id;
-                opt.textContent = `${u.nombre} ${u.apellido} (${u.correo || ''})`;
-                selectUsuario.appendChild(opt);
-            });
-        } catch(e){
-            selectUsuario.innerHTML = `<option value="">${e.message}</option>`;
-        }
-    }
+            const paginationInfo = document.getElementById('paginationInfo');
+            const paginationControls = document.getElementById('paginationControls');
 
-    async function cargarTransportistas(){
-        tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Cargando transportistas...</td></tr>`;
-        try{
-            const res = await fetch(`${window.location.origin}/api/transportistas`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            if (!res.ok){
-                if (res.status === 401){ localStorage.removeItem('authToken'); window.location.href = '/login'; return; }
-                throw new Error('No se pudieron cargar los transportistas');
-            }
-            const datos = await res.json();
-            transportistasCache = Array.isArray(datos) ? datos : [];
-            if (transportistasCache.length === 0){
-                tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay transportistas registrados.</td></tr>`;
+            // Renderizar Información de Paginación
+            if (totalItems === 0) {
+                tablaBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay transportistas registrados.</td></tr>';
+                paginationInfo.textContent = 'Mostrando 0 a 0 de 0 registros';
+                paginationControls.innerHTML = '';
                 return;
             }
-            tablaBody.innerHTML = transportistasCache.map(t => {
+
+            paginationInfo.textContent = `Mostrando ${startIndex + 1} a ${endIndex} de ${totalItems} registros`;
+
+            // Obtener items de la página actual
+            const itemsToShow = data.slice(startIndex, endIndex);
+
+            // Renderizar filas
+            tablaBody.innerHTML = itemsToShow.map(t => {
                 const nombreCompleto = `${t.nombre || ''} ${t.apellido || ''}`.trim() || '—';
                 const disabled = t.estado === 'En ruta' ? 'disabled' : '';
                 return `
-                    <tr data-id="${t.id}">
-                        <td>${t.id}</td>
-                        <td>${nombreCompleto}</td>
-                        <td>${t.ci || '—'}</td>
-                        <td>${t.telefono || '—'}</td>
-                        <td>${badgeEstado(t.estado)}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-warning btn-editar" data-id="${t.id}" ${disabled}><i class="fas fa-edit"></i></button>
-                                <button class="btn btn-outline-danger btn-eliminar" data-id="${t.id}" data-nombre="${nombreCompleto}" ${disabled}><i class="fas fa-trash"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                        <tr data-id="${t.id}">
+                            <td>${t.id}</td>
+                            <td>${nombreCompleto}</td>
+                            <td>${t.ci || '—'}</td>
+                            <td>${t.telefono || '—'}</td>
+                            <td>${badgeEstado(t.estado)}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-warning btn-editar" data-id="${t.id}" ${disabled}><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-outline-danger btn-eliminar" data-id="${t.id}" data-nombre="${nombreCompleto}" ${disabled}><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
             }).join('');
-        } catch(e){
-            tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${e.message}</td></tr>`;
-        }
-    }
 
-    function limpiarModal(){
-        formTransportista.reset();
-        fieldId.value = '';
-        fieldEstado.value = 'Disponible';
-        chkNuevoUsuario.checked = false;
-        wrapperUsuarioNuevo.classList.add('d-none');
-        wrapperUsuarioExistente.classList.remove('d-none');
-        errorForm.classList.add('d-none');
-        fieldResumenNombre.value = '';
-        fieldContrasena.value = '';
-    }
+            // Renderizar Controles de Paginación
+            let controlsHtml = '';
 
-    async function abrirModalCrear(){
-        limpiarModal();
-        await cargarClientesDisponibles();
-        actualizarResumenNombre();
-        document.getElementById('transportistaModalLabel').innerText = 'Nuevo transportista';
-        modalTransportista.modal('show');
-    }
+            // Botón Anterior
+            controlsHtml += `
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage - 1})">Anterior</a>
+                    </li>
+                `;
 
-    function abrirModalEditar(id){
-        const t = transportistasCache.find(item => item.id === Number(id));
-        if (!t) return;
-        limpiarModal();
-        fieldId.value = t.id;
-        chkNuevoUsuario.checked = false;
-        wrapperUsuarioNuevo.classList.add('d-none');
-        wrapperUsuarioExistente.classList.add('d-none');
-        fieldResumenNombre.value = `${t.nombre || ''} ${t.apellido || ''}`.trim();
-        fieldCI.value = t.ci || '';
-        fieldTelefono.value = t.telefono || '';
-        fieldEstado.value = t.estado || 'Disponible';
-        document.getElementById('transportistaModalLabel').innerText = 'Editar transportista';
-        modalTransportista.modal('show');
-    }
-
-    async function guardarTransportista(e){
-        e.preventDefault();
-        errorForm.classList.add('d-none');
-
-        const id = fieldId.value;
-        const ciValue = fieldCI.value.trim();
-        const telefonoValue = fieldTelefono.value.trim();
-
-        let url = `${window.location.origin}/api/transportistas`;
-        let method = 'POST';
-        let payload = {};
-
-        if (id){
-            if (!ciValue || !telefonoValue){
-                errorForm.textContent = 'Completa los campos de CI y teléfono.';
-                errorForm.classList.remove('d-none');
-                return;
-            }
-            payload = { ci: ciValue, telefono: telefonoValue };
-            url += `/${id}`;
-            method = 'PUT';
-        } else if (chkNuevoUsuario.checked){
-            if (!fieldNombre.value.trim() || !fieldApellido.value.trim() || !fieldCorreo.value.trim() || !fieldContrasena.value.trim() || !ciValue){
-                errorForm.textContent = 'Completa los datos del nuevo usuario (nombre, apellido, correo, contraseña, CI).';
-                errorForm.classList.remove('d-none');
-                return;
-            }
-            payload = {
-                usuario: {
-                    nombre: fieldNombre.value.trim(),
-                    apellido: fieldApellido.value.trim(),
-                    correo: fieldCorreo.value.trim(),
-                    contrasena: fieldContrasena.value.trim(),
-                    ci: ciValue,
-                    telefono: telefonoValue || null
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    controlsHtml += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${i})">${i}</a>
+                            </li>
+                        `;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    controlsHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                 }
+            }
+
+            // Botón Siguiente
+            controlsHtml += `
+                    <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); changePage(${currentPage + 1})">Siguiente</a>
+                    </li>
+                `;
+
+            paginationControls.innerHTML = controlsHtml;
+        }
+
+        function changePage(page) {
+            const totalItems = transportistasCache.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            renderTransportistas(transportistasCache);
+        }
+
+        const badgeEstado = (estado) => {
+            const clases = {
+                'Disponible': 'badge-success',
+                'No Disponible': 'badge-secondary',
+                'En ruta': 'badge-info',
+                'Inactivo': 'badge-warning'
             };
-            url += '/completo';
-        } else {
-            if (!selectUsuario.value){
-                errorForm.textContent = 'Selecciona un usuario existente.';
+            return `<span class="badge ${clases[estado] || 'badge-light'}">${estado}</span>`;
+        };
+
+        function actualizarResumenNombre() {
+            if (chkNuevoUsuario.checked) {
+                fieldResumenNombre.value = `${fieldNombre.value.trim()} ${fieldApellido.value.trim()}`.trim();
+            } else {
+                const selected = selectUsuario.options[selectUsuario.selectedIndex];
+                fieldResumenNombre.value = selected ? selected.textContent : '';
+            }
+        }
+
+        chkNuevoUsuario.addEventListener('change', () => {
+            if (chkNuevoUsuario.checked) {
+                wrapperUsuarioNuevo.classList.remove('d-none');
+                wrapperUsuarioExistente.classList.add('d-none');
+                selectUsuario.value = '';
+            } else {
+                wrapperUsuarioNuevo.classList.add('d-none');
+                wrapperUsuarioExistente.classList.remove('d-none');
+            }
+            actualizarResumenNombre();
+        });
+
+        [selectUsuario, fieldNombre, fieldApellido].forEach(el => {
+            el.addEventListener('input', actualizarResumenNombre);
+            el.addEventListener('change', actualizarResumenNombre);
+        });
+
+        async function cargarClientesDisponibles() {
+            try {
+                const res = await fetch(`${window.location.origin}/api/usuarios/rol/cliente`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!res.ok) throw new Error('No se pudieron cargar los usuarios disponibles');
+                const usuarios = await res.json();
+                clientesDisponibles = usuarios.filter(u => !transportistasCache.some(t => t.id_usuario === u.id));
+                selectUsuario.innerHTML = '<option value="">Selecciona un usuario...</option>';
+                clientesDisponibles.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = `${u.nombre} ${u.apellido} (${u.correo || ''})`;
+                    selectUsuario.appendChild(opt);
+                });
+            } catch (e) {
+                selectUsuario.innerHTML = `<option value="">${e.message}</option>`;
+            }
+        }
+
+        async function cargarTransportistas() {
+            // tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Cargando transportistas...</td></tr>`; 
+            try {
+                const res = await fetch(`${window.location.origin}/api/transportistas`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!res.ok) {
+                    if (res.status === 401) { localStorage.removeItem('authToken'); window.location.href = '/login'; return; }
+                    throw new Error('No se pudieron cargar los transportistas');
+                }
+                const datos = await res.json();
+                transportistasCache = Array.isArray(datos) ? datos : [];
+
+                // Inicializar paginación
+                renderTransportistas(transportistasCache);
+
+            } catch (e) {
+                tablaBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${e.message}</td></tr>`;
+            }
+        }
+
+        function limpiarModal() {
+            formTransportista.reset();
+            fieldId.value = '';
+            fieldEstado.value = 'Disponible';
+            chkNuevoUsuario.checked = false;
+            wrapperUsuarioNuevo.classList.add('d-none');
+            wrapperUsuarioExistente.classList.remove('d-none');
+            errorForm.classList.add('d-none');
+            fieldResumenNombre.value = '';
+            fieldContrasena.value = '';
+        }
+
+        async function abrirModalCrear() {
+            limpiarModal();
+            await cargarClientesDisponibles();
+            actualizarResumenNombre();
+            document.getElementById('transportistaModalLabel').innerText = 'Nuevo transportista';
+            modalTransportista.modal('show');
+        }
+
+        function abrirModalEditar(id) {
+            const t = transportistasCache.find(item => item.id === Number(id));
+            if (!t) return;
+            limpiarModal();
+            fieldId.value = t.id;
+            chkNuevoUsuario.checked = false;
+            wrapperUsuarioNuevo.classList.add('d-none');
+            wrapperUsuarioExistente.classList.add('d-none');
+            fieldResumenNombre.value = `${t.nombre || ''} ${t.apellido || ''}`.trim();
+            fieldCI.value = t.ci || '';
+            fieldTelefono.value = t.telefono || '';
+            fieldEstado.value = t.estado || 'Disponible';
+            document.getElementById('transportistaModalLabel').innerText = 'Editar transportista';
+            modalTransportista.modal('show');
+        }
+
+        async function guardarTransportista(e) {
+            e.preventDefault();
+            errorForm.classList.add('d-none');
+
+            const id = fieldId.value;
+            const ciValue = fieldCI.value.trim();
+            const telefonoValue = fieldTelefono.value.trim();
+
+            let url = `${window.location.origin}/api/transportistas`;
+            let method = 'POST';
+            let payload = {};
+
+            if (id) {
+                if (!ciValue || !telefonoValue) {
+                    errorForm.textContent = 'Completa los campos de CI y teléfono.';
+                    errorForm.classList.remove('d-none');
+                    return;
+                }
+                payload = { ci: ciValue, telefono: telefonoValue };
+                url += `/${id}`;
+                method = 'PUT';
+            } else if (chkNuevoUsuario.checked) {
+                if (!fieldNombre.value.trim() || !fieldApellido.value.trim() || !fieldCorreo.value.trim() || !fieldContrasena.value.trim() || !ciValue) {
+                    errorForm.textContent = 'Completa los datos del nuevo usuario (nombre, apellido, correo, contraseña, CI).';
+                    errorForm.classList.remove('d-none');
+                    return;
+                }
+                payload = {
+                    usuario: {
+                        nombre: fieldNombre.value.trim(),
+                        apellido: fieldApellido.value.trim(),
+                        correo: fieldCorreo.value.trim(),
+                        contrasena: fieldContrasena.value.trim(),
+                        ci: ciValue,
+                        telefono: telefonoValue || null
+                    }
+                };
+                url += '/completo';
+            } else {
+                if (!selectUsuario.value) {
+                    errorForm.textContent = 'Selecciona un usuario existente.';
+                    errorForm.classList.remove('d-none');
+                    return;
+                }
+                payload = { id_usuario: Number(selectUsuario.value) };
+            }
+
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Guardando...';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || (err.mensaje ?? 'No se pudo guardar el transportista'));
+                }
+                modalTransportista.modal('hide');
+                await cargarTransportistas();
+            } catch (e) {
+                errorForm.textContent = e.message;
                 errorForm.classList.remove('d-none');
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = 'Guardar';
+            }
+        }
+
+        function abrirModalEliminar(id, nombre) {
+            idTransportistaDelete = id;
+            deleteNombre.textContent = nombre;
+            deleteError.classList.add('d-none');
+            modalEliminar.modal('show');
+        }
+
+        async function eliminarTransportista() {
+            if (!idTransportistaDelete) return;
+            btnDeleteConfirm.disabled = true;
+            btnDeleteConfirm.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
+            try {
+                const res = await fetch(`${window.location.origin}/api/transportistas/${idTransportistaDelete}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'No se pudo eliminar el transportista');
+                }
+                modalEliminar.modal('hide');
+                await cargarTransportistas();
+            } catch (e) {
+                deleteError.textContent = e.message;
+                deleteError.classList.remove('d-none');
+            } finally {
+                btnDeleteConfirm.disabled = false;
+                btnDeleteConfirm.innerHTML = 'Eliminar';
+            }
+        }
+
+        tablaBody.addEventListener('click', (e) => {
+            const btnEdit = e.target.closest('.btn-editar');
+            if (btnEdit) {
+                abrirModalEditar(btnEdit.dataset.id);
                 return;
             }
-            payload = { id_usuario: Number(selectUsuario.value) };
-        }
-
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Guardando...';
-
-        try{
-            const res = await fetch(url, {
-                method,
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok){
-                const err = await res.json().catch(()=>({}));
-                throw new Error(err.error || (err.mensaje ?? 'No se pudo guardar el transportista'));
+            const btnDel = e.target.closest('.btn-eliminar');
+            if (btnDel) {
+                abrirModalEliminar(btnDel.dataset.id, btnDel.dataset.nombre);
             }
-            modalTransportista.modal('hide');
-            await cargarTransportistas();
-        } catch(e){
-            errorForm.textContent = e.message;
-            errorForm.classList.remove('d-none');
-        } finally {
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = 'Guardar';
-        }
-    }
+        });
 
-    function abrirModalEliminar(id, nombre){
-        idTransportistaDelete = id;
-        deleteNombre.textContent = nombre;
-        deleteError.classList.add('d-none');
-        modalEliminar.modal('show');
-    }
+        btnNuevo.addEventListener('click', abrirModalCrear);
+        formTransportista.addEventListener('submit', guardarTransportista);
+        btnDeleteConfirm.addEventListener('click', eliminarTransportista);
 
-    async function eliminarTransportista(){
-        if (!idTransportistaDelete) return;
-        btnDeleteConfirm.disabled = true;
-        btnDeleteConfirm.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando...';
-        try{
-            const res = await fetch(`${window.location.origin}/api/transportistas/${idTransportistaDelete}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            if (!res.ok){
-                const err = await res.json().catch(()=>({}));
-                throw new Error(err.error || 'No se pudo eliminar el transportista');
-            }
-            modalEliminar.modal('hide');
-            await cargarTransportistas();
-        } catch(e){
-            deleteError.textContent = e.message;
-            deleteError.classList.remove('d-none');
-        } finally {
-            btnDeleteConfirm.disabled = false;
-            btnDeleteConfirm.innerHTML = 'Eliminar';
-        }
-    }
-
-    tablaBody.addEventListener('click', (e)=>{
-        const btnEdit = e.target.closest('.btn-editar');
-        if (btnEdit){
-            abrirModalEditar(btnEdit.dataset.id);
-            return;
-        }
-        const btnDel = e.target.closest('.btn-eliminar');
-        if (btnDel){
-            abrirModalEliminar(btnDel.dataset.id, btnDel.dataset.nombre);
-        }
-    });
-
-    btnNuevo.addEventListener('click', abrirModalCrear);
-    formTransportista.addEventListener('submit', guardarTransportista);
-    btnDeleteConfirm.addEventListener('click', eliminarTransportista);
-
-    cargarTransportistas();
-</script>
+        cargarTransportistas();
+    </script>
 @endpush

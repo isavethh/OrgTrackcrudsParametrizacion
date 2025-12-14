@@ -452,6 +452,7 @@ class EnvioController extends Controller
                     ],
                     'nombre_origen' => $envio->direccion?->nombreorigen ?? "—",
                     'nombre_destino' => $envio->direccion?->nombredestino ?? "—",
+                    'observacion_cancelacion' => $envio->observacion_cancelacion,
                     'particiones' => [] // Por ahora vacío, se puede expandir después
                 ];
             });
@@ -600,6 +601,7 @@ class EnvioController extends Controller
                 return $p['estado'] === 'En curso';
             })->count();
             $envio->estado_resumen = "En curso ({$activos} de {$total} camiones activos)";
+            $envio->motivo = $envio->observacion_cancelacion;
 
             return response()->json($envio);
 
@@ -795,6 +797,8 @@ class EnvioController extends Controller
                         'cargas' => $cargasTransformadas,
                     ];
                 });
+
+                $envio->motivo = $envio->observacion_cancelacion;
 
                 return $envio;
             });
@@ -1858,7 +1862,7 @@ class EnvioController extends Controller
                 'motivo_cancelacion' => 'nullable|string|max:500'
             ]);
 
-            $envio = Envio::with(['asignaciones.transportista', 'asignaciones.vehiculo'])
+            $envio = Envio::with(['asignaciones.transportista', 'asignaciones.vehiculo', 'asignaciones.estadoAsignacion'])
                 ->find($id_envio);
 
             if (!$envio) {
@@ -1871,10 +1875,12 @@ class EnvioController extends Controller
             // Verificar que TODAS las particiones estén en estado Pendiente
             $estadosNoPermitidos = [];
             foreach ($envio->asignaciones as $asignacion) {
-                \Log::info("Asignación ID {$asignacion->id} - Estado: '{$asignacion->estado}'");
+                $nombreEstado = $asignacion->estadoAsignacion?->nombre ?? 'Sin Estado';
+                \Log::info("Asignación ID {$asignacion->id} - Estado: '{$nombreEstado}'");
 
-                if ($asignacion->estado !== 'Pendiente') {
-                    $estadosNoPermitidos[] = "Partición ID {$asignacion->id}: {$asignacion->estado}";
+                // Normalizar a minúsculas para comparar
+                if (strtolower($nombreEstado) !== 'pendiente') {
+                    $estadosNoPermitidos[] = "Partición ID {$asignacion->id}: {$nombreEstado}";
                 }
             }
 
@@ -1911,6 +1917,13 @@ class EnvioController extends Controller
 
             // Actualizar estado general del envío a Cancelado
             EstadoHelper::actualizarEstadoEnvio($id_envio, 'Cancelado');
+
+            // Guardar datos de cancelación en el modelo Envio
+            $envio->update([
+                'cancelado' => true,
+                'observacion_cancelacion' => $request->motivo_cancelacion ?? 'Sin motivo especificado',
+                'fecha_cancelacion' => now(),
+            ]);
 
             DB::commit();
 

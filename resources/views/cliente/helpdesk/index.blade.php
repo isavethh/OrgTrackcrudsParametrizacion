@@ -1,4 +1,4 @@
-@extends('layouts.adminlte')
+@extends('layouts.cliente')
 
 @section('title', 'Centro de Soporte')
 
@@ -48,7 +48,7 @@
             async function initHelpdesk() {
                 try {
                     // 1. Obtener Token Local
-                    const token = localStorage.getItem('authToken') || localStorage.getItem('token'); // Ajustar key
+                    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
 
                     if (!token) {
                         throw new Error('No se encontró sesión activa (Token is missing). Por favor inicia sesión nuevamente.');
@@ -56,7 +56,7 @@
 
                     status.innerText = "Negociando acceso seguro...";
 
-                    // 2. Pedir URL firmada al Backend (NUESTRO endpoint)
+                    // 2. Pedir URL firmada al Backend (usando el mismo endpoint del admin)
                     const response = await fetch('/admin/api/helpdesk/sso-url', {
                         headers: {
                             'Authorization': `Bearer ${token}`,

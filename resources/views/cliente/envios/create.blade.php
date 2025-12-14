@@ -773,6 +773,7 @@
 @push('js')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Evitar doble ejecución del script (soluciona duplicidad de particiones)
@@ -880,7 +881,7 @@
                     const hasMarkers = state.markers.origin && state.markers.destination;
 
                     if (!idDir && !hasMarkers) {
-                        alert('Por favor selecciona una ruta guardada o marca origen y destino en el mapa.');
+                        Swal.fire('Atención', 'Por favor selecciona una ruta guardada o marca origen y destino en el mapa.', 'warning');
                         return false;
                     }
                     return true;
@@ -889,7 +890,7 @@
                     // Validar que haya al menos una partición
                     const parts = document.querySelectorAll('.particion-item');
                     if (parts.length === 0) {
-                        alert('Debes agregar al menos un envío/camión.');
+                        Swal.fire('Atención', 'Debes agregar al menos un envío/camión.', 'warning');
                         return false;
                     }
 
@@ -906,7 +907,7 @@
                     });
 
                     if (!isValid) {
-                        alert('Por favor completa todos los campos obligatorios en los detalles del envío.');
+                        Swal.fire('Atención', 'Por favor completa todos los campos obligatorios en los detalles del envío.', 'warning');
                         return false;
                     }
 
@@ -919,7 +920,7 @@
                     });
 
                     if (emptyLoads) {
-                        alert('Cada envío debe tener al menos un producto/carga.');
+                        Swal.fire('Atención', 'Cada envío debe tener al menos un producto/carga.', 'warning');
                         return false;
                     }
 
@@ -1155,7 +1156,7 @@
                         card.remove();
                         renumberPartitions();
                     } else {
-                        alert('Debe haber al menos una partición.');
+                        Swal.fire('Atención', 'Debe haber al menos una partición.', 'warning');
                     }
                 });
 
@@ -1178,7 +1179,7 @@
                     if (containerEl.querySelectorAll('.carga-item').length > 1) {
                         e.target.closest('.carga-item').remove();
                     } else {
-                        alert('Debe haber al menos un producto.');
+                        Swal.fire('Atención', 'Debe haber al menos un producto.', 'warning');
                     }
                 });
 
@@ -1404,24 +1405,24 @@
                     const cargasHtml = p.cargas.map(c => `<li>${c.cantidad || 1}x ${c._productoNombre} - ${(c.peso || 0).toFixed(2)}kg</li>`).join('');
 
                     const html = `
-                                            <div class="card mb-2">
-                                                <div class="card-header bg-light p-2">
-                                                    <h5 class="mb-0">
-                                                        <button class="btn btn-link btn-block text-left text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseRes${idx}">
-                                                            Camión #${idx + 1} - ${p.recogidaEntrega.fecha_recogida}
-                                                        </button>
-                                                    </h5>
-                                                </div>
-                                                <div id="collapseRes${idx}" class="collapse show">
-                                                    <div class="card-body p-3">
-                                                        <p class="mb-1"><strong>Horario:</strong> ${p.recogidaEntrega.hora_recogida} - ${p.recogidaEntrega.hora_entrega}</p>
-                                                        <p class="mb-2"><strong>Instrucciones:</strong> ${p.recogidaEntrega.instrucciones_recogida || 'Ninguna'}</p>
-                                                        <strong>Cargas:</strong>
-                                                        <ul class="pl-3 mb-0">${cargasHtml}</ul>
+                                                <div class="card mb-2">
+                                                    <div class="card-header bg-light p-2">
+                                                        <h5 class="mb-0">
+                                                            <button class="btn btn-link btn-block text-left text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#collapseRes${idx}">
+                                                                Camión #${idx + 1} - ${p.recogidaEntrega.fecha_recogida}
+                                                            </button>
+                                                        </h5>
+                                                    </div>
+                                                    <div id="collapseRes${idx}" class="collapse show">
+                                                        <div class="card-body p-3">
+                                                            <p class="mb-1"><strong>Horario:</strong> ${p.recogidaEntrega.hora_recogida} - ${p.recogidaEntrega.hora_entrega}</p>
+                                                            <p class="mb-2"><strong>Instrucciones:</strong> ${p.recogidaEntrega.instrucciones_recogida || 'Ninguna'}</p>
+                                                            <strong>Cargas:</strong>
+                                                            <ul class="pl-3 mb-0">${cargasHtml}</ul>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        `;
+                                            `;
                     container.insertAdjacentHTML('beforeend', html);
                 });
             }
@@ -1470,11 +1471,17 @@
                         throw new Error(err.error || 'Error al crear el envío');
                     }
 
-                    alert('¡Envío creado exitosamente!');
-                    window.location.href = '/envios'; // Redirigir al index
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: '¡Envío creado exitosamente!',
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => {
+                        window.location.href = '/envios';
+                    });
 
                 } catch (e) {
-                    alert(e.message);
+                    Swal.fire('Error', e.message, 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmar y Crear Envío';
                 }

@@ -7,7 +7,7 @@ return [
         'route' => 'dashboard',
         'icon' => 'fas fa-tachometer-alt',
     ],
-    
+
     // Envíos
     ['header' => 'GESTIÓN DE ENVÍOS'],
     [
@@ -20,7 +20,7 @@ return [
         'route' => 'envios.create',
         'icon' => 'fas fa-plus-circle',
     ],
-    
+
     // Direcciones
     ['header' => 'DIRECCIONES'],
     [
@@ -28,7 +28,7 @@ return [
         'route' => 'direcciones.index',
         'icon' => 'fas fa-map-marked-alt',
     ],
-    
+
     // Documentos
     ['header' => 'DOCUMENTOS'],
     [
@@ -41,10 +41,10 @@ return [
     ['header' => 'SOPORTE'],
     [
         'text' => 'Centro de Soporte',
-        'route' => 'helpdesk',
+        'route' => 'cliente.helpdesk',
         'icon' => 'fas fa-fw fa-headset',
     ],
-    
+
     // Logout
     ['header' => 'CUENTA'],
     [

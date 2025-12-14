@@ -44,12 +44,12 @@ class UbicacionController extends Controller
         if (!$usuarioId) {
             return response()->json(['error' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
         }
-        
+
         // Obtener direcciones del usuario (directamente o a través de envíos)
         $direccionesIds = Envio::where('id_usuario', $usuarioId)
             ->distinct()
             ->pluck('id_direccion');
-        
+
         $items = Direccion::where('id_usuario', $usuarioId)
             ->orWhereIn('id', $direccionesIds)
             ->with('segmentos')
@@ -69,7 +69,7 @@ class UbicacionController extends Controller
                 return ($tieneCoordenadas ? 1000000000 : 0) + $item->id;
             })->first();
         })->values();
-        
+
         return response()->json($items);
     }
 
@@ -79,22 +79,22 @@ class UbicacionController extends Controller
         if (!$usuarioId) {
             return response()->json(['error' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
         }
-        
+
         // Verificar que la dirección pertenece al usuario o a un envío del usuario
         $direccion = Direccion::with('segmentos')->find($id);
         if (!$direccion) {
             return response()->json(['error' => 'Dirección no encontrada'], Response::HTTP_NOT_FOUND);
         }
-        
-        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId || 
+
+        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId ||
             Envio::where('id_usuario', $usuarioId)
                 ->where('id_direccion', $id)
                 ->exists();
-        
+
         if (!$perteneceAlUsuario) {
             return response()->json(['error' => 'Dirección no encontrada o no autorizada'], Response::HTTP_NOT_FOUND);
         }
-        
+
         return response()->json($direccion);
     }
 
@@ -105,15 +105,15 @@ class UbicacionController extends Controller
             return response()->json(['error' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
         }
         $data = $request->validate([
-            'nombreOrigen' => ['nullable','string','max:200'],
-            'origen_lng' => ['nullable','numeric'],
-            'origen_lat' => ['nullable','numeric'],
-            'nombreDestino' => ['nullable','string','max:200'],
-            'destino_lng' => ['nullable','numeric'],
-            'destino_lat' => ['nullable','numeric'],
-            'rutaGeoJSON' => ['nullable','string'],
-            'segmentos' => ['nullable','array'],
-            'segmentos.*.segmentogeojson' => ['required_with:segmentos','string'],
+            'nombreOrigen' => ['nullable', 'string', 'max:200'],
+            'origen_lng' => ['nullable', 'numeric'],
+            'origen_lat' => ['nullable', 'numeric'],
+            'nombreDestino' => ['nullable', 'string', 'max:200'],
+            'destino_lng' => ['nullable', 'numeric'],
+            'destino_lat' => ['nullable', 'numeric'],
+            'rutaGeoJSON' => ['nullable', 'string'],
+            'segmentos' => ['nullable', 'array'],
+            'segmentos.*.segmentogeojson' => ['required_with:segmentos', 'string'],
         ]);
 
         // Verificar si ya existe una dirección idéntica para este usuario
@@ -150,7 +150,7 @@ class UbicacionController extends Controller
                     'segmentogeojson' => $seg['segmentogeojson'],
                 ]);
             }
-        } 
+        }
         // Si NO vienen segmentos pero SÍ hay rutaGeoJSON (web), crear un segmento automático
         // Esto asegura compatibilidad con el móvil que espera segmentos
         elseif (!empty($data['rutaGeoJSON'])) {
@@ -172,30 +172,30 @@ class UbicacionController extends Controller
         if (!$usuarioId) {
             return response()->json(['error' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
         }
-        
+
         // Verificar que la dirección pertenece al usuario o a un envío del usuario
         $direccion = Direccion::find($id);
         if (!$direccion) {
             return response()->json(['error' => 'Dirección no encontrada'], Response::HTTP_NOT_FOUND);
         }
-        
-        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId || 
+
+        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId ||
             Envio::where('id_usuario', $usuarioId)
                 ->where('id_direccion', $id)
                 ->exists();
-        
+
         if (!$perteneceAlUsuario) {
             return response()->json(['error' => 'Dirección no encontrada o no autorizada'], Response::HTTP_NOT_FOUND);
         }
 
         $data = $request->validate([
-            'nombreOrigen' => ['nullable','string','max:200'],
-            'origen_lng' => ['nullable','numeric'],
-            'origen_lat' => ['nullable','numeric'],
-            'nombreDestino' => ['nullable','string','max:200'],
-            'destino_lng' => ['nullable','numeric'],
-            'destino_lat' => ['nullable','numeric'],
-            'rutaGeoJSON' => ['nullable','string'],
+            'nombreOrigen' => ['nullable', 'string', 'max:200'],
+            'origen_lng' => ['nullable', 'numeric'],
+            'origen_lat' => ['nullable', 'numeric'],
+            'nombreDestino' => ['nullable', 'string', 'max:200'],
+            'destino_lng' => ['nullable', 'numeric'],
+            'destino_lat' => ['nullable', 'numeric'],
+            'rutaGeoJSON' => ['nullable', 'string'],
         ]);
 
         $direccion->update([
@@ -217,36 +217,26 @@ class UbicacionController extends Controller
         if (!$usuarioId) {
             return response()->json(['error' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
         }
-        
+
         // Verificar que la dirección pertenece al usuario o a un envío del usuario
         $direccion = Direccion::find($id);
         if (!$direccion) {
             return response()->json(['error' => 'Dirección no encontrada'], Response::HTTP_NOT_FOUND);
         }
-        
-        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId || 
+
+        $perteneceAlUsuario = $direccion->id_usuario == $usuarioId ||
             Envio::where('id_usuario', $usuarioId)
                 ->where('id_direccion', $id)
                 ->exists();
-        
+
         if (!$perteneceAlUsuario) {
             return response()->json(['error' => 'Dirección no encontrada o no autorizada'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validar uso en envíos activos (Pendiente, Asignado, En curso)
+        // Validar si existe cualquier envío asociado (activo o histórico)
         $envios = Envio::where('id_direccion', $direccion->id)->get();
-        $enUso = false;
-        
-        foreach ($envios as $envio) {
-            $estadoActual = EstadoHelper::obtenerEstadoActualEnvio($envio->id);
-            if (in_array($estadoActual, ['Pendiente', 'Asignado', 'En curso'])) {
-                $enUso = true;
-                break;
-            }
-        }
-
-        if ($enUso) {
-            return response()->json(['error' => 'Esta dirección está en uso por un envío activo y no puede eliminarse.'], Response::HTTP_BAD_REQUEST);
+        if ($envios->isNotEmpty()) {
+            return response()->json(['error' => 'Esta dirección está vinculada al historial de envíos y no puede eliminarse.'], Response::HTTP_BAD_REQUEST);
         }
 
         DireccionSegmento::where('direccion_id', $direccion->id)->delete();

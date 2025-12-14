@@ -6,6 +6,16 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-box-open mr-2"></i>Detalle del Envío
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{{ route('envios.index') }}" class="btn btn-secondary btn-sm shadow-sm">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver a mis envíos
+                        </a>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div id="detalleEnvio"></div>
                 </div>
@@ -64,15 +74,15 @@
                     const alertaCancelado = document.createElement('div');
                     alertaCancelado.className = 'alert alert-danger mb-4';
                     alertaCancelado.innerHTML = `
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-times-circle fa-3x mr-3"></i>
-                                <div>
-                                    <h4 class="alert-heading mb-2"><strong>Envío Cancelado</strong></h4>
-                                    <p class="mb-0">Este envío fue rechazado por el administrador y no será procesado.</p>
-                                    <p class="mb-0 small">Si tienes dudas sobre esta cancelación, por favor contacta con nuestro equipo de soporte.</p>
-                                </div>
-                            </div>
-                        `;
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-times-circle fa-3x mr-3"></i>
+                                        <div>
+                                            <h4 class="alert-heading mb-2"><strong>Envío Cancelado</strong></h4>
+                                            <p class="mb-0">Este envío fue rechazado por el administrador y no será procesado. La razón por la que se canceló fue la siguiente:</p>
+                                            <p class="mb-0 font-weight-bold mt-2">${envio.motivo || envio.observacion_cancelacion || 'Sin motivo especificado'}</p>
+                                        </div>
+                                    </div>
+                                `;
                     wrapper.appendChild(alertaCancelado);
                 }
 
@@ -88,25 +98,25 @@
                     const colLeft = document.createElement('div');
                     colLeft.className = 'col-lg-6';
                     colLeft.innerHTML = `
-                            <h5 class="mb-3">Partición ${idx + 1} - Estado: ${badgeFor(p.estado)}</h5>
-                            <h6>Transportista</h6>
-                            <p class="mb-1">Nombre: ${(p.transportista?.nombre || '—')} ${(p.transportista?.apellido || '')}</p>
-                            <p class="mb-1">Teléfono: ${p.transportista?.telefono || '—'}</p>
-                            <p class="mb-3">CI: ${p.transportista?.ci || '—'}</p>
+                                    <h5 class="mb-3">Partición ${idx + 1} - Estado: ${badgeFor(p.estado)}</h5>
+                                    <h6>Transportista</h6>
+                                    <p class="mb-1">Nombre: ${(p.transportista?.nombre || '—')} ${(p.transportista?.apellido || '')}</p>
+                                    <p class="mb-1">Teléfono: ${p.transportista?.telefono || '—'}</p>
+                                    <p class="mb-3">CI: ${p.transportista?.ci || '—'}</p>
 
-                            <h6>Vehículo</h6>
-                            <p class="mb-1">Placa: ${p.vehiculo?.placa || '—'}</p>
-                            <p class="mb-3">Tipo: ${p.vehiculo?.tipo || '—'}</p>
+                                    <h6>Vehículo</h6>
+                                    <p class="mb-1">Placa: ${p.vehiculo?.placa || '—'}</p>
+                                    <p class="mb-3">Tipo: ${p.vehiculo?.tipo || '—'}</p>
 
-                            <h6>Transporte</h6>
-                            <p class="mb-3">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}<br>Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
+                                    <h6>Transporte</h6>
+                                    <p class="mb-3">Tipo de transporte: ${p.tipoTransporte?.nombre || '—'}<br>Descripción: ${p.tipoTransporte?.descripcion || '—'}</p>
 
-                            <div class="timeline-item mb-3">
-                                <span class="text-success">●</span>
-                                <strong class="ml-1">Recogida:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_recogida || '—'}
-                                <div class="mt-2 p-2 bg-light rounded">
-                                    <strong>Origen:</strong> ${envio.nombre_origen || '—'}<br>
-                                    ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
+                                    <div class="timeline-item mb-3">
+                                        <span class="text-success">●</span>
+                                        <strong class="ml-1">Recogida:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_recogida || '—'}
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            <strong>Origen:</strong> ${envio.nombre_origen || '—'}<br>
+                                            ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
                         const categoria = c.tipo || c.categoria || '—';
                         const producto = c.variedad || c.producto || '—';
                         const empaque = c.empaquetado || c.tipo_empaque || '—';
@@ -114,16 +124,16 @@
                         const peso = Number(c.peso || 0).toFixed(1);
                         return `<div>• <strong>${producto}</strong> (${categoria}) - ${cantidad} uds, ${peso} kg, ${empaque}</div>`;
                     }).join('') : '<div class="text-muted">Sin productos</div>'}
-                                    <small class="text-muted">${p.recogidaEntrega?.instrucciones_recogida || 'Sin instrucciones de recogida'}</small>
-                                </div>
-                            </div>
+                                            <small class="text-muted">${p.recogidaEntrega?.instrucciones_recogida || 'Sin instrucciones de recogida'}</small>
+                                        </div>
+                                    </div>
 
-                            <div class="timeline-item">
-                                <span class="text-muted">●</span>
-                                <strong class="ml-1">Entrega:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_entrega || '—'}
-                                <div class="mt-2 p-2 bg-light rounded">
-                                    <strong>Destino:</strong> ${envio.nombre_destino || '—'}<br>
-                                    ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
+                                    <div class="timeline-item">
+                                        <span class="text-muted">●</span>
+                                        <strong class="ml-1">Entrega:</strong> ${p.recogidaEntrega?.fecha_recogida || '—'} – ${p.recogidaEntrega?.hora_entrega || '—'}
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            <strong>Destino:</strong> ${envio.nombre_destino || '—'}<br>
+                                            ${Array.isArray(p.cargas) && p.cargas.length ? p.cargas.map(c => {
                         const categoria = c.tipo || c.categoria || '—';
                         const producto = c.variedad || c.producto || '—';
                         const empaque = c.empaquetado || c.tipo_empaque || '—';
@@ -131,21 +141,21 @@
                         const peso = Number(c.peso || 0).toFixed(1);
                         return `<div>• <strong>${producto}</strong> (${categoria}) - ${cantidad} uds, ${peso} kg, ${empaque}</div>`;
                     }).join('') : '<div class="text-muted">Sin productos</div>'}
-                                    <small class="text-muted">${p.recogidaEntrega?.instrucciones_entrega || 'Sin instrucciones de entrega'}</small>
-                                </div>
-                            </div>
-                        `;
+                                            <small class="text-muted">${p.recogidaEntrega?.instrucciones_entrega || 'Sin instrucciones de entrega'}</small>
+                                        </div>
+                                    </div>
+                                `;
 
                     const colRight = document.createElement('div');
                     colRight.className = 'col-lg-6';
                     const mapId = `map-${idx}`;
                     colRight.innerHTML = `
-                            <div id="${mapId}" style="height: 420px;" class="rounded border"></div>
-                            <div class="mt-3 p-3 bg-light rounded border">
-                                <h6 class="mb-2 font-weight-bold">Código de Acceso</h6>
-                                <p class="mb-0 h4 font-monospace text-primary">${p.codigo_acceso || 'No asignado'}</p>
-                            </div>
-                        `;
+                                    <div id="${mapId}" style="height: 420px;" class="rounded border"></div>
+                                    <div class="mt-3 p-3 bg-light rounded border">
+                                        <h6 class="mb-2 font-weight-bold">Código de Acceso</h6>
+                                        <p class="mb-0 h4 font-monospace text-primary">${p.codigo_acceso || 'No asignado'}</p>
+                                    </div>
+                                `;
 
                     row.appendChild(colLeft);
                     row.appendChild(colRight);
