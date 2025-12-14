@@ -120,6 +120,14 @@ return [
         'icon' => 'fas fa-chart-line',
     ],
 
+    // --- SOPORTE ---
+    ['header' => 'SOPORTE'],
+    [
+        'text' => 'Centro de Soporte',
+        'route' => 'helpdesk',
+        'icon' => 'fas fa-fw fa-headset',
+    ],
+
     // Logout
     ['header' => 'MI CUENTA'],
     [

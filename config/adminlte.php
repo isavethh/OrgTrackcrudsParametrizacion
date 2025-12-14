@@ -316,16 +316,16 @@ return [
             'text' => 'search',
         ],
         [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
             'text' => 'pages',
             'url' => 'admin/pages',
             'icon' => 'far fa-fw fa-file',
             'label' => 4,
             'label_color' => 'success',
+        ],
+        [
+            'text' => 'Centro de Soporte',
+            'url' => 'admin/helpdesk', // URL completa (prefijo admin + ruta helpdesk)
+            'icon' => 'fas fa-fw fa-headset',
         ],
         ['header' => 'account_settings'],
         [

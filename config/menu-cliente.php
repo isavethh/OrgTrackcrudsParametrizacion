@@ -36,6 +36,14 @@ return [
         'route' => 'documentos.index',
         'icon' => 'fas fa-file-alt',
     ],
+
+    // Soporte
+    ['header' => 'SOPORTE'],
+    [
+        'text' => 'Centro de Soporte',
+        'route' => 'helpdesk',
+        'icon' => 'fas fa-fw fa-headset',
+    ],
     
     // Logout
     ['header' => 'CUENTA'],
