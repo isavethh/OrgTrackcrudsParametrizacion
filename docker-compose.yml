@@ -16,6 +16,7 @@ services:
       CACHE_STORE: file
       APP_ENV: local
       FRONTEND_URL: https://orgtrack.dasalas.shop
+      HELPDESK_API_URL: https://proyecto-de-ultimo-minuto.online
     depends_on:
       - db
     networks:
@@ -25,8 +26,8 @@ services:
     container_name: orgtrack
     expose:
       - "80"
-    ports:
-      - "8080:80"
+  # ports:
+  #    - "8080:80"
     volumes:
       - .:/var/www
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
