@@ -74,6 +74,8 @@ class EnvioPublicoController extends Controller
                 'telefono_remitente' => 'required|string|max:20',
                 'email_remitente' => 'nullable|email|max:100',
                 'id_direccion' => 'required|integer|exists:direccion,id',
+                // Campo para integración con grupo planta (número de solicitud externo)
+                'numero_solicitud' => 'nullable|string|max:50',
                 'particiones' => 'required|array|min:1',
                 'particiones.*.id_tipo_transporte' => 'required|integer|exists:tipotransporte,id',
                 'particiones.*.cargas' => 'required|array|min:1',
@@ -110,6 +112,7 @@ class EnvioPublicoController extends Controller
             $nombreRemitente = $request->input('nombre_remitente');
             $telefonoRemitente = $request->input('telefono_remitente');
             $emailRemitente = $request->input('email_remitente');
+            $numeroSolicitud = $request->input('numero_solicitud'); // Número de solicitud del grupo planta
 
             // Validar que la dirección exista
             $direccion = Direccion::find($idDireccion);
@@ -117,7 +120,7 @@ class EnvioPublicoController extends Controller
                 return response()->json(['error' => 'La dirección no existe'], Response::HTTP_BAD_REQUEST);
             }
 
-            return DB::transaction(function () use ($idDireccion, $particiones, $nombreRemitente, $telefonoRemitente, $emailRemitente) {
+            return DB::transaction(function () use ($idDireccion, $particiones, $nombreRemitente, $telefonoRemitente, $emailRemitente, $numeroSolicitud) {
                 // Crear envío de productor sin id_usuario
                 $envio = Envio::create([
                     'id_usuario' => null,
@@ -126,6 +129,7 @@ class EnvioPublicoController extends Controller
                     'telefono_remitente' => $telefonoRemitente,
                     'email_remitente' => $emailRemitente,
                     'es_publico' => true,
+                    'numero_solicitud' => $numeroSolicitud, // Vincula con solicitud del grupo planta
                 ]);
 
                 // Crear estado inicial en historial
@@ -256,6 +260,7 @@ class EnvioPublicoController extends Controller
                 return response()->json([
                     'mensaje' => 'Envío de productor creado exitosamente',
                     'id_envio' => $envio->id,
+                    'numero_solicitud' => $envio->numero_solicitud, // Retorna el número de solicitud para confirmación
                 ], Response::HTTP_CREATED);
             });
 
@@ -822,6 +827,7 @@ class EnvioPublicoController extends Controller
             // Retornar el mismo formato JSON que el endpoint de clientes
             return response()->json([
                 'id_envio' => $envio->id,
+                'numero_solicitud' => $envio->numero_solicitud, // Número de solicitud del grupo planta
                 'nombre_cliente' => $envio->nombre_remitente ?? 'Productor',
                 'estado' => $estadoEnvio,
                 'fecha_creacion' => $envio->fecha_creacion,
