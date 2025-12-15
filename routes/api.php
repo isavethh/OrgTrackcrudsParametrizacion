@@ -202,6 +202,7 @@ Route::middleware([])->group(function () {
 
     // Catalogo Tamaño Conteo
     Route::get('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'index']);
+    Route::get('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'show']);
     Route::post('/catalogo-tamano-conteo', [CatalogoTamanoConteoController::class, 'store']);
     Route::put('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'update']);
     Route::delete('/catalogo-tamano-conteo/{id}', [CatalogoTamanoConteoController::class, 'destroy']);

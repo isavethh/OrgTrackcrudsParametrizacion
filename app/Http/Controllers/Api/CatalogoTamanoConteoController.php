@@ -17,6 +17,15 @@ class CatalogoTamanoConteoController extends Controller
         return response()->json($lista);
     }
 
+    public function show(int $id)
+    {
+        $item = CatalogoTamanoConteo::with('producto')->find($id);
+        if (!$item) {
+            return response()->json(['error' => 'Elemento no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+        return response()->json($item);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([

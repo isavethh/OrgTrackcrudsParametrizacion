@@ -124,4 +124,6 @@ Esta API permite la integración externa para la creación y seguimiento de env�
 ## 7. Generar Documento PDF
 **Descripción:** Obtiene los datos para generar el comprobante de entrega (solo si está Entregado).
 - **Método:** `GET`
-- **URL Completa:** `/api/public/envios/{id_envio}/documento`
+- **URL Completa:** `
+
+`

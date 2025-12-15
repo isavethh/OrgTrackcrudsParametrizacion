@@ -15,6 +15,15 @@ class CatalogoCategoriaController extends Controller
         return response()->json($categorias);
     }
 
+    public function show(int $id)
+    {
+        $categoria = CatalogoCategoria::find($id);
+        if (!$categoria) {
+            return response()->json(['error' => 'Categoría no encontrada'], Response::HTTP_NOT_FOUND);
+        }
+        return response()->json($categoria);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
