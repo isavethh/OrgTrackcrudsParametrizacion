@@ -83,6 +83,11 @@ Si prefieres ejecutar el sistema directamente en tu servidor o máquina local.
     ```ini
     HELPDESK_API_URL=https://proyecto-de-ultimo-minuto.online
     HELPDESK_API_KEY=tu_api_key_aqui
+
+    # Configuración del Frontend (CORS y Redirecciones)
+    FRONTEND_URL=https://orgtrack.dasalas.shop
+    # O para desarrollo local con IP específica:
+    # FRONTEND_URL=http://192.168.56.1:8000
     ```
 
 ### 2. Instalación de Dependencias
@@ -122,6 +127,11 @@ Para desarrollo local, puedes usar el servidor integrado de Laravel:
 
 ```bash
 php artisan serve
+```
+
+O si necesitas exponer el servidor en tu red local (o probar la API desde otros dispositivos):
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 El sistema estará disponible en: `http://localhost:8000`
