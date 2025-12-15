@@ -1,61 +1,143 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+#  Guía de Despliegue del Sistema - OrgTrack
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este documento detalla los pasos necesarios para instalar y ejecutar el sistema OrgTrack, tanto utilizando **Docker** (método recomendado) como de forma **Manual**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+##  Requisitos Previos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Antes de comenzar, asegúrate de tener instalado lo siguiente según el método que elijas:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Para Despliegue con Docker 
+- **Docker Desktop** (o Docker Engine + Docker Compose) instalado y corriendo.
+- Puerto **80** libre en tu máquina (o modificar `docker-compose.yml` si está ocupado).
 
-## Learning Laravel
+### Para Despliegue Manual 
+- **PHP**: Versión 8.2 o superior.
+- **Composer**: Gestor de dependencias de PHP.
+- **Node.js & NPM**: Para compilar los activos del frontend (Vite/Tailwind).
+- **Base de Datos**: PostgreSQL (Recomendado) o MySQL/MariaDB/SQLite.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+##  Opción 1: Despliegue con Docker (Recomendado)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Este proyecto ya incluye una configuración de Docker robusta que se encarga de instalar dependencias, configurar la base de datos y preparar el entorno automáticamente.
 
-## Laravel Sponsors
+### Pasos:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1.  **Abrir una terminal** en la raíz del proyecto.
 
-### Premium Partners
+2.  **Construir y levantar los contenedores**:
+    Ejecuta el siguiente comando para construir las imágenes y levantar los servicios en segundo plano:
+    ```bash
+    docker-compose up -d --build
+    ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+3.  **Esperar la inicialización**:
+    El contenedor `laravel` ejecutará un script de entrada (`entrypoint.sh`) que automáticamente:
+    - Creará el archivo `.env` si no existe.
+    - Instalará las dependencias de PHP (`composer install`).
+    - Generará la clave de aplicación.
+    - Ejecutará las migraciones y seeders de la base de datos.
+    - Iniciará el servidor.
 
-## Contributing
+    puedes monitorear el progreso con:
+    ```bash
+    docker-compose logs -f laravel
+    ```
+    *Espera hasta ver " Iniciando PHP-FPM..."*
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4.  **Acceder al sistema**:
+    Abre tu navegador y visita:
+    - **URL**: `http://localhost`
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Opción 2: Despliegue Manual (Sin Docker)
 
-## Security Vulnerabilities
+Si prefieres ejecutar el sistema directamente en tu servidor o máquina local.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Configuración del Entorno
 
-## License
+1.  **Copiar archivo de configuración**:
+    ```bash
+    cp .env.example .env
+    ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2.  **Editar `.env`**:
+    Abre el archivo `.env` y configura tu conexión a la base de datos.
+    
+    *Ejemplo para PostgreSQL:*
+    ```ini
+    DB_CONNECTION=pgsql
+    DB_HOST=127.0.0.1
+    DB_PORT=5432
+    DB_DATABASE=nombre_de_tu_bd
+    DB_USERNAME=tu_usuario
+    DB_PASSWORD=tu_password
+    ```
+    *Nota: Asegúrate de crear la base de datos vacía en tu gestor de BD antes de continuar.*
+
+    **Importante**: Configura también las variables del Helpdesk si las tienes:
+    ```ini
+    HELPDESK_API_URL=https://proyecto-de-ultimo-minuto.online
+    HELPDESK_API_KEY=tu_api_key_aqui
+    ```
+
+### 2. Instalación de Dependencias
+
+1.  **Backend (PHP)**:
+    ```bash
+    composer install
+    ```
+
+2.  **Frontend (Node.js)**:
+    ```bash
+    npm install
+    npm run build
+    ```
+
+### 3. Inicialización del Sistema
+
+1.  **Generar clave de aplicación**:
+    ```bash
+    php artisan key:generate
+    ```
+
+2.  **Ejecutar migraciones y datos de prueba (Seeders)**:
+    Esto creará las tablas y usuarios por defecto.
+    ```bash
+    php artisan migrate --seed
+    ```
+
+3.  **Enlace simbólico para almacenamiento** (Opcional pero recomendado para imágenes):
+    ```bash
+    php artisan storage:link
+    ```
+
+### 4. Ejecutar el Servidor
+
+Para desarrollo local, puedes usar el servidor integrado de Laravel:
+
+```bash
+php artisan serve
+```
+
+El sistema estará disponible en: `http://localhost:8000`
+
+---
+
+## Solución de Problemas Comunes
+
+### Permisos de Carpetas (Linux/Mac)
+Si tienes errores de permisos al escribir logs o sesiones en modo manual:
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+### Error de Conexión a Base de Datos (Docker)
+Asegúrate de que no haya otro servicio (como un Postgres local) ocupando el puerto `5432`. Si es así, detenlo o cambia el mapeo de puertos en `docker-compose.yml`.
+
+### Los estilos no cargan
+Asegúrate de haber ejecutado `npm run build`. Si estás en desarrollo, puedes dejar corriendo `npm run dev` en otra terminal para carga dinámica.
