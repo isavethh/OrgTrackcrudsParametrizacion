@@ -205,7 +205,7 @@ class EnvioController extends Controller
                 'particiones.*.cargas.*.peso_neto_kg' => 'nullable|numeric|min:0',
                 'particiones.*.cargas.*.tara_kg' => 'nullable|numeric|min:0',
                 'particiones.*.cargas.*.peso_bruto_kg' => 'nullable|numeric|min:0',
-                'particiones.*.cargas.*.forma_pedido' => 'nullable|string|in:empaques,cajas,bolsas,pallets',
+                'particiones.*.cargas.*.forma_pedido' => 'nullable|string|in:empaques,unidades,cajas,bolsas,pallets',
                 'particiones.*.cargas.*.cantidad_pedido' => 'nullable|integer|min:1',
                 'particiones.*.cargas.*.empaques_calculados' => 'nullable|integer|min:0',
                 'particiones.*.cargas.*.unidades_por_pallet' => 'nullable|integer|min:1',
